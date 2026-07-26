@@ -7,9 +7,10 @@ import { which, getVersion } from '../detect.js';
 import { detectorConfigs } from '../configs.js';
 import cursorDetector from './cursor.detector.js';
 import rovodevDetector from './rovodev.detector.js';
+import acpxDetector from './acpx.detector.js';
 
 /** File-based detectors (complex agents that need custom probe logic) */
-const fileBasedDetectors: AgentDetector[] = [cursorDetector, rovodevDetector];
+const fileBasedDetectors: AgentDetector[] = [cursorDetector, rovodevDetector, acpxDetector];
 
 /**
  * Create a detector from a config entry.
