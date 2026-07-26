@@ -14,9 +14,7 @@ vi.mock('node:child_process', () => ({
 }));
 
 vi.mock('node:util', () => ({
-  promisify: (fn: Function) => {
-    return mockExecFileAsync;
-  },
+  promisify: () => mockExecFileAsync,
 }));
 
 // Import the detector after mocks are set up
@@ -39,7 +37,9 @@ describe('acpx detector', () => {
 
   it('returns null when acpx binary not found', async () => {
     mockWhich.mockImplementation(async (name: string) => {
-      if (name === 'acpx') return null;
+      if (name === 'acpx') {
+        return null;
+      }
       return null;
     });
 
@@ -49,7 +49,9 @@ describe('acpx detector', () => {
 
   it('detects acpx with targets from `acpx list` command', async () => {
     mockWhich.mockImplementation(async (name: string) => {
-      if (name === 'acpx') return '/usr/bin/acpx';
+      if (name === 'acpx') {
+        return '/usr/bin/acpx';
+      }
       return null;
     });
 
@@ -66,7 +68,9 @@ describe('acpx detector', () => {
 
   it('detects acpx with empty targets when list command fails', async () => {
     mockWhich.mockImplementation(async (name: string) => {
-      if (name === 'acpx') return '/usr/bin/acpx';
+      if (name === 'acpx') {
+        return '/usr/bin/acpx';
+      }
       return null;
     });
 
@@ -83,7 +87,9 @@ describe('acpx detector', () => {
 
   it('detects acpx with empty targets when list command returns empty output', async () => {
     mockWhich.mockImplementation(async (name: string) => {
-      if (name === 'acpx') return '/usr/bin/acpx';
+      if (name === 'acpx') {
+        return '/usr/bin/acpx';
+      }
       return null;
     });
 
