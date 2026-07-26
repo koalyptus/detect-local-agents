@@ -18,7 +18,11 @@ export interface ConfigPath {
 export const AGENT_CONFIGS: Record<string, ConfigPath> = {
   claude: {
     name: 'claude',
-    paths: ['~/.claude/settings.json', '%APPDATA%/Claude/settings.json'],
+    paths: [
+      '~/.claude/settings.json',
+      '%APPDATA%/Claude/settings.json',
+      '%USERPROFILE%/.claude/settings.json',
+    ],
   },
   codex: {
     name: 'codex',
