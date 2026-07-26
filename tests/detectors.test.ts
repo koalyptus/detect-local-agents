@@ -245,7 +245,6 @@ describe('config file detection integration', () => {
 
   it('detects claude as configured via settings.json', async () => {
     const { loadAllDetectors } = await import('../src/detectors/index.js');
-    const { hasConfigFile } = await import('../src/config-paths.js');
 
     // Create temp dir with .claude/settings.json
     const tmpDir = await import('node:os').then((os) => os.tmpdir());

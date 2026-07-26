@@ -85,5 +85,76 @@ describe('config-paths', () => {
       const result = await hasConfigFile('unknown-agent');
       expect(result).toBe(false);
     });
+
+    it('resolves %APPDATA% paths on Windows', async () => {
+      // Test the %APPDATA% resolution branch
+      const customAppData = path.join(tempDir, 'CustomAppData');
+      await fs.mkdir(customAppData, { recursive: true });
+      const claudeDir = path.join(customAppData, 'Claude');
+      await fs.mkdir(claudeDir, { recursive: true });
+      await fs.writeFile(path.join(claudeDir, 'settings.json'), '{}');
+
+      // Temporarily override APPDATA
+      const oldAppData = process.env.APPDATA;
+      process.env.APPDATA = customAppData;
+
+      const result = await hasConfigFile('claude');
+      expect(result).toBe(true);
+
+      if (oldAppData !== undefined) {
+        process.env.APPDATA = oldAppData;
+      } else {
+        delete process.env.APPDATA;
+      }
+    });
+
+    it('resolves %USERPROFILE% paths on Windows for claude', async () => {
+      // Test the %USERPROFILE% resolution branch
+      const customUserProfile = path.join(tempDir, 'CustomUserProfile');
+      await fs.mkdir(customUserProfile, { recursive: true });
+      const claudeDir = path.join(customUserProfile, '.claude');
+      await fs.mkdir(claudeDir, { recursive: true });
+      await fs.writeFile(path.join(claudeDir, 'settings.json'), '{}');
+
+      // Temporarily override USERPROFILE
+      const oldUserProfile = process.env.USERPROFILE;
+      process.env.USERPROFILE = customUserProfile;
+      // Also clear APPDATA to force %USERPROFILE% branch
+      const oldAppData = process.env.APPDATA;
+      delete process.env.APPDATA;
+
+      const result = await hasConfigFile('claude');
+      expect(result).toBe(true);
+
+      if (oldUserProfile !== undefined) {
+        process.env.USERPROFILE = oldUserProfile;
+      } else {
+        delete process.env.USERPROFILE;
+      }
+      if (oldAppData !== undefined) {
+        process.env.APPDATA = oldAppData;
+      }
+    });
+
+    it('resolves %USERPROFILE% paths on Windows for gemini', async () => {
+      // Test the %USERPROFILE% resolution branch
+      const customProfile = path.join(tempDir, 'CustomProfile');
+      await fs.mkdir(customProfile, { recursive: true });
+      const geminiDir = path.join(customProfile, '.gemini');
+      await fs.mkdir(geminiDir, { recursive: true });
+      await fs.writeFile(path.join(geminiDir, 'config.json'), '{}');
+
+      const oldUserProfile = process.env.USERPROFILE;
+      process.env.USERPROFILE = customProfile;
+
+      const result = await hasConfigFile('gemini');
+      expect(result).toBe(true);
+
+      if (oldUserProfile !== undefined) {
+        process.env.USERPROFILE = oldUserProfile;
+      } else {
+        delete process.env.USERPROFILE;
+      }
+    });
   });
 });

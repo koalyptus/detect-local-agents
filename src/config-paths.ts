@@ -42,6 +42,7 @@ export const AGENT_CONFIGS: Record<string, ConfigPath> = {
     paths: [
       '~/.gemini/config.json',
       '%APPDATA%/gemini/config.json',
+      '%USERPROFILE%/.gemini/config.json',
     ],
   },
 };
