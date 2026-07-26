@@ -5,6 +5,7 @@ import * as os from 'node:os';
 import type { AgentDetector, DetectedAgent, DetectorConfig } from '../types.js';
 import { which, getVersion } from '../detect.js';
 import { detectorConfigs } from '../configs.js';
+import { hasConfigFile } from '../config-paths.js';
 import cursorDetector from './cursor.detector.js';
 import rovodevDetector from './rovodev.detector.js';
 import acpxDetector from './acpx.detector.js';
@@ -37,6 +38,12 @@ function configToDetector(config: DetectorConfig): AgentDetector {
 
       // v8 ignore: filesystem access cannot be properly mocked with namespace imports in vitest
       /* v8 ignore start */
+      // Check config file on disk
+      if (!isConfigured) {
+        isConfigured = await hasConfigFile(config.name);
+      }
+
+      // Fallback: check config directory (backward compat)
       if (!isConfigured && config.configDir) {
         const dir = config.configDir.startsWith('~')
           ? path.join(os.homedir(), config.configDir.slice(1))

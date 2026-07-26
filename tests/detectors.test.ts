@@ -235,3 +235,64 @@ describe('config detectors', () => {
     expect(typeof result?.isConfigured).toBe('boolean');
   });
 });
+
+describe('config file detection integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockWhich.mockResolvedValue(null);
+    mockGetVersion.mockResolvedValue(null);
+  });
+
+  it('detects claude as configured via settings.json', async () => {
+    const { loadAllDetectors } = await import('../src/detectors/index.js');
+    const { hasConfigFile } = await import('../src/config-paths.js');
+
+    // Create temp dir with .claude/settings.json
+    const tmpDir = await import('node:os').then((os) => os.tmpdir());
+    const { mkdtemp } = await import('node:fs/promises');
+    const path = await import('node:path');
+    const testDir = await mkdtemp(path.join(tmpDir, 'detect-test-'));
+    const claudeDir = path.join(testDir, '.claude');
+    await import('node:fs/promises').then((fs) => fs.mkdir(claudeDir, { recursive: true }));
+    await import('node:fs/promises').then((fs) => fs.writeFile(path.join(claudeDir, 'settings.json'), '{}'));
+
+    // Mock HOME to point to test dir
+    const originalHome = process.env.HOME;
+    process.env.HOME = testDir;
+    if (process.platform === 'win32') {
+      process.env.USERPROFILE = testDir;
+    }
+
+    // Mock which to return fake binary
+    mockWhich.mockImplementation(async (name) => {
+      if (name === 'claude') {
+        return '/fake/claude';
+      }
+      return null;
+    });
+    mockGetVersion.mockResolvedValue('1.0.0');
+
+    const detectors = await loadAllDetectors();
+    const claudeDetector = detectors.find((d) => d.name === 'claude');
+
+    const result = await claudeDetector?.detect();
+
+    expect(result).not.toBeNull();
+    expect(result?.name).toBe('claude');
+    expect(result?.isConfigured).toBe(true);
+    expect(result?.binary).toBe('/fake/claude');
+
+    // Cleanup
+    process.env.HOME = originalHome;
+    if (process.platform === 'win32') {
+      process.env.USERPROFILE = originalHome;
+    }
+    await import('node:fs/promises').then((fs) => fs.rm(testDir, { recursive: true, force: true }));
+  });
+
+  it('hasConfigFile returns false for unknown agent', async () => {
+    const { hasConfigFile } = await import('../src/config-paths.js');
+    const result = await hasConfigFile('unknown-agent-that-does-not-exist');
+    expect(result).toBe(false);
+  });
+});
