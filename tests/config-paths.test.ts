@@ -35,25 +35,33 @@ describe('config-paths', () => {
     it('includes claude with correct paths', () => {
       expect(AGENT_CONFIGS.claude).toBeDefined();
       expect(AGENT_CONFIGS.claude.name).toBe('claude');
-      expect(AGENT_CONFIGS.claude.paths).toContainEqual(expect.stringContaining('.claude/settings.json'));
+      expect(AGENT_CONFIGS.claude.paths).toContainEqual(
+        expect.stringContaining('.claude/settings.json'),
+      );
     });
 
     it('includes codex with correct paths', () => {
       expect(AGENT_CONFIGS.codex).toBeDefined();
       expect(AGENT_CONFIGS.codex.name).toBe('codex');
-      expect(AGENT_CONFIGS.codex.paths).toContainEqual(expect.stringContaining('.codex/config.json'));
+      expect(AGENT_CONFIGS.codex.paths).toContainEqual(
+        expect.stringContaining('.codex/config.json'),
+      );
     });
 
     it('includes opencode with correct paths', () => {
       expect(AGENT_CONFIGS.opencode).toBeDefined();
       expect(AGENT_CONFIGS.opencode.name).toBe('opencode');
-      expect(AGENT_CONFIGS.opencode.paths).toContainEqual(expect.stringContaining('opencode/config.json'));
+      expect(AGENT_CONFIGS.opencode.paths).toContainEqual(
+        expect.stringContaining('opencode/config.json'),
+      );
     });
 
     it('includes gemini with correct paths', () => {
       expect(AGENT_CONFIGS.gemini).toBeDefined();
       expect(AGENT_CONFIGS.gemini.name).toBe('gemini');
-      expect(AGENT_CONFIGS.gemini.paths).toContainEqual(expect.stringContaining('.gemini/config.json'));
+      expect(AGENT_CONFIGS.gemini.paths).toContainEqual(
+        expect.stringContaining('.gemini/config.json'),
+      );
     });
   });
 

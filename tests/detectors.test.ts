@@ -253,7 +253,9 @@ describe('config file detection integration', () => {
     const testDir = await mkdtemp(path.join(tmpDir, 'detect-test-'));
     const claudeDir = path.join(testDir, '.claude');
     await import('node:fs/promises').then((fs) => fs.mkdir(claudeDir, { recursive: true }));
-    await import('node:fs/promises').then((fs) => fs.writeFile(path.join(claudeDir, 'settings.json'), '{}'));
+    await import('node:fs/promises').then((fs) =>
+      fs.writeFile(path.join(claudeDir, 'settings.json'), '{}'),
+    );
 
     // Mock HOME to point to test dir
     const originalHome = process.env.HOME;

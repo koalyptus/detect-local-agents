@@ -18,24 +18,15 @@ export interface ConfigPath {
 export const AGENT_CONFIGS: Record<string, ConfigPath> = {
   claude: {
     name: 'claude',
-    paths: [
-      '~/.claude/settings.json',
-      '%APPDATA%/Claude/settings.json',
-    ],
+    paths: ['~/.claude/settings.json', '%APPDATA%/Claude/settings.json'],
   },
   codex: {
     name: 'codex',
-    paths: [
-      '~/.codex/config.json',
-      '%APPDATA%/Codex/config.json',
-    ],
+    paths: ['~/.codex/config.json', '%APPDATA%/Codex/config.json'],
   },
   opencode: {
     name: 'opencode',
-    paths: [
-      '~/.config/opencode/config.json',
-      '%APPDATA%/opencode/config.json',
-    ],
+    paths: ['~/.config/opencode/config.json', '%APPDATA%/opencode/config.json'],
   },
   gemini: {
     name: 'gemini',
@@ -55,7 +46,10 @@ function resolveConfigPath(p: string): string {
     return path.join(os.homedir(), p.slice(1));
   }
   if (p.startsWith('%APPDATA%')) {
-    return path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), p.slice(9));
+    return path.join(
+      process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'),
+      p.slice(9),
+    );
   }
   if (p.startsWith('%USERPROFILE%')) {
     return path.join(process.env.USERPROFILE || os.homedir(), p.slice(13));

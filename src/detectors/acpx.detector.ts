@@ -17,7 +17,10 @@ const detector: AgentDetector = {
 
     try {
       const { stdout } = await execFileAsync(binary, ['list'], { timeout: 5000 });
-      const targets = stdout.trim().split('\n').filter((t) => t.trim().length > 0);
+      const targets = stdout
+        .trim()
+        .split('\n')
+        .filter((t) => t.trim().length > 0);
 
       return {
         name: 'acpx',
