@@ -2,16 +2,13 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import { pathToFileURL } from 'node:url';
 import type { AgentDetector, DetectedAgent, DetectorConfig } from '../types.js';
 import { which, getVersion } from '../detect.js';
 import { detectorConfigs } from '../configs.js';
 import { hasConfigFile } from '../config-paths.js';
-import cursorDetector from './cursor.detector.js';
-import rovodevDetector from './rovodev.detector.js';
-import acpxDetector from './acpx.detector.js';
 
-/** File-based detectors (complex agents that need custom probe logic) */
-const fileBasedDetectors: AgentDetector[] = [cursorDetector, rovodevDetector, acpxDetector];
+const DETECTOR_SUFFIX = '.detector.ts';
 
 /**
  * Create a detector from a config entry.
@@ -69,7 +66,36 @@ function configToDetector(config: DetectorConfig): AgentDetector {
 }
 
 /**
- * Load all detectors: config-based + file-based.
+ * Auto-discover file-based detectors by scanning the detectors directory.
+ */
+async function loadFileBasedDetectors(): Promise<AgentDetector[]> {
+  // In Node.js, import.meta.url gives file:///.../src/detectors/index.js
+  // We need the directory containing this file
+  const moduleUrl = new URL(import.meta.url);
+  const detectorsDir = path.dirname(moduleUrl.pathname);
+
+  // On Windows, pathname may start with /C:/... - handle that
+  const normalizedDir =
+    detectorsDir.startsWith('/') && detectorsDir[2] === ':' ? detectorsDir.slice(1) : detectorsDir;
+
+  const files = (await fs.readdir(normalizedDir)).filter(
+    (f) => f.endsWith(DETECTOR_SUFFIX) && f !== 'index.ts',
+  );
+
+  const detectors: AgentDetector[] = [];
+  for (const file of files) {
+    const filePath = path.join(normalizedDir, file);
+    const mod = await import(pathToFileURL(filePath).href);
+    const detector = mod.default as AgentDetector;
+    if (detector && typeof detector.detect === 'function') {
+      detectors.push(detector);
+    }
+  }
+  return detectors;
+}
+
+/**
+ * Load all detectors: config-based + auto-discovered file-based.
  */
 export async function loadAllDetectors(): Promise<AgentDetector[]> {
   const detectors: AgentDetector[] = [];
@@ -79,8 +105,8 @@ export async function loadAllDetectors(): Promise<AgentDetector[]> {
     detectors.push(configToDetector(config));
   }
 
-  // File-based detectors (statically imported)
-  detectors.push(...fileBasedDetectors);
+  // File-based detectors (auto-discovered)
+  detectors.push(...(await loadFileBasedDetectors()));
 
   return detectors;
 }

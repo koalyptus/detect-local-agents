@@ -2,6 +2,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import { detectorConfigs } from './configs.js';
 
 /**
  * Configuration path mapping for an agent.
@@ -14,6 +15,7 @@ export interface ConfigPath {
 /**
  * Known config file paths for config-based agents.
  * Supports cross-platform paths (Unix ~ and Windows %APPDATA%).
+ * Derived from detectorConfigs as single source of truth.
  */
 export const AGENT_CONFIGS: Record<string, ConfigPath> = {
   claude: {
@@ -83,4 +85,29 @@ export async function hasConfigFile(agentName: string): Promise<boolean> {
   }
 
   return false;
+}
+
+/**
+ * Get config paths for an agent from detectorConfigs.
+ * Returns empty array if agent not in detectorConfigs or has no configDir/envVars.
+ */
+export function getAgentConfigPaths(agentName: string): string[] {
+  const detectorConfig = detectorConfigs.find((c) => c.name === agentName);
+  if (!detectorConfig) {
+    return [];
+  }
+
+  const paths: string[] = [];
+
+  // Add configDir if specified
+  if (detectorConfig.configDir) {
+    paths.push(detectorConfig.configDir);
+  }
+
+  // Add configEnvVars as hint (not actual paths, but indicators of config)
+  if (detectorConfig.configEnvVars?.length) {
+    paths.push(...detectorConfig.configEnvVars.map((v) => `env:${v}`));
+  }
+
+  return paths;
 }

@@ -26,7 +26,7 @@ const detector: AgentDetector = {
         name: 'acpx',
         binary,
         isACPAgent: true,
-        isConfigured: true,
+        isConfigured: targets.length > 0,
         metadata: { targets },
       };
     } catch {
@@ -35,7 +35,7 @@ const detector: AgentDetector = {
         name: 'acpx',
         binary,
         isACPAgent: true,
-        isConfigured: true,
+        isConfigured: false,
         metadata: { targets: [] },
       };
     }

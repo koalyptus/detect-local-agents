@@ -66,7 +66,7 @@ describe('acpx detector', () => {
     expect(result?.metadata?.targets).toEqual(['target1', 'target2', 'target3']);
   });
 
-  it('detects acpx with empty targets when list command fails', async () => {
+  it('detects acpx with isConfigured=false when list command fails', async () => {
     mockWhich.mockImplementation(async (name: string) => {
       if (name === 'acpx') {
         return '/usr/bin/acpx';
@@ -81,11 +81,11 @@ describe('acpx detector', () => {
     expect(result?.name).toBe('acpx');
     expect(result?.binary).toBe('/usr/bin/acpx');
     expect(result?.isACPAgent).toBe(true);
-    expect(result?.isConfigured).toBe(true);
+    expect(result?.isConfigured).toBe(false);
     expect(result?.metadata?.targets).toEqual([]);
   });
 
-  it('detects acpx with empty targets when list command returns empty output', async () => {
+  it('detects acpx with isConfigured=false when list command returns empty output', async () => {
     mockWhich.mockImplementation(async (name: string) => {
       if (name === 'acpx') {
         return '/usr/bin/acpx';
@@ -97,6 +97,7 @@ describe('acpx detector', () => {
 
     const result = await acpxDetector.detect();
     expect(result).not.toBeNull();
+    expect(result?.isConfigured).toBe(false);
     expect(result?.metadata?.targets).toEqual([]);
   });
 });
