@@ -23,5 +23,4 @@ export interface DetectorConfig {
   configEnvVars?: string[];
   configDir?: string;
   isACPAgent?: boolean;
-  probe?: string[];
 }

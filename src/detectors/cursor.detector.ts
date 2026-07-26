@@ -15,7 +15,6 @@ const detector: AgentDetector = {
       name: 'cursor',
       binary,
       isACPAgent: true,
-      isConfigured: true,
     };
   },
 };

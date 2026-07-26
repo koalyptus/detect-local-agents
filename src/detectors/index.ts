@@ -36,7 +36,7 @@ function configToDetector(config: DetectorConfig): AgentDetector {
       /* v8 ignore start */
       if (!isConfigured && config.configDir) {
         const dir = config.configDir.startsWith('~')
-          ? config.configDir.replace('~', os.homedir())
+          ? path.join(os.homedir(), config.configDir.slice(1))
           : config.configDir;
         try {
           await fs.access(dir);

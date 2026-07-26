@@ -55,7 +55,6 @@ describe('cursor detector', () => {
     expect(result?.name).toBe('cursor');
     expect(result?.binary).toBe('/usr/bin/cursor-agent');
     expect(result?.isACPAgent).toBe(true);
-    expect(result?.isConfigured).toBe(true);
   });
 });
 
