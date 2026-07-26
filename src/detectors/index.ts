@@ -1,13 +1,15 @@
 // src/detectors/index.ts
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { pathToFileURL, fileURLToPath } from 'node:url';
 import * as os from 'node:os';
 import type { AgentDetector, DetectedAgent, DetectorConfig } from '../types.js';
 import { which, getVersion } from '../detect.js';
 import { detectorConfigs } from '../configs.js';
+import cursorDetector from './cursor.detector.js';
+import rovodevDetector from './rovodev.detector.js';
 
-const DETECTOR_SUFFIX = '.detector.js';
+/** File-based detectors (complex agents that need custom probe logic) */
+const fileBasedDetectors: AgentDetector[] = [cursorDetector, rovodevDetector];
 
 /**
  * Create a detector from a config entry.
@@ -69,21 +71,8 @@ export async function loadAllDetectors(): Promise<AgentDetector[]> {
     detectors.push(configToDetector(config));
   }
 
-  // v8 ignore: dynamic import of detector files requires filesystem mocks that
-  // don't work with namespace imports (import * as fs). Tests cover detectors directly.
-  /* v8 ignore start */
-  const dir = fileURLToPath(new URL('.', import.meta.url));
-  const files = (await fs.readdir(dir)).filter((f) => f.endsWith(DETECTOR_SUFFIX));
-
-  for (const file of files) {
-    const filePath = path.join(dir, file);
-    const mod = await import(pathToFileURL(filePath).href);
-    const detector = mod.default as AgentDetector;
-    if (isAgentDetector(detector)) {
-      detectors.push(detector);
-    }
-  }
-  /* v8 ignore stop */
+  // File-based detectors (statically imported)
+  detectors.push(...fileBasedDetectors);
 
   return detectors;
 }
