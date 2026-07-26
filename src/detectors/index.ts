@@ -64,27 +64,23 @@ function configToDetector(config: DetectorConfig): AgentDetector {
     },
   };
 }
-
 /**
  * Auto-discover file-based detectors by scanning the detectors directory.
  */
 async function loadFileBasedDetectors(): Promise<AgentDetector[]> {
-  // In Node.js, import.meta.url gives file:///.../src/detectors/index.js
-  // We need the directory containing this file
-  const moduleUrl = new URL(import.meta.url);
-  const detectorsDir = path.dirname(moduleUrl.pathname);
+  const { fileURLToPath } = await import('node:url');
+  const { dirname } = await import('node:path');
+  const { readdir } = await import('node:fs/promises');
 
-  // On Windows, pathname may start with /C:/... - handle that
-  const normalizedDir =
-    detectorsDir.startsWith('/') && detectorsDir[2] === ':' ? detectorsDir.slice(1) : detectorsDir;
+  const detectorsDir = dirname(fileURLToPath(import.meta.url));
 
-  const files = (await fs.readdir(normalizedDir)).filter(
+  const files = (await readdir(detectorsDir)).filter(
     (f) => f.endsWith(DETECTOR_SUFFIX) && f !== 'index.ts',
   );
 
   const detectors: AgentDetector[] = [];
   for (const file of files) {
-    const filePath = path.join(normalizedDir, file);
+    const filePath = path.join(detectorsDir, file);
     const mod = await import(pathToFileURL(filePath).href);
     const detector = mod.default as AgentDetector;
     if (detector && typeof detector.detect === 'function') {
