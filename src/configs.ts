@@ -60,4 +60,16 @@ export const detectorConfigs: DetectorConfig[] = [
     name: 'amp',
     binary: 'amp',
   },
+  {
+    name: 'roo-code',
+    binary: 'roo-code',
+  },
+  {
+    name: 'continue',
+    binary: 'continue',
+  },
+  {
+    name: 'tabnine',
+    binary: 'tabnine',
+  },
 ];
