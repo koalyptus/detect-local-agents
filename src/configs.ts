@@ -55,6 +55,7 @@ export const detectorConfigs: DetectorConfig[] = [
     name: 'gemini',
     binary: 'gemini',
     configEnvVars: ['GOOGLE_API_KEY'],
+    configDir: '~/.gemini',
   },
   {
     name: 'amp',

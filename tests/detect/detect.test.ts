@@ -7,7 +7,7 @@ vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
 }));
 
-import { which, getVersion } from '../src/detect.js';
+import { which, getVersion } from '../../src/detect.js';
 import { execFile } from 'node:child_process';
 
 const mockExecFile = vi.mocked(execFile);

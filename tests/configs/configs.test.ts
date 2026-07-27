@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectorConfigs } from '../src/configs.js';
+import { detectorConfigs } from '../../src/configs.js';
 
 describe('detectorConfigs', () => {
   it('includes roo-code config entry', () => {
