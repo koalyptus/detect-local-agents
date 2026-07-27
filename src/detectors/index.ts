@@ -2,7 +2,8 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { pathToFileURL } from 'node:url';
+import * as fsSync from 'node:fs';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import type { AgentDetector, DetectedAgent, DetectorConfig } from '../types.js';
 import { which, getVersion } from '../detect.js';
 import { detectorConfigs } from '../configs.js';
@@ -33,8 +34,6 @@ function configToDetector(config: DetectorConfig): AgentDetector {
         isConfigured = config.configEnvVars.some((v) => !!process.env[v]);
       }
 
-      // v8 ignore: filesystem access cannot be properly mocked with namespace imports in vitest
-      /* v8 ignore start */
       // Check config file on disk
       if (!isConfigured) {
         isConfigured = await hasConfigFile(config.name);
@@ -52,7 +51,6 @@ function configToDetector(config: DetectorConfig): AgentDetector {
           // No config dir
         }
       }
-      /* v8 ignore stop */
 
       return {
         name: config.name,
@@ -68,15 +66,11 @@ function configToDetector(config: DetectorConfig): AgentDetector {
  * Auto-discover file-based detectors by scanning the detectors directory.
  */
 async function loadFileBasedDetectors(): Promise<AgentDetector[]> {
-  const { fileURLToPath } = await import('node:url');
-  const { dirname } = await import('node:path');
-  const { readdir } = await import('node:fs/promises');
+  const detectorsDir = path.dirname(fileURLToPath(import.meta.url));
 
-  const detectorsDir = dirname(fileURLToPath(import.meta.url));
-
-  const files = (await readdir(detectorsDir)).filter(
-    (f) => f.endsWith(DETECTOR_SUFFIX) && f !== 'index.ts',
-  );
+  const files = fsSync
+    .readdirSync(detectorsDir)
+    .filter((f) => f.endsWith(DETECTOR_SUFFIX) && f !== 'index.ts');
 
   const detectors: AgentDetector[] = [];
   for (const file of files) {

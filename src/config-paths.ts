@@ -5,34 +5,6 @@ import * as os from 'node:os';
 import { detectorConfigs } from './configs.js';
 
 /**
- * Configuration path mapping for an agent.
- */
-export interface ConfigPath {
-  name: string;
-  paths: string[];
-}
-
-/**
- * Resolves a path that may contain ~ or %APPDATA% or %USERPROFILE%.
- */
-export function resolveConfigPath(p: string): string {
-  if (p.startsWith('~')) {
-    return path.join(os.homedir(), p.slice(1));
-  }
-  if (p.startsWith('%APPDATA%')) {
-    const base = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
-    const rest = p.slice(9).replace(/^\/+/, '');
-    return path.join(base, rest);
-  }
-  if (p.startsWith('%USERPROFILE%')) {
-    const base = process.env.USERPROFILE || os.homedir();
-    const rest = p.slice(13).replace(/^\/+/, '');
-    return path.join(base, rest);
-  }
-  return p;
-}
-
-/**
  * Get standard config file paths for an agent.
  * Derives from detectorConfigs (single source of truth).
  * Uses POSIX paths for consistency across platforms.
@@ -44,9 +16,9 @@ export function getConfigPaths(agentName: string): string[] {
   }
 
   const dir = config.configDir;
-  const agentFileName = agentName === 'claude' ? 'settings.json' : 'config.json';
+  const agentFileName = 'config.json';
 
-  // Standard paths using POSIX for consistency
+  // Standard paths using POSIX for consistency across platforms
   const paths: string[] = [];
 
   // Unix: ~/.agent/
@@ -72,7 +44,19 @@ export async function hasConfigFile(agentName: string): Promise<boolean> {
   }
 
   for (const p of paths) {
-    const resolvedPath = resolveConfigPath(p);
+    let resolvedPath: string;
+    if (p.startsWith('~')) {
+      resolvedPath = path.join(os.homedir(), p.slice(1));
+    } else if (p.startsWith('%APPDATA%')) {
+      const base = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+      resolvedPath = path.join(base, p.slice(9).replace(/^\/+/, ''));
+    } else if (p.startsWith('%USERPROFILE%')) {
+      const base = process.env.USERPROFILE || os.homedir();
+      resolvedPath = path.join(base, p.slice(13).replace(/^\/+/, ''));
+    } else {
+      resolvedPath = p;
+    }
+
     try {
       await fs.access(resolvedPath);
       return true;
