@@ -96,3 +96,7 @@ export default detector;
 - Cline (`cline`)
 - Gemini (`gemini`)
 - Amp (`amp`)
+- **Roo Code (`roo-code`)** — NEW
+- **Continue (`continue`)** — NEW
+- **Tabnine (`tabnine`)** — NEW
+- **acpx (`acpx`)** — NEW — ACP proxy with target listing

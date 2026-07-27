@@ -1,7 +1,11 @@
 // tests/detectors.test.ts
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import * as os from 'node:os';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
-import { isAgentDetector } from '../src/detectors/index.js';
+import { isAgentDetector, loadAllDetectors } from '../src/detectors/index.js';
+import { hasConfigFile } from '../src/config-paths.js';
 import cursorDetector from '../src/detectors/cursor.detector.js';
 import rovodevDetector from '../src/detectors/rovodev.detector.js';
 
@@ -166,7 +170,6 @@ describe('config detectors', () => {
   });
 
   it('claude detector returns null when binary not found', async () => {
-    const { loadAllDetectors } = await import('../src/detectors/index.js');
     mockWhich.mockResolvedValue(null);
 
     const detectors = await loadAllDetectors();
@@ -177,7 +180,6 @@ describe('config detectors', () => {
   });
 
   it('claude detector returns agent when binary found', async () => {
-    const { loadAllDetectors } = await import('../src/detectors/index.js');
     mockWhich.mockImplementation(async (name) => {
       if (name === 'claude') {
         return '/usr/bin/claude';
@@ -197,7 +199,6 @@ describe('config detectors', () => {
   });
 
   it('claude detector checks env vars for isConfigured', async () => {
-    const { loadAllDetectors } = await import('../src/detectors/index.js');
     mockWhich.mockImplementation(async (name) => {
       if (name === 'claude') {
         return '/usr/bin/claude';
@@ -218,7 +219,6 @@ describe('config detectors', () => {
   });
 
   it('hermes detector checks config dir for isConfigured (dir exists)', async () => {
-    const { loadAllDetectors } = await import('../src/detectors/index.js');
     mockWhich.mockImplementation(async (name) => {
       if (name === 'hermes') {
         return '/usr/bin/hermes';
@@ -233,5 +233,60 @@ describe('config detectors', () => {
     const result = await hermesDetector?.detect();
     // isConfigured depends on whether ~/.hermes exists
     expect(typeof result?.isConfigured).toBe('boolean');
+  });
+});
+
+describe('config file detection integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockWhich.mockResolvedValue(null);
+    mockGetVersion.mockResolvedValue(null);
+  });
+
+  it('detects claude as configured via settings.json', async () => {
+    // Create temp dir with .claude/config.json
+    const tmpDir = os.tmpdir();
+    const testDir = await fs.mkdtemp(path.join(tmpDir, 'detect-test-'));
+    const claudeDir = path.join(testDir, '.claude');
+    await fs.mkdir(claudeDir, { recursive: true });
+    await fs.writeFile(path.join(claudeDir, 'settings.json'), '{}');
+
+    // Mock HOME to point to test dir
+    const originalHome = process.env.HOME;
+    process.env.HOME = testDir;
+    if (process.platform === 'win32') {
+      process.env.USERPROFILE = testDir;
+    }
+
+    // Mock which to return fake binary
+    mockWhich.mockImplementation(async (name) => {
+      if (name === 'claude') {
+        return '/fake/claude';
+      }
+      return null;
+    });
+    mockGetVersion.mockResolvedValue('1.0.0');
+
+    const detectors = await loadAllDetectors();
+    const claudeDetector = detectors.find((d) => d.name === 'claude');
+
+    const result = await claudeDetector?.detect();
+
+    expect(result).not.toBeNull();
+    expect(result?.name).toBe('claude');
+    expect(result?.isConfigured).toBe(true);
+    expect(result?.binary).toBe('/fake/claude');
+
+    // Cleanup
+    process.env.HOME = originalHome;
+    if (process.platform === 'win32') {
+      process.env.USERPROFILE = originalHome;
+    }
+    await fs.rm(testDir, { recursive: true, force: true });
+  });
+
+  it('hasConfigFile returns false for unknown agent', async () => {
+    const result = await hasConfigFile('unknown-agent-that-does-not-exist');
+    expect(result).toBe(false);
   });
 });
