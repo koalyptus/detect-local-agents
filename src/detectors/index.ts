@@ -2,14 +2,13 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import * as fsSync from 'node:fs';
-import { pathToFileURL, fileURLToPath } from 'node:url';
 import type { AgentDetector, DetectedAgent, DetectorConfig } from '../types.js';
 import { which, getVersion } from '../detect.js';
 import { detectorConfigs } from '../configs.js';
 import { hasConfigFile } from '../config-paths.js';
-
-const DETECTOR_SUFFIX = '.detector.ts';
+import acpxDetector from './acpx.detector.js';
+import cursorDetector from './cursor.detector.js';
+import rovodevDetector from './rovodev.detector.js';
 
 /**
  * Create a detector from a config entry.
@@ -62,27 +61,6 @@ function configToDetector(config: DetectorConfig): AgentDetector {
     },
   };
 }
-/**
- * Auto-discover file-based detectors by scanning the detectors directory.
- */
-async function loadFileBasedDetectors(): Promise<AgentDetector[]> {
-  const detectorsDir = path.dirname(fileURLToPath(import.meta.url));
-
-  const files = fsSync
-    .readdirSync(detectorsDir)
-    .filter((f) => f.endsWith(DETECTOR_SUFFIX) && f !== 'index.ts');
-
-  const detectors: AgentDetector[] = [];
-  for (const file of files) {
-    const filePath = path.join(detectorsDir, file);
-    const mod = await import(pathToFileURL(filePath).href);
-    const detector = mod.default as AgentDetector;
-    if (detector && typeof detector.detect === 'function') {
-      detectors.push(detector);
-    }
-  }
-  return detectors;
-}
 
 /**
  * Load all detectors: config-based + auto-discovered file-based.
@@ -95,8 +73,16 @@ export async function loadAllDetectors(): Promise<AgentDetector[]> {
     detectors.push(configToDetector(config));
   }
 
-  // File-based detectors (auto-discovered)
-  detectors.push(...(await loadFileBasedDetectors()));
+  // File-based detectors (statically imported)
+  if (acpxDetector && typeof acpxDetector.detect === 'function') {
+    detectors.push(acpxDetector);
+  }
+  if (cursorDetector && typeof cursorDetector.detect === 'function') {
+    detectors.push(cursorDetector);
+  }
+  if (rovodevDetector && typeof rovodevDetector.detect === 'function') {
+    detectors.push(rovodevDetector);
+  }
 
   return detectors;
 }

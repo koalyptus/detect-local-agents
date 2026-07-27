@@ -1,9 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { DetectedAgent } from '../../src/types.js';
+import acpxDetector from '../../src/detectors/acpx.detector.js';
 
-// Mock modules before importing the detector
-const mockWhich = vi.fn();
-const mockExecFileAsync = vi.fn();
+// vi.mock factories are hoisted to the top of the file, so they cannot
+// reference any top-level variables. Use vi.hoisted to create shared mocks.
+const { mockWhich, mockExecFileAsync } = vi.hoisted(() => ({
+  mockWhich: vi.fn(),
+  mockExecFileAsync: vi.fn(),
+}));
 
 vi.mock('../../src/detect.js', () => ({
   which: mockWhich,
@@ -18,18 +21,11 @@ vi.mock('node:util', () => ({
   promisify: () => mockExecFileAsync,
 }));
 
-// Import the detector after mocks are set up
-let acpxDetector: { name: string; detect: () => Promise<DetectedAgent | null> };
-
 describe('acpx detector', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
     mockWhich.mockResolvedValue('/usr/bin/acpx');
     mockExecFileAsync.mockResolvedValue({ stdout: '', stderr: '' });
-
-    // Import after mocks are set up
-    const module = await import('../../src/detectors/acpx.detector.js');
-    acpxDetector = module.default;
   });
 
   afterEach(() => {
