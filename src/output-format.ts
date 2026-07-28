@@ -33,7 +33,7 @@ function renderTable(agents: DetectedAgent[]): string {
     a.binary,
   ]);
 
-  const widths = headers.map((h, i) => Math.max(h.length, ...rows.map((r) => (r[i]!).length)));
+  const widths = headers.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i]!.length)));
 
   const lines: string[] = [
     buildRow(headers, widths),
