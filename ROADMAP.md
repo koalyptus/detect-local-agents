@@ -23,10 +23,10 @@
 
 ## Phase 3: CLI
 
-- [ ] Add `src/cli.ts` (yargs) with `detect`, `ls`, `info` commands
-- [ ] Add `bin` entry in `package.json` so `npx detect-local-agents` works
-- [ ] JSON + table output formats
-- [ ] Update README with CLI usage
+- [x] Add `src/cli.ts` (yargs) with `detect`, `ls`, `info` commands
+- [x] Add `bin` entry in `package.json` so `npx detect-local-agents` works
+- [x] JSON + table output formats
+- [x] Update README with CLI usage
 
 ## Phase 4: Advanced Features
 

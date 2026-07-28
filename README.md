@@ -66,7 +66,7 @@ After install, the package ships a `detect-local-agents` binary and a `dla` shor
 
 ```bash
 npx detect-local-agents
-npx dla            # same thing
+npx dla            # shorthand
 ```
 
 All subcommands work with both names:
@@ -141,20 +141,21 @@ export default detector;
 
 ## Supported Agents
 
+- Antigravity (`antigravity`) — replaces former Gemini
 - Claude Code (`claude`)
 - Codex (`codex`)
 - OpenCode (`opencode`)
 - Goose (`goose`)
 - Hermes (`hermes`)
+- Gemini (`gemini`) — legacy, replaced by Antigravity
 - Cursor (`cursor-agent`) — ACP
 - Rovo Dev (`acli rovodev`) — special probe
 - Copilot (`copilot`)
 - Pi (`pi`)
 - Aider (`aider`)
 - Cline (`cline`)
-- Gemini (`gemini`)
 - Amp (`amp`)
-- **Roo Code (`roo-code`)** — NEW
-- **Continue (`continue`)** — NEW
-- **Tabnine (`tabnine`)** — NEW
-- **acpx (`acpx`)** — NEW — ACP proxy with target listing
+- Roo Code (`roo-code`)
+- Continue (`continue`)
+- Tabnine (`tabnine`)
+- acpx (`acpx`) — ACP proxy with target listing

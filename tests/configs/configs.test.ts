@@ -19,4 +19,11 @@ describe('detectorConfigs', () => {
     expect(tabnineConfig).toBeDefined();
     expect(tabnineConfig?.binary).toBe('tabnine');
   });
+
+  it('includes antigravity config entry', () => {
+    const antigravityConfig = detectorConfigs.find((c) => c.name === 'antigravity');
+    expect(antigravityConfig).toBeDefined();
+    expect(antigravityConfig?.binary).toBe('antigravity');
+    expect(antigravityConfig?.configEnvVars).toContain('GOOGLE_API_KEY');
+  });
 });
