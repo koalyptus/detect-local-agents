@@ -62,7 +62,14 @@ const configured = agents.filter((a) => a.isConfigured);
 
 ## CLI
 
-After install, the package ships a `detect-local-agents` binary:
+After install, the package ships a `detect-local-agents` binary and a `dla` shorthand:
+
+```bash
+npx detect-local-agents
+npx dla            # same thing
+```
+
+All subcommands work with both names:
 
 ```bash
 # Default: print a table of detected agents (with configured status)

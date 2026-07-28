@@ -13,4 +13,8 @@ describe('package.json - bin wiring', () => {
     expect(pkg.bin).toBeDefined();
     expect(pkg.bin?.['detect-local-agents']).toBe('./bin/cli.cjs');
   });
+
+  it('declares dla alias pointing to the same bin', () => {
+    expect(pkg.bin?.['dla']).toBe('./bin/cli.cjs');
+  });
 });

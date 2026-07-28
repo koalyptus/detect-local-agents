@@ -6,7 +6,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "detect-local-agents": "./bin/cli.cjs"
+    "detect-local-agents": "./bin/cli.cjs",
+    "dla": "./bin/cli.cjs"
   },
   "exports": {
     ".": {
