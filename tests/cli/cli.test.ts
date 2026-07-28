@@ -105,6 +105,18 @@ describe('cli - detect command', () => {
     const { runCli } = await import('../../src/cli.js');
     await expect(runCli(['node', 'detect-local-agents'])).rejects.toThrow('exit:1');
   });
+
+  it('handles non-Error rejections via String() fallback in catch', async () => {
+    // Trigger the err instanceof Error ? err.message : String(err) else-branch
+    // by having the handler throw a plain string, not an Error object
+    mockDetectAgents.mockRejectedValue('something went wrong');
+
+    const { runCli } = await import('../../src/cli.js');
+    await expect(runCli(['node', 'detect-local-agents'])).rejects.toThrow('exit:1');
+
+    const err = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
+    expect(err).toContain('something went wrong');
+  });
 });
 
 describe('cli - info command', () => {

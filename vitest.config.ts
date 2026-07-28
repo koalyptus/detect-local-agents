@@ -11,7 +11,7 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: ['src/types.ts', 'src/config-paths.ts', 'src/detectors/index.ts'],
       thresholds: {
-        branches: 95,
+        branches: 100,
         functions: 100,
         lines: 100,
         statements: 100,
