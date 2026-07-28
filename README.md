@@ -19,6 +19,28 @@ The package answers: **"Which providers does this user already have configured?"
 npm install detect-local-agents
 ```
 
+Then use as a library (see below) or via CLI:
+
+```bash
+npx detect-local-agents
+```
+
+### Local development
+
+Clone the repo and install:
+
+```bash
+git clone https://github.com/your-org/detect-local-agents.git
+cd detect-local-agents
+npm install
+```
+
+That's it. The CLI works immediately from the project directory:
+
+```bash
+npx detect-local-agents
+```
+
 ## Usage
 
 ```typescript
