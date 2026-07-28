@@ -23,7 +23,7 @@ describe('detectorConfigs', () => {
   it('includes antigravity config entry', () => {
     const antigravityConfig = detectorConfigs.find((c) => c.name === 'antigravity');
     expect(antigravityConfig).toBeDefined();
-    expect(antigravityConfig?.binary).toBe('antigravity');
+    expect(antigravityConfig?.binary).toBe('agy');
     expect(antigravityConfig?.configEnvVars).toContain('GOOGLE_API_KEY');
   });
 });

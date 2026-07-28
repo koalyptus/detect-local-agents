@@ -59,9 +59,8 @@ export const detectorConfigs: DetectorConfig[] = [
   },
   {
     name: 'antigravity',
-    binary: 'antigravity',
+    binary: 'agy',
     configEnvVars: ['GOOGLE_API_KEY', 'ANTIGRAVITY_API_KEY'],
-    configDir: '~/.antigravity',
   },
   {
     name: 'amp',

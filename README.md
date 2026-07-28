@@ -141,7 +141,7 @@ export default detector;
 
 ## Supported Agents
 
-- Antigravity (`antigravity`) — replaces former Gemini
+- Antigravity (`agy`) — replaces former Gemini
 - Claude Code (`claude`)
 - Codex (`codex`)
 - OpenCode (`opencode`)
