@@ -10,7 +10,10 @@ function padRight(s: string, width: number): string {
 }
 
 function buildRow(cols: string[], widths: number[]): string {
-  return cols.map((c, i) => padRight(c, widths[i] ?? 0)).join(' '.repeat(PAD)).trimEnd();
+  return cols
+    .map((c, i) => padRight(c, widths[i] ?? 0))
+    .join(' '.repeat(PAD))
+    .trimEnd();
 }
 
 function buildSeparator(widths: number[]): string {
@@ -30,9 +33,7 @@ function renderTable(agents: DetectedAgent[]): string {
     a.binary,
   ]);
 
-  const widths = headers.map((h, i) =>
-    Math.max(h.length, ...rows.map((r) => (r[i] ?? '').length)),
-  );
+  const widths = headers.map((h, i) => Math.max(h.length, ...rows.map((r) => (r[i] ?? '').length)));
 
   const lines: string[] = [
     buildRow(headers, widths),

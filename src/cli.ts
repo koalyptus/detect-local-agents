@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
 import { detectAgents } from './index.js';
 import { formatAgents, type OutputFormat } from './output-format.js';
 import type { DetectedAgent } from './types.js';
@@ -67,7 +66,11 @@ export async function runCli(argv: string[]): Promise<CliResult> {
       'info <name>',
       'Show details for a single agent by name',
       (y) =>
-        y.positional('name', { type: 'string', demandOption: true, describe: 'Agent name (e.g. claude)' }),
+        y.positional('name', {
+          type: 'string',
+          demandOption: true,
+          describe: 'Agent name (e.g. claude)',
+        }),
       async (args) => {
         const agents = await detectAgents();
         const agent = agents.find((a) => a.name === args.name);
@@ -104,7 +107,7 @@ const invokedDirectly =
   (process.argv[1].endsWith('cli.js') || process.argv[1].endsWith('cli.ts'));
 
 if (invokedDirectly) {
-  void runCli(hideBin(process.argv)).then((r) => {
+  void runCli(process.argv).then((r) => {
     process.exit(r.exitCode);
   });
 }

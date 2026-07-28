@@ -6,13 +6,12 @@ describe('cli - detect command', () => {
   let mockDetectAgents: ReturnType<typeof vi.spyOn>;
   let stdoutSpy: ReturnType<typeof vi.spyOn>;
   let stderrSpy: ReturnType<typeof vi.spyOn>;
-  let exitSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     mockDetectAgents = vi.spyOn(indexModule, 'detectAgents');
     stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
-    exitSpy = vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+    vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
       throw new Error(`exit:${code}`);
     }) as never);
   });
