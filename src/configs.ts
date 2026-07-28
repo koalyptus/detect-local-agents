@@ -67,6 +67,11 @@ export const detectorConfigs: DetectorConfig[] = [
     binary: 'ollama',
   },
   {
+    name: 'grok',
+    binary: 'grok',
+    configEnvVars: ['GROK_API_KEY'],
+  },
+  {
     name: 'amp',
     binary: 'amp',
   },

@@ -148,6 +148,7 @@ export default detector;
 - Goose (`goose`)
 - Hermes (`hermes`)
 - Ollama (`ollama`)
+- Grok (`grok`)
 - Gemini (`gemini`) — legacy, replaced by Antigravity
 - Cursor (`cursor-agent`) — ACP
 - Rovo Dev (`acli rovodev`) — special probe

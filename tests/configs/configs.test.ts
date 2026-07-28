@@ -32,4 +32,11 @@ describe('detectorConfigs', () => {
     expect(ollamaConfig).toBeDefined();
     expect(ollamaConfig?.binary).toBe('ollama');
   });
+
+  it('includes grok config entry', () => {
+    const grokConfig = detectorConfigs.find((c) => c.name === 'grok');
+    expect(grokConfig).toBeDefined();
+    expect(grokConfig?.binary).toBe('grok');
+    expect(grokConfig?.configEnvVars).toContain('GROK_API_KEY');
+  });
 });
