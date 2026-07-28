@@ -63,6 +63,10 @@ export const detectorConfigs: DetectorConfig[] = [
     configEnvVars: ['GOOGLE_API_KEY', 'ANTIGRAVITY_API_KEY'],
   },
   {
+    name: 'ollama',
+    binary: 'ollama',
+  },
+  {
     name: 'amp',
     binary: 'amp',
   },

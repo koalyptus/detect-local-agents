@@ -26,4 +26,10 @@ describe('detectorConfigs', () => {
     expect(antigravityConfig?.binary).toBe('agy');
     expect(antigravityConfig?.configEnvVars).toContain('GOOGLE_API_KEY');
   });
+
+  it('includes ollama config entry', () => {
+    const ollamaConfig = detectorConfigs.find((c) => c.name === 'ollama');
+    expect(ollamaConfig).toBeDefined();
+    expect(ollamaConfig?.binary).toBe('ollama');
+  });
 });
