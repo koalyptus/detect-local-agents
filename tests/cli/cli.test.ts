@@ -1,7 +1,6 @@
 // tests/cli/cli.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as indexModule from '../../src/index.js';
-
 describe('cli - detect command', () => {
   let mockDetectAgents: ReturnType<typeof vi.spyOn>;
   let stdoutSpy: ReturnType<typeof vi.spyOn>;
@@ -71,6 +70,41 @@ describe('cli - detect command', () => {
     const err = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
     expect(err).toContain('boom');
   });
+
+  it('handles ls command like default detect', async () => {
+    mockDetectAgents.mockResolvedValue([
+      { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
+    ]);
+
+    const { runCli } = await import('../../src/cli.js');
+    await runCli(['node', 'detect-local-agents', 'ls']);
+
+    const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
+    expect(out).toContain('NAME');
+    expect(out).toContain('claude');
+  });
+
+  it('handles ls --json output', async () => {
+    mockDetectAgents.mockResolvedValue([
+      { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
+    ]);
+
+    const { runCli } = await import('../../src/cli.js');
+    await runCli(['node', 'detect-local-agents', 'ls', '--json']);
+
+    const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
+    const parsed = JSON.parse(out);
+    expect(parsed[0].name).toBe('claude');
+  });
+
+  it('re-throws exit errors from catch block', async () => {
+    // Trigger the catch block's "if message starts with exit:" branch
+    // by making the fail handler throw an exit:1 error
+    mockDetectAgents.mockRejectedValue(new Error('exit:1'));
+
+    const { runCli } = await import('../../src/cli.js');
+    await expect(runCli(['node', 'detect-local-agents'])).rejects.toThrow('exit:1');
+  });
 });
 
 describe('cli - info command', () => {
@@ -114,5 +148,52 @@ describe('cli - info command', () => {
     // No stderr output for missing agent — no agent found is not an error
     const err = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
     expect(err).toBe('');
+  });
+});
+
+describe('cli - auto-run guard', () => {
+  it('detects direct invocation from cli.js', async () => {
+    const { isInvokedDirectly } = await import('../../src/cli.js');
+    expect(isInvokedDirectly(['node', '/path/to/cli.js'])).toBe(true);
+  });
+
+  it('detects direct invocation from cli.ts', async () => {
+    const { isInvokedDirectly } = await import('../../src/cli.js');
+    expect(isInvokedDirectly(['tsx', '/path/to/cli.ts'])).toBe(true);
+  });
+
+  it('returns false when imported as module', async () => {
+    const { isInvokedDirectly } = await import('../../src/cli.js');
+    expect(isInvokedDirectly(['node', '/path/to/vitest.js'])).toBe(false);
+  });
+
+  it('returns false when argv is empty', async () => {
+    const { isInvokedDirectly } = await import('../../src/cli.js');
+    expect(isInvokedDirectly([])).toBe(false);
+  });
+
+  it('autoRun calls process.exit when invoked directly', async () => {
+    const origArgv = process.argv;
+    process.argv = ['node', '/path/to/cli.js'];
+    vi.restoreAllMocks();
+
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {
+      throw new Error('exit:0');
+    }) as never);
+
+    const { autoRun } = await import('../../src/cli.js');
+    await expect(autoRun()).rejects.toThrow('exit:0');
+
+    expect(exitSpy).toHaveBeenCalledWith(0);
+    process.argv = origArgv;
+  });
+
+  it('autoRun skips process.exit when not invoked directly', async () => {
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => 1) as never);
+
+    const { autoRun } = await import('../../src/cli.js');
+    autoRun();
+
+    expect(exitSpy).not.toHaveBeenCalled();
   });
 });

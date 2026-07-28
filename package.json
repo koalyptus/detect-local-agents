@@ -6,7 +6,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "detect-local-agents": "./dist/cli.js"
+    "detect-local-agents": "./bin/cli.cjs"
   },
   "exports": {
     ".": {
@@ -15,7 +15,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
   "scripts": {
     "build": "tsc",
@@ -24,6 +25,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "cli": "node dist/cli.js",
     "test": "vitest run --coverage",
     "test:watch": "vitest"
   },
@@ -45,6 +47,7 @@
     "@types/node": "^22.10.0",
     "@types/yargs": "^17.0.35",
     "@vitest/coverage-v8": "^2.1.8",
+    "detect-local-agents": "file:",
     "eslint": "^9.15.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.4.1",

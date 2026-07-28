@@ -9,8 +9,8 @@ describe('package.json - bin wiring', () => {
     bin?: Record<string, string>;
   };
 
-  it('declares detect-local-agents bin pointing to dist/cli.js', () => {
+  it('declares detect-local-agents bin pointing to bin/cli.cjs', () => {
     expect(pkg.bin).toBeDefined();
-    expect(pkg.bin?.['detect-local-agents']).toBe('./dist/cli.js');
+    expect(pkg.bin?.['detect-local-agents']).toBe('./bin/cli.cjs');
   });
 });

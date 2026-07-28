@@ -102,12 +102,17 @@ export async function runCli(argv: string[]): Promise<CliResult> {
 }
 
 // Only auto-run when invoked directly (not when imported by tests).
-const invokedDirectly =
-  process.argv[1] !== undefined &&
-  (process.argv[1].endsWith('cli.js') || process.argv[1].endsWith('cli.ts'));
-
-if (invokedDirectly) {
-  void runCli(process.argv).then((r) => {
-    process.exit(r.exitCode);
-  });
+export function isInvokedDirectly(argv: string[]): boolean {
+  const script = argv[1];
+  return script !== undefined && (script.endsWith('cli.js') || script.endsWith('cli.ts'));
 }
+
+export function autoRun(): Promise<void> | void {
+  if (isInvokedDirectly(process.argv)) {
+    return runCli(process.argv).then((r) => {
+      process.exit(r.exitCode);
+    });
+  }
+}
+
+void autoRun();
