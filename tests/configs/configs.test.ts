@@ -19,4 +19,24 @@ describe('detectorConfigs', () => {
     expect(tabnineConfig).toBeDefined();
     expect(tabnineConfig?.binary).toBe('tabnine');
   });
+
+  it('includes antigravity config entry', () => {
+    const antigravityConfig = detectorConfigs.find((c) => c.name === 'antigravity');
+    expect(antigravityConfig).toBeDefined();
+    expect(antigravityConfig?.binary).toBe('agy');
+    expect(antigravityConfig?.configEnvVars).toContain('GOOGLE_API_KEY');
+  });
+
+  it('includes ollama config entry', () => {
+    const ollamaConfig = detectorConfigs.find((c) => c.name === 'ollama');
+    expect(ollamaConfig).toBeDefined();
+    expect(ollamaConfig?.binary).toBe('ollama');
+  });
+
+  it('includes grok config entry', () => {
+    const grokConfig = detectorConfigs.find((c) => c.name === 'grok');
+    expect(grokConfig).toBeDefined();
+    expect(grokConfig?.binary).toBe('grok');
+    expect(grokConfig?.configEnvVars).toContain('GROK_API_KEY');
+  });
 });

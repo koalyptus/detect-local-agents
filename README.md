@@ -19,6 +19,28 @@ The package answers: **"Which providers does this user already have configured?"
 npm install detect-local-agents
 ```
 
+Then use as a library (see below) or via CLI:
+
+```bash
+npx detect-local-agents
+```
+
+### Local development
+
+Clone the repo and install:
+
+```bash
+git clone https://github.com/your-org/detect-local-agents.git
+cd detect-local-agents
+npm install
+```
+
+That's it. The CLI works immediately from the project directory:
+
+```bash
+npx detect-local-agents
+```
+
 ## Usage
 
 ```typescript
@@ -37,6 +59,42 @@ if (agents.length > 0) {
 // Check which providers are configured
 const configured = agents.filter((a) => a.isConfigured);
 ```
+
+## CLI
+
+After install, the package ships a `detect-local-agents` binary and a `dla` shorthand:
+
+```bash
+npx detect-local-agents
+npx dla            # shorthand
+```
+
+All subcommands work with both names:
+
+```bash
+# Default: print a table of detected agents (with configured status)
+npx detect-local-agents
+
+# JSON output
+npx detect-local-agents --json
+
+# Only show agents with auth/configured
+npx detect-local-agents --configured
+
+# Same as default
+npx detect-local-agents ls
+
+# Single-agent details (prints null if not found, exit 0)
+npx detect-local-agents info claude
+
+# Help
+npx detect-local-agents --help
+```
+
+Exit codes:
+
+- `0` — always (a clean run with or without agents is not an error)
+- `1` — detection failed or args were invalid
 
 ## DetectedAgent
 
@@ -83,20 +141,23 @@ export default detector;
 
 ## Supported Agents
 
+- Antigravity (`agy`) — replaces former Gemini
 - Claude Code (`claude`)
 - Codex (`codex`)
 - OpenCode (`opencode`)
 - Goose (`goose`)
 - Hermes (`hermes`)
+- Ollama (`ollama`)
+- Grok (`grok`)
+- Gemini (`gemini`) — legacy, replaced by Antigravity
 - Cursor (`cursor-agent`) — ACP
 - Rovo Dev (`acli rovodev`) — special probe
 - Copilot (`copilot`)
 - Pi (`pi`)
 - Aider (`aider`)
 - Cline (`cline`)
-- Gemini (`gemini`)
 - Amp (`amp`)
-- **Roo Code (`roo-code`)** — NEW
-- **Continue (`continue`)** — NEW
-- **Tabnine (`tabnine`)** — NEW
-- **acpx (`acpx`)** — NEW — ACP proxy with target listing
+- Roo Code (`roo-code`)
+- Continue (`continue`)
+- Tabnine (`tabnine`)
+- acpx (`acpx`) — ACP proxy with target listing
