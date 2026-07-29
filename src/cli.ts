@@ -20,6 +20,26 @@ function filterAgents(agents: DetectedAgent[], opts: { configuredOnly: boolean }
   return opts.configuredOnly ? agents.filter((a) => a.isConfigured) : agents;
 }
 
+/**
+ * Typed exit sentinel — replaces opaque Error('exit:N') strings so tests
+ * can distinguish exit-as-flow-control from genuine errors.
+ */
+export const enum CliExitSentinel {
+  SUCCESS = 'exit:0',
+  ERROR = 'exit:1',
+}
+
+/**
+ * Shared handler extracted to eliminate near-duplicate code between $0 and ls.
+ */
+async function sharedHandler(args: { json?: boolean; configured?: boolean }): Promise<void> {
+  const agents = await detectAgents();
+  const filtered = filterAgents(agents, { configuredOnly: Boolean(args.configured) });
+  const format: OutputFormat = args.json ? 'json' : 'table';
+  writeStdout(formatAgents(filtered, format));
+  writeStdout('\n');
+}
+
 export async function runCli(argv: string[]): Promise<CliResult> {
   const parser = yargs(argv.slice(2))
     .scriptName('detect-local-agents')
@@ -29,23 +49,9 @@ export async function runCli(argv: string[]): Promise<CliResult> {
       'Detect locally installed AI agents (default)',
       (y) =>
         y
-          .option('json', {
-            type: 'boolean',
-            default: false,
-            description: 'Output as JSON instead of a table',
-          })
-          .option('configured', {
-            type: 'boolean',
-            default: false,
-            description: 'Only show agents with auth/configured',
-          }),
-      async (args) => {
-        const agents = await detectAgents();
-        const filtered = filterAgents(agents, { configuredOnly: Boolean(args.configured) });
-        const format: OutputFormat = args.json ? 'json' : 'table';
-        writeStdout(formatAgents(filtered, format));
-        writeStdout('\n');
-      },
+          .option('json', { type: 'boolean', default: false, description: 'Output as JSON instead of a table' })
+          .option('configured', { type: 'boolean', default: false, description: 'Only show agents with auth/configured' }),
+      (args) => sharedHandler(args),
     )
     .command(
       'ls',
@@ -54,28 +60,27 @@ export async function runCli(argv: string[]): Promise<CliResult> {
         y
           .option('json', { type: 'boolean', default: false })
           .option('configured', { type: 'boolean', default: false }),
-      async (args) => {
-        const agents = await detectAgents();
-        const filtered = filterAgents(agents, { configuredOnly: Boolean(args.configured) });
-        const format: OutputFormat = args.json ? 'json' : 'table';
-        writeStdout(formatAgents(filtered, format));
-        writeStdout('\n');
-      },
+      (args) => sharedHandler(args),
     )
     .command(
       'info <name>',
       'Show details for a single agent by name',
       (y) =>
-        y.positional('name', {
-          type: 'string',
-          demandOption: true,
-          describe: 'Agent name (e.g. claude)',
-        }),
+        y
+          .positional('name', {
+            type: 'string',
+            demandOption: true,
+            describe: 'Agent name (e.g. claude)',
+          })
+          .option('json', { type: 'boolean', default: false, description: 'Output in JSON format instead of table' }),
       async (args) => {
         const agents = await detectAgents();
         const agent = agents.find((a) => a.name === args.name);
-        // No agent found is not an error — print null to stdout and exit 0
-        writeStdout(agent ? JSON.stringify(agent, null, 2) : 'null');
+        if (args.json) {
+          writeStdout(agent ? JSON.stringify(agent, null, 2) : 'null');
+        } else {
+          writeStdout(agent ? formatAgents([agent], 'table') : 'Agents not found.');
+        }
         writeStdout('\n');
       },
     )
@@ -85,7 +90,7 @@ export async function runCli(argv: string[]): Promise<CliResult> {
     .strict()
     .fail((msg) => {
       writeStderr(`error: ${msg}\n`);
-      process.exit(1);
+      throw new Error(CliExitSentinel.ERROR);
     });
 
   try {
@@ -93,11 +98,11 @@ export async function runCli(argv: string[]): Promise<CliResult> {
     return { exitCode: 0 };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (message.startsWith('exit:')) {
+    if (message === CliExitSentinel.ERROR || message === CliExitSentinel.SUCCESS) {
       throw err;
     }
     writeStderr(`error: ${message}\n`);
-    throw new Error('exit:1');
+    throw new Error(CliExitSentinel.ERROR);
   }
 }
 

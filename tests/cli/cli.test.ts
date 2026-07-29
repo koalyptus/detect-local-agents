@@ -134,20 +134,35 @@ describe('cli - info command', () => {
     vi.restoreAllMocks();
   });
 
-  it('prints single agent as JSON', async () => {
+  it('prints single agent as JSON with --json flag', async () => {
     mockDetectAgents.mockResolvedValue([
       { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
     ]);
 
     const { runCli } = await import('../../src/cli.js');
-    await runCli(['node', 'detect-local-agents', 'info', 'claude']);
+    await runCli(['node', 'detect-local-agents', 'info', 'claude', '--json']);
 
     const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
     const parsed = JSON.parse(out);
     expect(parsed.name).toBe('claude');
   });
 
-  it('prints null to stdout and exits 0 when agent not found', async () => {
+  it('prints null JSON when agent not found with --json', async () => {
+    mockDetectAgents.mockResolvedValue([
+      { name: 'claude', binary: '/usr/bin/claude', isConfigured: true },
+    ]);
+
+    const { runCli } = await import('../../src/cli.js');
+    await runCli(['node', 'detect-local-agents', 'info', 'nonexistent', '--json']);
+
+    const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
+    expect(out).toBe('null\n');
+    // No stderr output for missing agent with --json — no agent found is not an error
+    const err = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
+    expect(err).toBe('');
+  });
+
+  it('prints user-friendly message when agent not found without --json', async () => {
     mockDetectAgents.mockResolvedValue([
       { name: 'claude', binary: '/usr/bin/claude', isConfigured: true },
     ]);
@@ -156,10 +171,24 @@ describe('cli - info command', () => {
     await runCli(['node', 'detect-local-agents', 'info', 'nonexistent']);
 
     const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
-    expect(out).toBe('null\n');
+    expect(out).toBe('Agents not found.\n');
     // No stderr output for missing agent — no agent found is not an error
     const err = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
     expect(err).toBe('');
+  });
+
+  it('prints table for single agent without --json', async () => {
+    mockDetectAgents.mockResolvedValue([
+      { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
+    ]);
+
+    const { runCli } = await import('../../src/cli.js');
+    await runCli(['node', 'detect-local-agents', 'info', 'claude']);
+
+    const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
+    expect(out).toContain('NAME');
+    expect(out).toContain('claude');
+    expect(out).toContain('1.0.0');
   });
 });
 
