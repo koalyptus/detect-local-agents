@@ -49,8 +49,16 @@ export async function runCli(argv: string[]): Promise<CliResult> {
       'Detect locally installed AI agents (default)',
       (y) =>
         y
-          .option('json', { type: 'boolean', default: false, description: 'Output as JSON instead of a table' })
-          .option('configured', { type: 'boolean', default: false, description: 'Only show agents with auth/configured' }),
+          .option('json', {
+            type: 'boolean',
+            default: false,
+            description: 'Output as JSON instead of a table',
+          })
+          .option('configured', {
+            type: 'boolean',
+            default: false,
+            description: 'Only show agents with auth/configured',
+          }),
       (args) => sharedHandler(args),
     )
     .command(
@@ -72,7 +80,11 @@ export async function runCli(argv: string[]): Promise<CliResult> {
             demandOption: true,
             describe: 'Agent name (e.g. claude)',
           })
-          .option('json', { type: 'boolean', default: false, description: 'Output in JSON format instead of table' }),
+          .option('json', {
+            type: 'boolean',
+            default: false,
+            description: 'Output in JSON format instead of table',
+          }),
       async (args) => {
         const agents = await detectAgents();
         const agent = agents.find((a) => a.name === args.name);
