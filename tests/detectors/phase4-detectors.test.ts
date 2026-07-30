@@ -151,6 +151,7 @@ describe('windsurf detector (Phase 4)', () => {
   it('finds windsurf through common Linux install paths', async () => {
     vi.clearAllMocks();
     mockWhich.mockResolvedValue(null);
+    mockPlatform.mockReturnValue(process.platform);
 
     const mockAccessCalls: string[] = [];
     mockFsAccess.mockImplementation(async (path: unknown) => {
