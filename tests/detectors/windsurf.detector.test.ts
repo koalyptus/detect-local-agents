@@ -106,14 +106,12 @@ describe('windsurf detector', () => {
 
   it('detects as configured when .windsurf directory exists', async () => {
     mockWhich.mockResolvedValue('/usr/bin/windsurf');
-    mockFsAccess
-      .mockResolvedValueOnce(undefined)
-      .mockImplementation(async (p: PathLike) => {
-        if ((p as string).includes('.windsurf')) {
-          return;
-        }
-        throw new Error('not found');
-      });
+    mockFsAccess.mockResolvedValueOnce(undefined).mockImplementation(async (p: PathLike) => {
+      if ((p as string).includes('.windsurf')) {
+        return;
+      }
+      throw new Error('not found');
+    });
 
     const result = await windsurfDetector.detect();
     expect(result?.isConfigured).toBe(true);
@@ -122,9 +120,7 @@ describe('windsurf detector', () => {
   it('covers macOS common install paths and fs.access loop', async () => {
     mockWhich.mockResolvedValue(null);
     mockPlatform.mockReturnValue('darwin');
-    mockFsAccess
-      .mockResolvedValueOnce(undefined)
-      .mockRejectedValue(new Error('not found'));
+    mockFsAccess.mockResolvedValueOnce(undefined).mockRejectedValue(new Error('not found'));
 
     const result = await windsurfDetector.detect();
     expect(result?.name).toBe('windsurf');
