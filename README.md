@@ -139,46 +139,44 @@ const detector: AgentDetector = {
 export default detector;
 ```
 
-## Supported Agents
+## Supported Agents (34 total)
 
-- Antigravity (`agy`) — replaces former Gemini
+### Simple config entries (25)
+
 - Claude Code (`claude`)
 - Codex (`codex`)
 - OpenCode (`opencode`)
 - Goose (`goose`)
 - Hermes (`hermes`)
-- Ollama (`ollama`)
-- Grok (`grok`)
-- Gemini (`gemini`) — legacy, replaced by Antigravity
-- Cursor (`cursor-agent`) — ACP
-- Rovo Dev (`acli rovodev`) — special probe
 - Copilot (`copilot`)
 - Pi (`pi`)
-- Aider (`aider`) — with enriched config/version detection
+- Aider (`aider`)
 - Cline (`cline`)
+- Ollama (`ollama`)
+- Grok (`grok`)
 - Amp (`amp`)
 - Roo Code (`roo-code`)
 - Continue (`continue`)
 - Tabnine (`tabnine`)
-- acpx (`acpx`) — ACP proxy with target listing
-- Devin (`devin`)
 - Kimi Code CLI (`kimi`)
 - Kiro (`kiro`)
 - MiMoCode (`mimocode`)
-- OpenClacky (`openclacky`)
 - OpenHands (`openhands`)
-- Open SWE (`open-swe`)
-- Proliferate (`proliferate`)
 - Qwen Code (`qwen`)
 - CoPaw (`copaw`)
-- Mercury Agent (`mercury`)
+- Mercury (`mercury`)
 - nanobot (`nanobot`)
-- OpenHuman (`openhuman`)
 - OpenClaw (`openclaw`)
 - QwenPaw (`qwenpaw`)
-- Trustclaw (`trustclaw`)
-- Orca (`orca`) ⚡ — file-based detector
-- Windsurf (`windsurf`/`codeium`) ⚡ — file-based detector
-- SWE-agent ⚡ — pip detection
+
+### File-based detectors (9)
+
+- Antigravity (`agy` or `gemini`) ⚡ — checks agy first, falls back to gemini
+- Cursor (`cursor-agent`) ⚡ — ACP
+- Rovo Dev (`acli rovodev`) ⚡ — special probe
+- acpx ⚡ — ACP proxy with target listing
+- Orca (`orca`) ⚡
+- Windsurf (`windsurf`/`codeium`) ⚡
+- SWE-agent ⚡ — pip/binary detection
 - mini-coding-agent ⚡ — pip detection
 - OpenHands SDK ⚡ — pip detection

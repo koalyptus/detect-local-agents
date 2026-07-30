@@ -14,6 +14,7 @@ import windsurfDetector from './windsurf.detector.js';
 import sweAgentDetector from './swe-agent.detector.js';
 import miniCodingAgentDetector from './mini-coding-agent.detector.js';
 import openhandsSdkDetector from './openhands-sdk.detector.js';
+import geminiDetector from './gemini.detector.js';
 
 /**
  * Create a detector from a config entry.
@@ -102,6 +103,9 @@ export async function loadAllDetectors(): Promise<AgentDetector[]> {
   }
   if (openhandsSdkDetector && typeof openhandsSdkDetector.detect === 'function') {
     detectors.push(openhandsSdkDetector);
+  }
+  if (geminiDetector && typeof geminiDetector.detect === 'function') {
+    detectors.push(geminiDetector);
   }
 
   return detectors;

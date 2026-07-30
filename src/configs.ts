@@ -54,17 +54,6 @@ export const detectorConfigs: DetectorConfig[] = [
     binary: 'cline',
   },
   {
-    name: 'gemini',
-    binary: 'gemini',
-    configEnvVars: ['GOOGLE_API_KEY'],
-    configDir: '~/.gemini',
-  },
-  {
-    name: 'antigravity',
-    binary: 'agy',
-    configEnvVars: ['GOOGLE_API_KEY', 'ANTIGRAVITY_API_KEY'],
-  },
-  {
     name: 'ollama',
     binary: 'ollama',
   },
@@ -89,13 +78,7 @@ export const detectorConfigs: DetectorConfig[] = [
     name: 'tabnine',
     binary: 'tabnine',
   },
-  // ── Phase 4: New agents ──────────────────────────────────────
-  // Coding agents — terminal / desktop
-  {
-    name: 'devin',
-    binary: 'devin',
-    // Cloud/web-based — may not have a local binary; included for completeness.
-  },
+  // ── Phase 4 ──────────────────────────────────────────────────────
   {
     name: 'kimi-code',
     binary: 'kimi',
@@ -105,16 +88,12 @@ export const detectorConfigs: DetectorConfig[] = [
   {
     name: 'kiro',
     binary: 'kiro',
-    // ⚠️ needs doc verification: binary name, config paths
+    configDir: '~/.kiro',
   },
   {
     name: 'mimocode',
     binary: 'mimocode',
-    // ⚠️ Fork of OpenCode — binary name may differ
-  },
-  {
-    name: 'openclacky',
-    binary: 'openclacky',
+    configDir: '~/.config/mimocode',
   },
   {
     name: 'openhands',
@@ -123,45 +102,14 @@ export const detectorConfigs: DetectorConfig[] = [
     configEnvVars: ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY'],
   },
   {
-    name: 'open-swe',
-    binary: 'open-swe',
-    // ⚠️ needs doc verification: binary may differ
-  },
-  {
-    name: 'proliferate',
-    binary: 'proliferate',
-    // ⚠️ needs doc verification
-  },
-  {
-    name: 'qwen-code',
-    binary: 'qwen',
-    configEnvVars: ['DASHSCOPE_API_KEY'],
-  },
-  // Personal AI agents
-  {
     name: 'copaw',
     binary: 'copaw',
     configDir: '~/.copaw',
   },
   {
-    name: 'mercury',
-    binary: 'mercury',
-    configDir: '~/.mercury',
-  },
-  {
     name: 'nanobot',
     binary: 'nanobot',
     configDir: '~/.nanobot',
-  },
-  {
-    name: 'openhuman',
-    binary: 'openhuman',
-    configDir: '~/.openhuman',
-  },
-  {
-    name: 'openclaw',
-    binary: 'openclaw',
-    configDir: '~/.openclaw',
   },
   {
     name: 'qwenpaw',
@@ -170,8 +118,18 @@ export const detectorConfigs: DetectorConfig[] = [
     configDir: '~/.qwenpaw',
   },
   {
-    name: 'trustclaw',
-    binary: 'trustclaw',
-    configDir: '~/.trustclaw',
+    name: 'openclaw',
+    binary: 'openclaw',
+    configDir: '~/.openclaw',
+  },
+  {
+    name: 'qwen-code',
+    binary: 'qwen',
+    configEnvVars: ['DASHSCOPE_API_KEY'],
+  },
+  {
+    name: 'mercury',
+    binary: 'mercury',
+    configDir: '~/.mercury',
   },
 ];

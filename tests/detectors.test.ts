@@ -328,10 +328,10 @@ describe('loadAllDetectors counts', () => {
     vi.clearAllMocks();
   });
 
-  it('returns at least 35 detectors', async () => {
+  it('returns at least 34 detectors', async () => {
     const detectors = await loadAllDetectors();
-    // 19 existing config entries + 16 phase 4 config entries + 8 file-based detectors
-    expect(detectors.length).toBeGreaterThanOrEqual(35);
+    // 15 original + 10 Phase 4 config entries + 9 file-based detectors
+    expect(detectors.length).toBeGreaterThanOrEqual(34);
   });
 });
 

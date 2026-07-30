@@ -37,9 +37,9 @@
 - [x] File-based detectors for IDE agents (Orca, Windsurf)
 - [x] Enriched Aider detection (config dir, AIDER_ env vars, version)
 - [x] Pip detection utility
-- [ ] Add regression tests for new detectors
-- [ ] Documentation update
-- [ ] PR
+- [x] Add regression tests for new detectors
+- [x] Documentation update
+- [x] PR
 
 ## Phase 5: Bug Fixes, Polish & Productionize
 

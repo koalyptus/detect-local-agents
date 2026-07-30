@@ -7,16 +7,25 @@ vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
 }));
 
+// Mock fs/promises so we can control access() for npm prefix fallback tests
+vi.mock('node:fs/promises', () => ({
+  access: vi.fn(),
+}));
+
 import { which, getVersion } from '../../src/detect.js';
 import { execFile } from 'node:child_process';
+import { access } from 'node:fs/promises';
+import { join } from 'node:path';
 
 const mockExecFile = vi.mocked(execFile);
+const mockAccess = vi.mocked(access);
 
 const mockChildProcess = {} as ChildProcess;
 
 describe('which', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.npm_config_prefix;
   });
 
   it('finds node binary', async () => {
@@ -99,6 +108,58 @@ describe('which', () => {
     );
 
     Object.defineProperty(process, 'platform', { value: originalPlatform });
+  });
+
+  describe('npm global prefix fallback', () => {
+    beforeEach(() => {
+      // Make which/where command fail so we fall through to npm prefix
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(new Error('not found'), { stdout: '', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+    });
+
+    it('uses npm_config_prefix env var and finds binary', async () => {
+      process.env.npm_config_prefix = '/test/prefix';
+      mockAccess.mockResolvedValue(undefined);
+
+      const path = await which('my-agent');
+      // On win32 npm bin dir is prefix itself; on Linux it's prefix/bin
+      const expected =
+        process.platform === 'win32'
+          ? join('/test/prefix', 'my-agent')
+          : join('/test/prefix', 'bin', 'my-agent');
+      expect(path).toBe(expected);
+    });
+
+    it('returns null when binary not in npm prefix dir', async () => {
+      process.env.npm_config_prefix = '/test/prefix';
+      mockAccess.mockRejectedValue(new Error('ENOENT'));
+
+      const path = await which('missing-agent');
+      expect(path).toBeNull();
+    });
+
+    it('returns null when npm_config_prefix is not set and npm config fails', async () => {
+      // execFile already mocked to fail — npm config get prefix will also fail
+      const path = await which('some-agent');
+      expect(path).toBeNull();
+    });
+
+    it('uses prefix/bin on posix platforms', async () => {
+      const origPlatform = process.platform;
+      Object.defineProperty(process, 'platform', { value: 'linux' });
+
+      process.env.npm_config_prefix = '/test/prefix';
+      mockAccess.mockResolvedValue(undefined);
+
+      const path = await which('my-agent');
+      expect(path).toBe(join('/test/prefix', 'bin', 'my-agent'));
+
+      Object.defineProperty(process, 'platform', { value: origPlatform });
+    });
   });
 });
 

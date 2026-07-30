@@ -144,3 +144,6 @@ vite.config.ts.timestamp-*
 
 # Lavish artifacts
 .lavish/
+
+# Local AI artifacts
+RESEARCHED_AGENTS.md
