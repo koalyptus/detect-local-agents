@@ -45,7 +45,9 @@ export const detectorConfigs: DetectorConfig[] = [
   {
     name: 'aider',
     binary: 'aider',
-    configEnvVars: ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY'],
+    configEnvVars: ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'AIDER_ANTHROPIC_API_KEY'],
+    configDir: '~/.aider',
+    versionArgs: ['--version'],
   },
   {
     name: 'cline',
@@ -86,5 +88,90 @@ export const detectorConfigs: DetectorConfig[] = [
   {
     name: 'tabnine',
     binary: 'tabnine',
+  },
+  // ── Phase 4: New agents ──────────────────────────────────────
+  // Coding agents — terminal / desktop
+  {
+    name: 'devin',
+    binary: 'devin',
+    // Cloud/web-based — may not have a local binary; included for completeness.
+  },
+  {
+    name: 'kimi-code',
+    binary: 'kimi',
+    configDir: '~/.kimi-code',
+    configEnvVars: ['KIMI_API_KEY'],
+  },
+  {
+    name: 'kiro',
+    binary: 'kiro',
+    // ⚠️ needs doc verification: binary name, config paths
+  },
+  {
+    name: 'mimocode',
+    binary: 'mimocode',
+    // ⚠️ Fork of OpenCode — binary name may differ
+  },
+  {
+    name: 'openclacky',
+    binary: 'openclacky',
+  },
+  {
+    name: 'openhands',
+    binary: 'openhands',
+    configDir: '~/.openhands',
+    configEnvVars: ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY'],
+  },
+  {
+    name: 'open-swe',
+    binary: 'open-swe',
+    // ⚠️ needs doc verification: binary may differ
+  },
+  {
+    name: 'proliferate',
+    binary: 'proliferate',
+    // ⚠️ needs doc verification
+  },
+  {
+    name: 'qwen-code',
+    binary: 'qwen',
+    configEnvVars: ['DASHSCOPE_API_KEY'],
+  },
+  // Personal AI agents
+  {
+    name: 'copaw',
+    binary: 'copaw',
+    configDir: '~/.copaw',
+  },
+  {
+    name: 'mercury',
+    binary: 'mercury',
+    configDir: '~/.mercury',
+  },
+  {
+    name: 'nanobot',
+    binary: 'nanobot',
+    configDir: '~/.nanobot',
+  },
+  {
+    name: 'openhuman',
+    binary: 'openhuman',
+    configDir: '~/.openhuman',
+  },
+  {
+    name: 'openclaw',
+    binary: 'openclaw',
+    configDir: '~/.openclaw',
+  },
+  {
+    name: 'qwenpaw',
+    binary: 'qwenpaw',
+    configEnvVars: ['DASHSCOPE_API_KEY'],
+    configDir: '~/.qwenpaw',
+  },
+  {
+    name: 'trustclaw',
+    binary: 'trustclaw',
+    configDir: '~/.trustclaw',
   },
 ];

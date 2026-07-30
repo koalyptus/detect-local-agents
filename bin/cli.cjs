@@ -3,13 +3,13 @@
 const path = require('path');
 const { spawnSync } = require('child_process');
 
-const cliJs = path.resolve(__dirname, '..', 'dist', 'cli.js');
+const cliJs = path.resolve(__dirname, '..', 'dist', 'cli', 'cli.js');
 
 try {
   require('fs').accessSync(cliJs, require('fs').constants.F_OK);
 } catch {
   console.error(
-    '⚠️  dist/cli.js not found. Run "npm run build" to compile the TypeScript sources.',
+    '⚠️  dist/cli/cli.js not found. Run "npm run build" to compile the TypeScript sources.',
   );
   process.exit(1);
 }

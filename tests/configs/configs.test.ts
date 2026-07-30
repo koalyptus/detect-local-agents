@@ -39,4 +39,46 @@ describe('detectorConfigs', () => {
     expect(grokConfig?.binary).toBe('grok');
     expect(grokConfig?.configEnvVars).toContain('GROK_API_KEY');
   });
+
+  describe('Phase 4: new config entries', () => {
+    const newAgents = [
+      { name: 'devin', binary: 'devin' },
+      { name: 'kimi-code', binary: 'kimi' },
+      { name: 'kiro', binary: 'kiro' },
+      { name: 'mimocode', binary: 'mimocode' },
+      { name: 'openclacky', binary: 'openclacky' },
+      { name: 'openhands', binary: 'openhands' },
+      { name: 'open-swe', binary: 'open-swe' },
+      { name: 'proliferate', binary: 'proliferate' },
+      { name: 'qwen-code', binary: 'qwen' },
+      { name: 'copaw', binary: 'copaw' },
+      { name: 'mercury', binary: 'mercury' },
+      { name: 'nanobot', binary: 'nanobot' },
+      { name: 'openhuman', binary: 'openhuman' },
+      { name: 'openclaw', binary: 'openclaw' },
+      { name: 'qwenpaw', binary: 'qwenpaw' },
+      { name: 'trustclaw', binary: 'trustclaw' },
+    ];
+
+    for (const agent of newAgents) {
+      it(`includes ${agent.name} config entry with binary ${agent.binary}`, () => {
+        const config = detectorConfigs.find((c) => c.name === agent.name);
+        expect(config).toBeDefined();
+        expect(config?.binary).toBe(agent.binary);
+      });
+    }
+  });
+
+  it('kimi-code has configDir and KIMI_API_KEY', () => {
+    const config = detectorConfigs.find((c) => c.name === 'kimi-code');
+    expect(config?.configDir).toBe('~/.kimi-code');
+    expect(config?.configEnvVars).toContain('KIMI_API_KEY');
+  });
+
+  it('aider has enriched config', () => {
+    const config = detectorConfigs.find((c) => c.name === 'aider');
+    expect(config?.configDir).toBe('~/.aider');
+    expect(config?.configEnvVars).toContain('AIDER_ANTHROPIC_API_KEY');
+    expect(config?.versionArgs).toEqual(['--version']);
+  });
 });

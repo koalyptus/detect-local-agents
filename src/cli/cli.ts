@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import yargs from 'yargs';
-import { detectAgents } from './index.js';
+import { detectAgents } from '../index.js';
 import { formatAgents, type OutputFormat } from './output-format.js';
-import type { DetectedAgent } from './types.js';
+import type { DetectedAgent } from '../types.js';
 
 export interface CliResult {
   exitCode: number;

@@ -24,7 +24,7 @@ describe('cli - detect command', () => {
       { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
     ]);
 
-    const { runCli } = await import('../../src/cli.js');
+    const { runCli } = await import('../../src/cli/cli.js');
     await runCli(['node', 'detect-local-agents']);
 
     expect(mockDetectAgents).toHaveBeenCalledOnce();
@@ -38,7 +38,7 @@ describe('cli - detect command', () => {
       { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
     ]);
 
-    const { runCli } = await import('../../src/cli.js');
+    const { runCli } = await import('../../src/cli/cli.js');
     await runCli(['node', 'detect-local-agents', '--json']);
 
     const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
@@ -53,7 +53,7 @@ describe('cli - detect command', () => {
       { name: 'codex', binary: '/usr/bin/codex', isConfigured: false },
     ]);
 
-    const { runCli } = await import('../../src/cli.js');
+    const { runCli } = await import('../../src/cli/cli.js');
     await runCli(['node', 'detect-local-agents', '--configured']);
 
     const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
@@ -64,7 +64,7 @@ describe('cli - detect command', () => {
   it('exits 1 when detectAgents throws', async () => {
     mockDetectAgents.mockRejectedValue(new Error('boom'));
 
-    const { runCli } = await import('../../src/cli.js');
+    const { runCli } = await import('../../src/cli/cli.js');
     await expect(runCli(['node', 'detect-local-agents'])).rejects.toThrow('exit:1');
 
     const err = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
@@ -76,7 +76,7 @@ describe('cli - detect command', () => {
       { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
     ]);
 
-    const { runCli } = await import('../../src/cli.js');
+    const { runCli } = await import('../../src/cli/cli.js');
     await runCli(['node', 'detect-local-agents', 'ls']);
 
     const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
@@ -89,7 +89,7 @@ describe('cli - detect command', () => {
       { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
     ]);
 
-    const { runCli } = await import('../../src/cli.js');
+    const { runCli } = await import('../../src/cli/cli.js');
     await runCli(['node', 'detect-local-agents', 'ls', '--json']);
 
     const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
@@ -102,7 +102,7 @@ describe('cli - detect command', () => {
     // by making the fail handler throw an exit:1 error
     mockDetectAgents.mockRejectedValue(new Error('exit:1'));
 
-    const { runCli } = await import('../../src/cli.js');
+    const { runCli } = await import('../../src/cli/cli.js');
     await expect(runCli(['node', 'detect-local-agents'])).rejects.toThrow('exit:1');
   });
 
@@ -111,7 +111,7 @@ describe('cli - detect command', () => {
     // by having the handler throw a plain string, not an Error object
     mockDetectAgents.mockRejectedValue('something went wrong');
 
-    const { runCli } = await import('../../src/cli.js');
+    const { runCli } = await import('../../src/cli/cli.js');
     await expect(runCli(['node', 'detect-local-agents'])).rejects.toThrow('exit:1');
 
     const err = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
@@ -139,7 +139,7 @@ describe('cli - info command', () => {
       { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
     ]);
 
-    const { runCli } = await import('../../src/cli.js');
+    const { runCli } = await import('../../src/cli/cli.js');
     await runCli(['node', 'detect-local-agents', 'info', 'claude', '--json']);
 
     const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
@@ -152,7 +152,7 @@ describe('cli - info command', () => {
       { name: 'claude', binary: '/usr/bin/claude', isConfigured: true },
     ]);
 
-    const { runCli } = await import('../../src/cli.js');
+    const { runCli } = await import('../../src/cli/cli.js');
     await runCli(['node', 'detect-local-agents', 'info', 'nonexistent', '--json']);
 
     const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
@@ -167,7 +167,7 @@ describe('cli - info command', () => {
       { name: 'claude', binary: '/usr/bin/claude', isConfigured: true },
     ]);
 
-    const { runCli } = await import('../../src/cli.js');
+    const { runCli } = await import('../../src/cli/cli.js');
     await runCli(['node', 'detect-local-agents', 'info', 'nonexistent']);
 
     const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
@@ -182,7 +182,7 @@ describe('cli - info command', () => {
       { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
     ]);
 
-    const { runCli } = await import('../../src/cli.js');
+    const { runCli } = await import('../../src/cli/cli.js');
     await runCli(['node', 'detect-local-agents', 'info', 'claude']);
 
     const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
@@ -194,35 +194,39 @@ describe('cli - info command', () => {
 
 describe('cli - auto-run guard', () => {
   it('detects direct invocation from cli.js', async () => {
-    const { isInvokedDirectly } = await import('../../src/cli.js');
+    const { isInvokedDirectly } = await import('../../src/cli/cli.js');
     expect(isInvokedDirectly(['node', '/path/to/cli.js'])).toBe(true);
   });
 
   it('detects direct invocation from cli.ts', async () => {
-    const { isInvokedDirectly } = await import('../../src/cli.js');
+    const { isInvokedDirectly } = await import('../../src/cli/cli.js');
     expect(isInvokedDirectly(['tsx', '/path/to/cli.ts'])).toBe(true);
   });
 
   it('returns false when imported as module', async () => {
-    const { isInvokedDirectly } = await import('../../src/cli.js');
+    const { isInvokedDirectly } = await import('../../src/cli/cli.js');
     expect(isInvokedDirectly(['node', '/path/to/vitest.js'])).toBe(false);
   });
 
   it('returns false when argv is empty', async () => {
-    const { isInvokedDirectly } = await import('../../src/cli.js');
+    const { isInvokedDirectly } = await import('../../src/cli/cli.js');
     expect(isInvokedDirectly([])).toBe(false);
   });
 
   it('autoRun calls process.exit when invoked directly', async () => {
     const origArgv = process.argv;
     process.argv = ['node', '/path/to/cli.js'];
-    vi.restoreAllMocks();
 
+    // Spy on process.exit before the dynamic import — the module-level
+    // void autoRun() fires on the first import and needs the spy in place.
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {
       throw new Error('exit:0');
     }) as never);
 
-    const { autoRun } = await import('../../src/cli.js');
+    // Mock detectAgents so the auto-run doesn't run the real detection
+    vi.spyOn(indexModule, 'detectAgents').mockResolvedValue([]);
+
+    const { autoRun } = await import('../../src/cli/cli.js');
     await expect(autoRun()).rejects.toThrow('exit:0');
 
     expect(exitSpy).toHaveBeenCalledWith(0);
@@ -232,7 +236,7 @@ describe('cli - auto-run guard', () => {
   it('autoRun skips process.exit when not invoked directly', async () => {
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => 1) as never);
 
-    const { autoRun } = await import('../../src/cli.js');
+    const { autoRun } = await import('../../src/cli/cli.js');
     autoRun();
 
     expect(exitSpy).not.toHaveBeenCalled();

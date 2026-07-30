@@ -1,5 +1,5 @@
-// src/output-format.ts
-import type { DetectedAgent } from './types.js';
+// src/cli/output-format.ts
+import type { DetectedAgent } from '../types.js';
 
 export type OutputFormat = 'json' | 'table';
 

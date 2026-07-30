@@ -9,6 +9,11 @@ import { hasConfigFile } from '../config-paths.js';
 import acpxDetector from './acpx.detector.js';
 import cursorDetector from './cursor.detector.js';
 import rovodevDetector from './rovodev.detector.js';
+import orcaDetector from './orca.detector.js';
+import windsurfDetector from './windsurf.detector.js';
+import sweAgentDetector from './swe-agent.detector.js';
+import miniCodingAgentDetector from './mini-coding-agent.detector.js';
+import openhandsSdkDetector from './openhands-sdk.detector.js';
 
 /**
  * Create a detector from a config entry.
@@ -82,6 +87,21 @@ export async function loadAllDetectors(): Promise<AgentDetector[]> {
   }
   if (rovodevDetector && typeof rovodevDetector.detect === 'function') {
     detectors.push(rovodevDetector);
+  }
+  if (orcaDetector && typeof orcaDetector.detect === 'function') {
+    detectors.push(orcaDetector);
+  }
+  if (windsurfDetector && typeof windsurfDetector.detect === 'function') {
+    detectors.push(windsurfDetector);
+  }
+  if (sweAgentDetector && typeof sweAgentDetector.detect === 'function') {
+    detectors.push(sweAgentDetector);
+  }
+  if (miniCodingAgentDetector && typeof miniCodingAgentDetector.detect === 'function') {
+    detectors.push(miniCodingAgentDetector);
+  }
+  if (openhandsSdkDetector && typeof openhandsSdkDetector.detect === 'function') {
+    detectors.push(openhandsSdkDetector);
   }
 
   return detectors;

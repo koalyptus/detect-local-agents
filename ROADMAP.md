@@ -28,9 +28,27 @@
 - [x] JSON + table output formats
 - [x] Update README with CLI usage
 
-## Phase 4: Advanced Features
+## Phase 4: Agent Expansion
 
-- [ ] Configurable agent list (consumer can filter/extend)
-- [ ] Agent discovery events / callbacks
-- [ ] Caching layer (avoid re-probing on every call)
-- [ ] Health check / status endpoint per agent
+> [Jul 2026] Massive agent coverage — 30+ agents total.
+
+- [x] Add config entries for 15+ new agents (Kimi Code CLI, OpenHands, Qwen Code, Orca, Windsurf, etc.)
+- [x] File-based detectors for pip packages (swe-agent, mini-coding-agent, OpenHands SDK)
+- [x] File-based detectors for IDE agents (Orca, Windsurf)
+- [x] Enriched Aider detection (config dir, AIDER_ env vars, version)
+- [x] Pip detection utility
+- [ ] Add regression tests for new detectors
+- [ ] Documentation update
+- [ ] PR
+
+## Phase 5: Bug Fixes, Polish & Productionize
+
+> [Future] Harden and ship with confidence.
+
+- [ ] Fix coverage gaps and edge cases
+- [ ] Harden error handling (detector timeouts, malformed config files)
+- [ ] Improve cross-platform detection (Windows AppData, WSL paths)
+- [ ] CI reliability and lint enforcement
+- [ ] Audit docs, generate API reference
+- [ ] Real-world testing on Windows/macOS/Linux
+- [ ] npm publish

@@ -154,10 +154,31 @@ export default detector;
 - Rovo Dev (`acli rovodev`) — special probe
 - Copilot (`copilot`)
 - Pi (`pi`)
-- Aider (`aider`)
+- Aider (`aider`) — with enriched config/version detection
 - Cline (`cline`)
 - Amp (`amp`)
 - Roo Code (`roo-code`)
 - Continue (`continue`)
 - Tabnine (`tabnine`)
 - acpx (`acpx`) — ACP proxy with target listing
+- Devin (`devin`)
+- Kimi Code CLI (`kimi`)
+- Kiro (`kiro`)
+- MiMoCode (`mimocode`)
+- OpenClacky (`openclacky`)
+- OpenHands (`openhands`)
+- Open SWE (`open-swe`)
+- Proliferate (`proliferate`)
+- Qwen Code (`qwen`)
+- CoPaw (`copaw`)
+- Mercury Agent (`mercury`)
+- nanobot (`nanobot`)
+- OpenHuman (`openhuman`)
+- OpenClaw (`openclaw`)
+- QwenPaw (`qwenpaw`)
+- Trustclaw (`trustclaw`)
+- Orca (`orca`) ⚡ — file-based detector
+- Windsurf (`windsurf`/`codeium`) ⚡ — file-based detector
+- SWE-agent ⚡ — pip detection
+- mini-coding-agent ⚡ — pip detection
+- OpenHands SDK ⚡ — pip detection
