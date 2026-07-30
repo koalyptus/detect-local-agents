@@ -154,9 +154,20 @@ describe('which', () => {
 
       process.env.npm_config_prefix = '/test/prefix';
       mockAccess.mockResolvedValue(undefined);
-
       const path = await which('my-agent');
       expect(path).toBe(join('/test/prefix', 'bin', 'my-agent'));
+
+      Object.defineProperty(process, 'platform', { value: origPlatform });
+    });
+
+    it('uses prefix directly (no /bin) on win32', async () => {
+      const origPlatform = process.platform;
+      Object.defineProperty(process, 'platform', { value: 'win32' });
+
+      process.env.npm_config_prefix = 'C:\\node-prefix';
+      mockAccess.mockResolvedValue(undefined);
+      const path = await which('my-agent');
+      expect(path).toBe(join('C:\\node-prefix', 'my-agent'));
 
       Object.defineProperty(process, 'platform', { value: origPlatform });
     });
