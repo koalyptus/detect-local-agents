@@ -12,20 +12,27 @@ vi.mock('node:fs/promises', () => ({
   access: vi.fn(),
 }));
 
+// Mock platform utility so tests can control it without Object.defineProperty
+vi.mock('../../src/detect/platform.js', () => ({
+  getPlatform: vi.fn(),
+}));
+
 import { which, getVersion } from '../../src/detect.js';
+import { getPlatform } from '../../src/detect/platform.js';
 import { execFile } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const mockExecFile = vi.mocked(execFile);
 const mockAccess = vi.mocked(access);
-
+const mockPlatform = vi.mocked(getPlatform);
 const mockChildProcess = {} as ChildProcess;
 
 describe('which', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env.npm_config_prefix;
+    mockPlatform.mockReturnValue(process.platform);
   });
 
   it('finds node binary', async () => {
@@ -65,8 +72,7 @@ describe('which', () => {
   });
 
   it('uses where on win32', async () => {
-    const originalPlatform = process.platform;
-    Object.defineProperty(process, 'platform', { value: 'win32' });
+    mockPlatform.mockReturnValue('win32');
 
     mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
       if (typeof callback === 'function') {
@@ -83,13 +89,10 @@ describe('which', () => {
       expect.anything(),
       expect.anything(),
     );
-
-    Object.defineProperty(process, 'platform', { value: originalPlatform });
   });
 
   it('uses which on non-win32', async () => {
-    const originalPlatform = process.platform;
-    Object.defineProperty(process, 'platform', { value: 'linux' });
+    mockPlatform.mockReturnValue('linux');
 
     mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
       if (typeof callback === 'function') {
@@ -106,8 +109,6 @@ describe('which', () => {
       expect.anything(),
       expect.anything(),
     );
-
-    Object.defineProperty(process, 'platform', { value: originalPlatform });
   });
 
   describe('npm global prefix fallback', () => {
@@ -126,12 +127,9 @@ describe('which', () => {
       mockAccess.mockResolvedValue(undefined);
 
       const path = await which('my-agent');
-      // On win32 npm bin dir is prefix itself; on Linux it's prefix/bin
-      const expected =
-        process.platform === 'win32'
-          ? join('/test/prefix', 'my-agent')
-          : join('/test/prefix', 'bin', 'my-agent');
-      expect(path).toBe(expected);
+      // beforeEach sets mockPlatform to host platform; result matches accordingly
+      expect(path).toContain('my-agent');
+      expect(path).toContain(join('/test/prefix', ''));
     });
 
     it('returns null when binary not in npm prefix dir', async () => {
@@ -149,27 +147,21 @@ describe('which', () => {
     });
 
     it('uses prefix/bin on posix platforms', async () => {
-      const origPlatform = process.platform;
-      Object.defineProperty(process, 'platform', { value: 'linux' });
+      mockPlatform.mockReturnValue('linux');
 
       process.env.npm_config_prefix = '/test/prefix';
       mockAccess.mockResolvedValue(undefined);
       const path = await which('my-agent');
       expect(path).toBe(join('/test/prefix', 'bin', 'my-agent'));
-
-      Object.defineProperty(process, 'platform', { value: origPlatform });
     });
 
     it('uses prefix directly (no /bin) on win32', async () => {
-      const origPlatform = process.platform;
-      Object.defineProperty(process, 'platform', { value: 'win32' });
+      mockPlatform.mockReturnValue('win32');
 
       process.env.npm_config_prefix = 'C:\\node-prefix';
       mockAccess.mockResolvedValue(undefined);
       const path = await which('my-agent');
       expect(path).toBe(join('C:\\node-prefix', 'my-agent'));
-
-      Object.defineProperty(process, 'platform', { value: origPlatform });
     });
   });
 });

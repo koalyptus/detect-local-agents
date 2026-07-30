@@ -3,6 +3,7 @@ import { execFile } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import { getPlatform } from './detect/platform.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -27,7 +28,7 @@ async function getNpmPrefix(): Promise<string | null> {
  * Falls back to checking the npm global bin directory when PATH fails.
  */
 export async function which(name: string): Promise<string | null> {
-  const cmd = process.platform === 'win32' ? 'where' : 'which';
+  const cmd = getPlatform() === 'win32' ? 'where' : 'which';
   try {
     const { stdout } = await execFileAsync(cmd, [name], { timeout: 5000 });
     const first = stdout.trim().split('\n')[0];
@@ -44,7 +45,7 @@ export async function which(name: string): Promise<string | null> {
     return null;
   }
 
-  const binDir = process.platform === 'win32' ? prefix : join(prefix, 'bin');
+  const binDir = getPlatform() === 'win32' ? prefix : join(prefix, 'bin');
   const binPath = join(binDir, name);
   try {
     await access(binPath);
