@@ -72,6 +72,5 @@ describe('detectorConfigs', () => {
     const config = detectorConfigs.find((c) => c.name === 'aider');
     expect(config?.configDir).toBe('~/.aider');
     expect(config?.configEnvVars).toContain('AIDER_ANTHROPIC_API_KEY');
-    expect(config?.versionArgs).toEqual(['--version']);
   });
 });

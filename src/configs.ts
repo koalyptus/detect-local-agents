@@ -46,7 +46,6 @@ export const detectorConfigs: DetectorConfig[] = [
     binary: 'aider',
     configEnvVars: ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'AIDER_ANTHROPIC_API_KEY'],
     configDir: '~/.aider',
-    versionArgs: ['--version'],
   },
   {
     name: 'cline',
