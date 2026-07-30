@@ -61,10 +61,10 @@ describe('config-paths', () => {
       expect(paths).toEqual([]);
     });
 
-    it('returns paths for gemini', () => {
-      const paths = getConfigPaths('gemini');
+    it('returns paths for claude', () => {
+      const paths = getConfigPaths('claude');
       expect(paths.length).toBeGreaterThan(0);
-      expect(paths.some((p) => p.includes('.gemini/config.json'))).toBe(true);
+      expect(paths.some((p) => p.includes('.claude/config.json'))).toBe(true);
     });
   });
 

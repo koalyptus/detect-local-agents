@@ -1,4 +1,3 @@
-// src/configs.ts
 import type { DetectorConfig } from './types.js';
 
 /**
@@ -45,22 +44,12 @@ export const detectorConfigs: DetectorConfig[] = [
   {
     name: 'aider',
     binary: 'aider',
-    configEnvVars: ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY'],
+    configEnvVars: ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'AIDER_ANTHROPIC_API_KEY'],
+    configDir: '~/.aider',
   },
   {
     name: 'cline',
     binary: 'cline',
-  },
-  {
-    name: 'gemini',
-    binary: 'gemini',
-    configEnvVars: ['GOOGLE_API_KEY'],
-    configDir: '~/.gemini',
-  },
-  {
-    name: 'antigravity',
-    binary: 'agy',
-    configEnvVars: ['GOOGLE_API_KEY', 'ANTIGRAVITY_API_KEY'],
   },
   {
     name: 'ollama',
@@ -86,5 +75,58 @@ export const detectorConfigs: DetectorConfig[] = [
   {
     name: 'tabnine',
     binary: 'tabnine',
+  },
+  {
+    name: 'kimi-code',
+    binary: 'kimi',
+    configDir: '~/.kimi-code',
+    configEnvVars: ['KIMI_API_KEY'],
+  },
+  {
+    name: 'kiro',
+    binary: 'kiro',
+    configDir: '~/.kiro',
+  },
+  {
+    name: 'mimocode',
+    binary: 'mimocode',
+    configDir: '~/.config/mimocode',
+  },
+  {
+    name: 'openhands',
+    binary: 'openhands',
+    configDir: '~/.openhands',
+    configEnvVars: ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY'],
+  },
+  {
+    name: 'copaw',
+    binary: 'copaw',
+    configDir: '~/.copaw',
+  },
+  {
+    name: 'nanobot',
+    binary: 'nanobot',
+    configDir: '~/.nanobot',
+  },
+  {
+    name: 'qwenpaw',
+    binary: 'qwenpaw',
+    configEnvVars: ['DASHSCOPE_API_KEY'],
+    configDir: '~/.qwenpaw',
+  },
+  {
+    name: 'openclaw',
+    binary: 'openclaw',
+    configDir: '~/.openclaw',
+  },
+  {
+    name: 'qwen-code',
+    binary: 'qwen',
+    configEnvVars: ['DASHSCOPE_API_KEY'],
+  },
+  {
+    name: 'mercury',
+    binary: 'mercury',
+    configDir: '~/.mercury',
   },
 ];

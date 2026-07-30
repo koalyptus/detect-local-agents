@@ -1,14 +1,11 @@
-// src/detectors/index.ts
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { AgentDetector, DetectedAgent, DetectorConfig } from '../types.js';
 import { which, getVersion } from '../detect.js';
 import { detectorConfigs } from '../configs.js';
 import { hasConfigFile } from '../config-paths.js';
-import acpxDetector from './acpx.detector.js';
-import cursorDetector from './cursor.detector.js';
-import rovodevDetector from './rovodev.detector.js';
 
 /**
  * Create a detector from a config entry.
@@ -73,15 +70,23 @@ export async function loadAllDetectors(): Promise<AgentDetector[]> {
     detectors.push(configToDetector(config));
   }
 
-  // File-based detectors (statically imported)
-  if (acpxDetector && typeof acpxDetector.detect === 'function') {
-    detectors.push(acpxDetector);
-  }
-  if (cursorDetector && typeof cursorDetector.detect === 'function') {
-    detectors.push(cursorDetector);
-  }
-  if (rovodevDetector && typeof rovodevDetector.detect === 'function') {
-    detectors.push(rovodevDetector);
+  // File-based detectors: auto-discover *.detector.ts sibling modules
+  const __filename = fileURLToPath(import.meta.url);
+  const detectorsDir = path.dirname(__filename);
+  const files = await fs.readdir(detectorsDir);
+  for (const file of files) {
+    if (!/\.detector\.[jt]s$/.test(file) || file.startsWith('index.')) {
+      continue;
+    }
+    try {
+      const mod = await import(pathToFileURL(path.join(detectorsDir, file)).href);
+      const detector = mod.default;
+      if (detector && typeof detector.detect === 'function') {
+        detectors.push(detector);
+      }
+    } catch (err) {
+      console.warn(`Skipping detector ${file}: ${(err as Error).message}`);
+    }
   }
 
   return detectors;

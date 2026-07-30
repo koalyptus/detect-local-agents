@@ -20,13 +20,6 @@ describe('detectorConfigs', () => {
     expect(tabnineConfig?.binary).toBe('tabnine');
   });
 
-  it('includes antigravity config entry', () => {
-    const antigravityConfig = detectorConfigs.find((c) => c.name === 'antigravity');
-    expect(antigravityConfig).toBeDefined();
-    expect(antigravityConfig?.binary).toBe('agy');
-    expect(antigravityConfig?.configEnvVars).toContain('GOOGLE_API_KEY');
-  });
-
   it('includes ollama config entry', () => {
     const ollamaConfig = detectorConfigs.find((c) => c.name === 'ollama');
     expect(ollamaConfig).toBeDefined();
@@ -38,5 +31,46 @@ describe('detectorConfigs', () => {
     expect(grokConfig).toBeDefined();
     expect(grokConfig?.binary).toBe('grok');
     expect(grokConfig?.configEnvVars).toContain('GROK_API_KEY');
+  });
+
+  describe('Phase 4: new config entries', () => {
+    const newAgents = [
+      { name: 'kimi-code', binary: 'kimi' },
+      { name: 'kiro', binary: 'kiro' },
+      { name: 'mimocode', binary: 'mimocode' },
+      { name: 'openhands', binary: 'openhands' },
+      { name: 'copaw', binary: 'copaw' },
+      { name: 'nanobot', binary: 'nanobot' },
+      { name: 'qwenpaw', binary: 'qwenpaw' },
+      { name: 'openclaw', binary: 'openclaw' },
+      { name: 'qwen-code', binary: 'qwen' },
+      { name: 'mercury', binary: 'mercury' },
+    ];
+
+    for (const agent of newAgents) {
+      it(`includes ${agent.name} config entry with binary ${agent.binary}`, () => {
+        const config = detectorConfigs.find((c) => c.name === agent.name);
+        expect(config).toBeDefined();
+        expect(config?.binary).toBe(agent.binary);
+      });
+    }
+  });
+
+  it('kimi-code has configDir and KIMI_API_KEY', () => {
+    const config = detectorConfigs.find((c) => c.name === 'kimi-code');
+    expect(config?.configDir).toBe('~/.kimi-code');
+    expect(config?.configEnvVars).toContain('KIMI_API_KEY');
+  });
+
+  it('openclaw has configDir', () => {
+    const config = detectorConfigs.find((c) => c.name === 'openclaw');
+    expect(config?.configDir).toBe('~/.openclaw');
+    expect(config?.binary).toBe('openclaw');
+  });
+
+  it('aider has enriched config', () => {
+    const config = detectorConfigs.find((c) => c.name === 'aider');
+    expect(config?.configDir).toBe('~/.aider');
+    expect(config?.configEnvVars).toContain('AIDER_ANTHROPIC_API_KEY');
   });
 });

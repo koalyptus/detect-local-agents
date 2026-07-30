@@ -26,7 +26,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "cli": "node dist/cli.js",
+    "cli": "node dist/cli/cli.js",
     "test": "vitest run --coverage",
     "test:watch": "vitest"
   },
