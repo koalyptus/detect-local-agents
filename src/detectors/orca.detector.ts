@@ -1,4 +1,3 @@
-// src/detectors/orca.detector.ts
 import type { AgentDetector, DetectedAgent } from '../types.js';
 import { which } from '../detect.js';
 import * as fs from 'node:fs/promises';

@@ -1,4 +1,3 @@
-// src/detectors/swe-agent.detector.ts
 import type { AgentDetector, DetectedAgent } from '../types.js';
 import { findPipPackage } from '../detect/pip.js';
 import { which, getVersion } from '../detect.js';

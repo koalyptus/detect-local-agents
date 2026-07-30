@@ -1,4 +1,3 @@
-// tests/cli/output-format.test.ts
 import { describe, it, expect } from 'vitest';
 import { formatAgents } from '../../src/cli/output-format.js';
 import type { DetectedAgent } from '../../src/types.js';

@@ -1,20 +1,11 @@
-// src/detectors/index.ts
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { AgentDetector, DetectedAgent, DetectorConfig } from '../types.js';
 import { which, getVersion } from '../detect.js';
 import { detectorConfigs } from '../configs.js';
 import { hasConfigFile } from '../config-paths.js';
-import acpxDetector from './acpx.detector.js';
-import cursorDetector from './cursor.detector.js';
-import rovodevDetector from './rovodev.detector.js';
-import orcaDetector from './orca.detector.js';
-import windsurfDetector from './windsurf.detector.js';
-import sweAgentDetector from './swe-agent.detector.js';
-import miniCodingAgentDetector from './mini-coding-agent.detector.js';
-import openhandsSdkDetector from './openhands-sdk.detector.js';
-import geminiDetector from './gemini.detector.js';
 
 /**
  * Create a detector from a config entry.
@@ -79,33 +70,23 @@ export async function loadAllDetectors(): Promise<AgentDetector[]> {
     detectors.push(configToDetector(config));
   }
 
-  // File-based detectors (statically imported)
-  if (acpxDetector && typeof acpxDetector.detect === 'function') {
-    detectors.push(acpxDetector);
-  }
-  if (cursorDetector && typeof cursorDetector.detect === 'function') {
-    detectors.push(cursorDetector);
-  }
-  if (rovodevDetector && typeof rovodevDetector.detect === 'function') {
-    detectors.push(rovodevDetector);
-  }
-  if (orcaDetector && typeof orcaDetector.detect === 'function') {
-    detectors.push(orcaDetector);
-  }
-  if (windsurfDetector && typeof windsurfDetector.detect === 'function') {
-    detectors.push(windsurfDetector);
-  }
-  if (sweAgentDetector && typeof sweAgentDetector.detect === 'function') {
-    detectors.push(sweAgentDetector);
-  }
-  if (miniCodingAgentDetector && typeof miniCodingAgentDetector.detect === 'function') {
-    detectors.push(miniCodingAgentDetector);
-  }
-  if (openhandsSdkDetector && typeof openhandsSdkDetector.detect === 'function') {
-    detectors.push(openhandsSdkDetector);
-  }
-  if (geminiDetector && typeof geminiDetector.detect === 'function') {
-    detectors.push(geminiDetector);
+  // File-based detectors: auto-discover *.detector.ts sibling modules
+  const __filename = fileURLToPath(import.meta.url);
+  const detectorsDir = path.dirname(__filename);
+  const files = await fs.readdir(detectorsDir);
+  for (const file of files) {
+    if (!file.endsWith('.detector.ts') || file === 'index.ts') {
+      continue;
+    }
+    try {
+      const mod = await import(pathToFileURL(path.join(detectorsDir, file)).href);
+      const detector = mod.default;
+      if (detector && typeof detector.detect === 'function') {
+        detectors.push(detector);
+      }
+    } catch {
+      // Skip detectors that fail to load
+    }
   }
 
   return detectors;

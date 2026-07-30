@@ -1,6 +1,8 @@
-// tests/detectors/gemini.detector.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-// Mock detect module
+import { which, getVersion } from '../../src/detect.js';
+import { access } from 'node:fs/promises';
+import geminiDetector from '../../src/detectors/gemini.detector.js';
+
 vi.mock('../../src/detect.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
@@ -10,14 +12,9 @@ vi.mock('node:fs/promises', () => ({
   access: vi.fn(),
 }));
 
-import { which, getVersion } from '../../src/detect.js';
-import { access } from 'node:fs/promises';
-
 const mockWhich = vi.mocked(which);
 const mockGetVersion = vi.mocked(getVersion);
 const mockFsAccess = vi.mocked(access);
-
-import geminiDetector from '../../src/detectors/gemini.detector.js';
 
 describe('antigravity detector', () => {
   beforeEach(() => {

@@ -1,4 +1,3 @@
-// tests/detect.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
 

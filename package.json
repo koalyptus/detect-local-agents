@@ -6,8 +6,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "detect-local-agents": "./bin/cli.cjs",
-    "dla": "./bin/cli.cjs"
+    "detect-local-agents": "./dist/cli/cli.js",
+    "dla": "./dist/cli/cli.js"
   },
   "exports": {
     ".": {
@@ -16,8 +16,7 @@
     }
   },
   "files": [
-    "dist",
-    "bin"
+    "dist"
   ],
   "scripts": {
     "build": "tsc",

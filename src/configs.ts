@@ -1,4 +1,3 @@
-// src/configs.ts
 import type { DetectorConfig } from './types.js';
 
 /**
@@ -78,7 +77,6 @@ export const detectorConfigs: DetectorConfig[] = [
     name: 'tabnine',
     binary: 'tabnine',
   },
-  // ── Phase 4 ──────────────────────────────────────────────────────
   {
     name: 'kimi-code',
     binary: 'kimi',

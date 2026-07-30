@@ -1,4 +1,3 @@
-// src/detect.ts
 import { execFile } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';

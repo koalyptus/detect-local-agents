@@ -1,4 +1,3 @@
-// src/detect/platform.ts
 /**
  * Get the current OS platform.
  * Exported as a function so it can be mocked in tests.

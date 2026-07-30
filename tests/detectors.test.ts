@@ -236,7 +236,6 @@ describe('config detectors', () => {
   });
 });
 
-// ── Phase 4: New file-based detectors ──────────────────────────
 describe('orca detector', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -330,7 +329,7 @@ describe('loadAllDetectors counts', () => {
 
   it('returns at least 34 detectors', async () => {
     const detectors = await loadAllDetectors();
-    // 15 original + 10 Phase 4 config entries + 9 file-based detectors
+    // config entries + file-based detectors
     expect(detectors.length).toBeGreaterThanOrEqual(34);
   });
 });

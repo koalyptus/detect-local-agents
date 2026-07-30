@@ -1,4 +1,3 @@
-// src/detectors/openhands-sdk.detector.ts
 import type { AgentDetector, DetectedAgent } from '../types.js';
 import { findPipPackage } from '../detect/pip.js';
 

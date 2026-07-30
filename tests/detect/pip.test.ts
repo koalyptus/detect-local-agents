@@ -1,12 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
+import { execFile } from 'node:child_process';
+import { findPipPackage, pipShow } from '../../src/detect/pip.js';
 
 vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
 }));
-
-import { execFile } from 'node:child_process';
-import { findPipPackage, pipShow } from '../../src/detect/pip.js';
 
 const mockExecFile = vi.mocked(execFile);
 const mockChildProcess = {} as ChildProcess;
