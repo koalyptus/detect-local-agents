@@ -84,8 +84,8 @@ export async function loadAllDetectors(): Promise<AgentDetector[]> {
       if (detector && typeof detector.detect === 'function') {
         detectors.push(detector);
       }
-    } catch {
-      // Skip detectors that fail to load
+    } catch (err) {
+      console.warn(`Skipping detector ${file}: ${(err as Error).message}`);
     }
   }
 
