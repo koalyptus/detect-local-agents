@@ -53,7 +53,7 @@ describe('antigravity detector', () => {
     mockGetVersion.mockResolvedValue('0.53.0');
 
     const result = await geminiDetector.detect();
-    expect(result?.name).toBe('antigravity');
+    expect(result?.name).toBe('gemini');
     expect(result?.binary).toBe('/usr/bin/gemini');
     expect(result?.version).toBe('0.53.0');
   });

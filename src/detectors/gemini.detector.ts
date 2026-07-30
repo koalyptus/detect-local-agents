@@ -9,11 +9,14 @@ const detector: AgentDetector = {
 
   async detect(): Promise<DetectedAgent | null> {
     // Check both binary names: agy (current codename) and gemini (legacy name)
-    const binary = (await which('agy')) ?? (await which('gemini'));
+    const agyBinary = await which('agy');
+    const geminiBinary = await which('gemini');
+    const binary = agyBinary ?? geminiBinary;
     if (!binary) {
       return null;
     }
 
+    const name = agyBinary ? 'antigravity' : 'gemini';
     const version = (await getVersion(binary)) ?? undefined;
 
     // Check configured status: env vars or config directory
@@ -29,7 +32,7 @@ const detector: AgentDetector = {
     }
 
     return {
-      name: 'antigravity',
+      name,
       binary,
       version,
       isConfigured,
