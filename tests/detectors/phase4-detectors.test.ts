@@ -145,17 +145,30 @@ describe('windsurf detector (Phase 4)', () => {
     const result = await windsurfDetector.detect();
     expect(result?.name).toBe('windsurf');
     expect(result?.binary).toBe('/usr/bin/codeium');
+    expect(result?.isACPAgent).toBe(true);
   });
 
   it('finds windsurf through common Linux install paths', async () => {
+    vi.clearAllMocks();
     mockWhich.mockResolvedValue(null);
-    mockFsAccess.mockImplementation(async () => undefined);
+
+    const mockAccessCalls: string[] = [];
+    mockFsAccess.mockImplementation(async (path: unknown) => {
+      const pathStr = String(path);
+      mockAccessCalls.push(pathStr);
+
+      if (
+        pathStr.includes('/opt/Windsurf/windsurf') ||
+        pathStr.includes('/usr/bin/windsurf') ||
+        pathStr.includes('/usr/local/bin/windsurf')
+      ) {
+        return undefined; // Success - file exists
+      }
+
+      throw new Error('not found');
+    });
 
     const result = await windsurfDetector.detect();
-    // On Windows, common paths for linux/macOS don't apply
-    // so detector returns null when which fails.
-    // On Linux/macOS, it would find install paths.
-    // Coverage: this test covers the which-fallback path.
     if (process.platform === 'linux') {
       expect(result?.name).toBe('windsurf');
     } else {
