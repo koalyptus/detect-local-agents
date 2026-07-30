@@ -1,26 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
-
-// Mock child_process to control execFile behavior
-vi.mock('node:child_process', () => ({
-  execFile: vi.fn(),
-}));
-
-// Mock fs/promises so we can control access() for npm prefix fallback tests
-vi.mock('node:fs/promises', () => ({
-  access: vi.fn(),
-}));
-
-// Mock platform utility so tests can control it without Object.defineProperty
-vi.mock('../../src/detect/platform.js', () => ({
-  getPlatform: vi.fn(),
-}));
-
 import { which, getVersion } from '../../src/detect.js';
 import { getPlatform } from '../../src/detect/platform.js';
 import { execFile } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
+
+vi.mock('node:child_process', () => ({
+  execFile: vi.fn(),
+}));
+
+vi.mock('node:fs/promises', () => ({
+  access: vi.fn(),
+}));
+
+vi.mock('../../src/detect/platform.js', () => ({
+  getPlatform: vi.fn(),
+}));
 
 const mockExecFile = vi.mocked(execFile);
 const mockAccess = vi.mocked(access);
