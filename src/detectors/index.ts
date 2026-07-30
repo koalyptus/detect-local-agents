@@ -75,7 +75,7 @@ export async function loadAllDetectors(): Promise<AgentDetector[]> {
   const detectorsDir = path.dirname(__filename);
   const files = await fs.readdir(detectorsDir);
   for (const file of files) {
-    if (!file.endsWith('.detector.ts') || file === 'index.ts') {
+    if (!/\.detector\.[jt]s$/.test(file) || file.startsWith('index.')) {
       continue;
     }
     try {
