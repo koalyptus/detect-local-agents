@@ -1,9 +1,10 @@
-import { execFile } from 'node:child_process';
+import { exec as execCb, execFile } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { getPlatform } from './detect/platform.js';
 
+const execAsync = promisify(execCb);
 const execFileAsync = promisify(execFile);
 
 async function getNpmPrefix(): Promise<string | null> {
@@ -88,7 +89,8 @@ export async function which(name: string): Promise<string | null> {
 /**
  * Get version string by running a command. Returns version or null.
  * On Windows, resolves npm .cmd/.exe shims and runs .cmd/.bat through the
- * shell — CreateProcess cannot spawn those directly.
+ * shell via exec() — a single command string avoids DEP0190 and properly
+ * handles spaces in paths.
  */
 export async function getVersion(
   binary: string,
@@ -100,12 +102,14 @@ export async function getVersion(
     return null;
   }
   try {
-    const { stdout } = await execFileAsync(resolved, args, {
-      timeout: 5000,
-      // .cmd/.bat shims only execute through cmd.exe; .exe and bare binaries
-      // spawn directly.
-      shell: isWin && /\.(cmd|bat)$/i.test(resolved),
-    });
+    const needsShell = isWin && /\.(cmd|bat)$/i.test(resolved);
+    // .cmd/.bat shims only execute through cmd.exe. Use exec() (single
+    // command string) rather than execFile + shell:true — execFile with
+    // shell and an args array triggers Node 22's DEP0190 and doesn't quote
+    // spaces in the path correctly.
+    const { stdout } = needsShell
+      ? await execAsync(`"${resolved}" ${args.join(' ')}`, { timeout: 5000 })
+      : await execFileAsync(resolved, args, { timeout: 5000 });
     // Match dotted segments only (no trailing dot): "1.0.76." -> "1.0.76".
     const match = stdout.trim().match(/(\d+\.\d+(?:\.\d+)*)/);
     return match?.[1] ?? stdout.trim();

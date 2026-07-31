@@ -2,12 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
 import { which, getVersion } from '../../src/detect.js';
 import { getPlatform } from '../../src/detect/platform.js';
-import { execFile } from 'node:child_process';
+import { exec, execFile } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 
 vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
+  exec: vi.fn(),
 }));
 
 vi.mock('node:fs/promises', () => ({
@@ -19,6 +20,7 @@ vi.mock('../../src/detect/platform.js', () => ({
 }));
 
 const mockExecFile = vi.mocked(execFile);
+const mockExec = vi.mocked(exec);
 const mockAccess = vi.mocked(access);
 const mockPlatform = vi.mocked(getPlatform);
 const mockChildProcess = {} as ChildProcess;
@@ -321,7 +323,7 @@ describe('getVersion', () => {
         }
         throw new Error('ENOENT');
       });
-      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      mockExec.mockImplementation((_cmd, _opts, callback) => {
         if (typeof callback === 'function') {
           callback(null, { stdout: 'v1.0.76\n', stderr: '' });
         }
@@ -330,12 +332,13 @@ describe('getVersion', () => {
 
       const version = await getVersion('C:\\Program Files\\nodejs\\copilot', ['--version']);
       expect(version).toBe('1.0.76');
-      expect(mockExecFile).toHaveBeenCalledWith(
-        'C:\\Program Files\\nodejs\\copilot.cmd',
-        ['--version'],
-        expect.objectContaining({ shell: true }),
+      // exec() (not execFile) — single command string, no DEP0190, proper quoting
+      expect(mockExec).toHaveBeenCalledWith(
+        '"C:\\Program Files\\nodejs\\copilot.cmd" --version',
+        expect.objectContaining({ timeout: 5000 }),
         expect.anything(),
       );
+      expect(mockExecFile).not.toHaveBeenCalled();
     });
 
     it('falls back to bare path when no shim exists', async () => {
