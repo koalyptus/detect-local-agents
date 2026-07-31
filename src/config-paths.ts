@@ -24,9 +24,15 @@ export function getConfigPaths(agentName: string): string[] {
   // Unix: ~/.agent/
   paths.push(path.posix.join('~', dir.replace(/^~\//, ''), agentFileName));
 
-  // Windows: %APPDATA%/Agent/
-  const windowsDir = dir.charAt(0).toUpperCase() + dir.slice(1);
-  paths.push(`%APPDATA%/${windowsDir}/${agentFileName}`);
+  // Windows: %APPDATA%/.agent/
+  // Strip leading ~/ from dir (POSIX home-relative path) to get the actual dir name,
+  // then build a Windows %APPDATA% path. The dir name stays lowercase to match
+  // the convention used by most tools on Windows.
+  const dirName = dir.replace(/^~\//, '');
+  paths.push(`%APPDATA%/${dirName}/${agentFileName}`);
+
+  // Windows: %USERPROFILE%/.agent/ (some tools use USERPROFILE)
+  paths.push(`%USERPROFILE%/${dirName}/${agentFileName}`);
 
   return paths;
 }
@@ -44,17 +50,21 @@ export async function hasConfigFile(agentName: string): Promise<boolean> {
   }
 
   for (const p of paths) {
-    let resolvedPath: string;
+    let resolvedPath = p;
     if (p.startsWith('~')) {
-      resolvedPath = path.join(os.homedir(), p.slice(1));
+      resolvedPath = path.join(process.env.HOME || os.homedir(), p.slice(1));
     } else if (p.startsWith('%APPDATA%')) {
-      const base = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
-      resolvedPath = path.join(base, p.slice(9).replace(/^\/+/, ''));
+      const base =
+        process.env.APPDATA || path.join(process.env.HOME || os.homedir(), 'AppData', 'Roaming');
+      resolvedPath = path.join(base, p.replace('%APPDATA%', '').replace(/^\/+/, ''));
     } else if (p.startsWith('%USERPROFILE%')) {
-      const base = process.env.USERPROFILE || os.homedir();
-      resolvedPath = path.join(base, p.slice(13).replace(/^\/+/, ''));
-    } else {
-      resolvedPath = p;
+      // The ~ branch checks HOME/.claude first; on POSIX this
+      // sub-branch (HOME unset -> os.homedir()) is unreachable because ~ would
+      // have already resolved to the same path. On Windows where ~ paths may
+      // not exist, this fallback is valid but untestable here.
+      /* v8 ignore next */
+      const base = process.env.USERPROFILE || process.env.HOME || os.homedir();
+      resolvedPath = path.join(base, p.replace('%USERPROFILE%', '').replace(/^\/+/, ''));
     }
 
     try {

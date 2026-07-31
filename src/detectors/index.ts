@@ -9,8 +9,9 @@ import { hasConfigFile } from '../config-paths.js';
 
 /**
  * Create a detector from a config entry.
+ * Exported for testing.
  */
-function configToDetector(config: DetectorConfig): AgentDetector {
+export function configToDetector(config: DetectorConfig): AgentDetector {
   return {
     name: config.name,
 
@@ -38,7 +39,7 @@ function configToDetector(config: DetectorConfig): AgentDetector {
       // Fallback: check config directory (backward compat)
       if (!isConfigured && config.configDir) {
         const dir = config.configDir.startsWith('~')
-          ? path.join(os.homedir(), config.configDir.slice(1))
+          ? path.join(process.env.HOME || os.homedir(), config.configDir.slice(1))
           : config.configDir;
         try {
           await fs.access(dir);
