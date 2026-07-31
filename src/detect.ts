@@ -23,6 +23,37 @@ async function getNpmPrefix(): Promise<string | null> {
 }
 
 /**
+ * Return the first path in `candidates` that exists on disk.
+ */
+async function firstExisting(candidates: string[]): Promise<string | null> {
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // Try next candidate
+    }
+  }
+  return null;
+}
+
+/**
+ * Resolve a binary path to something CreateProcess can actually spawn.
+ * On Windows, npm installs .cmd/.exe shims (e.g. claude.cmd) rather than
+ * extension-less binaries, and CreateProcess cannot execute .cmd/.bat files
+ * at all — those need cmd.exe. Returns the resolved path or null.
+ */
+async function resolveWindowsShim(binary: string): Promise<string | null> {
+  // Real executables spawn directly.
+  if (/\.(exe|com)$/i.test(binary)) {
+    return binary;
+  }
+  // Prefer the .cmd shim (what npm installs), then .exe, then the bare
+  // launcher as a last resort (some extension-less PE files still work).
+  return firstExisting([`${binary}.cmd`, `${binary}.exe`, binary]);
+}
+
+/**
  * Find a binary in PATH. Returns absolute path or null.
  * Falls back to checking the npm global bin directory when PATH fails.
  */
@@ -51,28 +82,32 @@ export async function which(name: string): Promise<string | null> {
   // On Windows, npm installs .cmd/.exe shims (e.g. claude.cmd) rather than
   // extension-less binaries — check those when the bare name isn't present.
   const candidates = getPlatform() === 'win32' ? [name, `${name}.cmd`, `${name}.exe`] : [name];
-  for (const candidate of candidates) {
-    const binPath = join(binDir, candidate);
-    try {
-      await access(binPath);
-      return binPath;
-    } catch {
-      // Try next candidate
-    }
-  }
-  return null;
+  return firstExisting(candidates.map((candidate) => join(binDir, candidate)));
 }
 
 /**
  * Get version string by running a command. Returns version or null.
+ * On Windows, resolves npm .cmd/.exe shims and runs .cmd/.bat through the
+ * shell — CreateProcess cannot spawn those directly.
  */
 export async function getVersion(
   binary: string,
   args: string[] = ['--version'],
 ): Promise<string | null> {
+  const isWin = getPlatform() === 'win32';
+  const resolved = isWin ? await resolveWindowsShim(binary) : binary;
+  if (!resolved) {
+    return null;
+  }
   try {
-    const { stdout } = await execFileAsync(binary, args, { timeout: 5000 });
-    const match = stdout.trim().match(/(\d+\.\d+[\d.]*)/);
+    const { stdout } = await execFileAsync(resolved, args, {
+      timeout: 5000,
+      // .cmd/.bat shims only execute through cmd.exe; .exe and bare binaries
+      // spawn directly.
+      shell: isWin && /\.(cmd|bat)$/i.test(resolved),
+    });
+    // Match dotted segments only (no trailing dot): "1.0.76." -> "1.0.76".
+    const match = stdout.trim().match(/(\d+\.\d+(?:\.\d+)*)/);
     return match?.[1] ?? stdout.trim();
   } catch {
     return null;

@@ -219,6 +219,9 @@ describe('which', () => {
 describe('getVersion', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Pin to a non-win32 platform so existing tests are deterministic on every
+    // CI runner; Windows shim behavior has dedicated tests below.
+    mockPlatform.mockReturnValue('linux');
   });
 
   it('gets node version', async () => {
@@ -273,5 +276,99 @@ describe('getVersion', () => {
       expect.anything(),
       expect.anything(),
     );
+  });
+
+  it('strips trailing dot from version output', async () => {
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: '1.0.76.\n', stderr: '' });
+      }
+      return mockChildProcess;
+    });
+
+    const version = await getVersion('copilot', ['--version']);
+    expect(version).toBe('1.0.76');
+  });
+
+  describe('on win32', () => {
+    beforeEach(() => {
+      mockPlatform.mockReturnValue('win32');
+    });
+
+    it('spawns .exe directly without a shell', async () => {
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(null, { stdout: 'v3.2.1\n', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+
+      const version = await getVersion('C:\\tools\\copilot.exe', ['--version']);
+      expect(version).toBe('3.2.1');
+      expect(mockExecFile).toHaveBeenCalledWith(
+        'C:\\tools\\copilot.exe',
+        ['--version'],
+        expect.not.objectContaining({ shell: true }),
+        expect.anything(),
+      );
+    });
+
+    it('resolves npm .cmd shim and runs through the shell', async () => {
+      // Only the .cmd shim exists (npm installs copilot, copilot.cmd).
+      mockAccess.mockImplementation(async (p) => {
+        if (String(p).endsWith('.cmd')) {
+          return undefined;
+        }
+        throw new Error('ENOENT');
+      });
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(null, { stdout: 'v1.0.76\n', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+
+      const version = await getVersion('C:\\Program Files\\nodejs\\copilot', ['--version']);
+      expect(version).toBe('1.0.76');
+      expect(mockExecFile).toHaveBeenCalledWith(
+        'C:\\Program Files\\nodejs\\copilot.cmd',
+        ['--version'],
+        expect.objectContaining({ shell: true }),
+        expect.anything(),
+      );
+    });
+
+    it('falls back to bare path when no shim exists', async () => {
+      // No .cmd/.exe on disk; the bare launcher itself exists.
+      mockAccess.mockImplementation(async (p) => {
+        if (String(p).endsWith('.cmd') || String(p).endsWith('.exe')) {
+          throw new Error('ENOENT');
+        }
+        return undefined;
+      });
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(null, { stdout: 'v2.0.0\n', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+
+      const version = await getVersion('C:\\bin\\mytool', []);
+      expect(version).toBe('2.0.0');
+      expect(mockExecFile).toHaveBeenCalledWith(
+        'C:\\bin\\mytool',
+        [],
+        expect.not.objectContaining({ shell: true }),
+        expect.anything(),
+      );
+    });
+
+    it('returns null when no resolvable shim exists', async () => {
+      mockAccess.mockRejectedValue(new Error('ENOENT'));
+
+      const version = await getVersion('C:\\missing\\tool', []);
+      expect(version).toBeNull();
+      expect(mockExecFile).not.toHaveBeenCalled();
+    });
   });
 });
