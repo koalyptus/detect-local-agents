@@ -132,7 +132,7 @@ describe('detectors/index', () => {
     await fs.writeFile(brokenFile, 'export default { broken: ; };\\n');
 
     try {
-      const detectors = await loadAllDetectors();
+      const _detectors = await loadAllDetectors();
       expect(spy).toHaveBeenCalled();
     } finally {
       await fs.rm(brokenFile, { force: true });
