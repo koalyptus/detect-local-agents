@@ -44,9 +44,18 @@ export function getConfigPaths(agentName: string): string[] {
  * @returns true if any config file exists for the agent
  */
 export async function hasConfigFile(agentName: string): Promise<boolean> {
+  return (await findAgentConfigPath(agentName)) !== null;
+}
+
+/**
+ * Find the first existing config file path for an agent.
+ * Returns the path or null if none found.
+ * Shares resolution logic with hasConfigFile.
+ */
+export async function findAgentConfigPath(agentName: string): Promise<string | null> {
   const paths = getConfigPaths(agentName);
   if (paths.length === 0) {
-    return false;
+    return null;
   }
 
   for (const p of paths) {
@@ -69,11 +78,30 @@ export async function hasConfigFile(agentName: string): Promise<boolean> {
 
     try {
       await fs.access(resolvedPath);
-      return true;
+      return resolvedPath;
     } catch {
       // File doesn't exist, try next path
     }
   }
 
-  return false;
+  return null;
+}
+
+/**
+ * Safely read and parse an agent's config file.
+ * Returns the parsed JSON object, or null if the file doesn't exist
+ * or contains malformed JSON.
+ */
+export async function readAgentConfig(agentName: string): Promise<Record<string, unknown> | null> {
+  const configPath = await findAgentConfigPath(agentName);
+  if (!configPath) {
+    return null;
+  }
+
+  try {
+    const content = await fs.readFile(configPath, 'utf-8');
+    return JSON.parse(content) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
 }

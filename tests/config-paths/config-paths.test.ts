@@ -4,7 +4,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 
-import { hasConfigFile, getConfigPaths } from '../../src/config-paths.js';
+import { hasConfigFile, getConfigPaths, findAgentConfigPath, readAgentConfig } from '../../src/config-paths.js';
 
 describe('config-paths', () => {
   let tempDir: string;
@@ -173,6 +173,53 @@ describe('config-paths', () => {
       // HOME is tempDir, ~ resolves to tempDir/.claude — file found
       const result = await hasConfigFile('claude');
       expect(result).toBe(true);
+    });
+  });
+
+  describe('findAgentConfigPath', () => {
+    it('returns the resolved path when config file exists', async () => {
+      const claudeDir = path.join(tempDir, '.claude');
+      await fs.mkdir(claudeDir, { recursive: true });
+      const configPath = path.join(claudeDir, 'config.json');
+      await fs.writeFile(configPath, '{}');
+
+      const result = await findAgentConfigPath('claude');
+      expect(result).toBe(path.join(tempDir, '.claude', 'config.json'));
+    });
+
+    it('returns null when config file is missing', async () => {
+      const result = await findAgentConfigPath('claude');
+      expect(result).toBeNull();
+    });
+
+    it('returns null for unknown agent', async () => {
+      const result = await findAgentConfigPath('unknown-agent');
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('readAgentConfig', () => {
+    it('returns parsed JSON when config file is valid', async () => {
+      const claudeDir = path.join(tempDir, '.claude');
+      await fs.mkdir(claudeDir, { recursive: true });
+      await fs.writeFile(path.join(claudeDir, 'config.json'), '{"theme":"dark"}');
+
+      const result = await readAgentConfig('claude');
+      expect(result).toEqual({ theme: 'dark' });
+    });
+
+    it('returns null when config file contains malformed JSON', async () => {
+      const claudeDir = path.join(tempDir, '.claude');
+      await fs.mkdir(claudeDir, { recursive: true });
+      await fs.writeFile(path.join(claudeDir, 'config.json'), '{not valid json');
+
+      const result = await readAgentConfig('claude');
+      expect(result).toBeNull();
+    });
+
+    it('returns null when config file is missing', async () => {
+      const result = await readAgentConfig('claude');
+      expect(result).toBeNull();
     });
   });
 });

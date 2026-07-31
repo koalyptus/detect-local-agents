@@ -6,6 +6,10 @@ import type { AgentDetector, DetectedAgent, DetectorConfig } from '../types.js';
 import { which, getVersion } from '../detect.js';
 import { detectorConfigs } from '../configs.js';
 import { hasConfigFile } from '../config-paths.js';
+import { withTimeout } from '../timeout.js';
+
+/** Per-detector timeout in milliseconds. */
+const DETECTOR_TIMEOUT = 10_000;
 
 /**
  * Create a detector from a config entry.
@@ -16,48 +20,52 @@ export function configToDetector(config: DetectorConfig): AgentDetector {
     name: config.name,
 
     async detect(): Promise<DetectedAgent | null> {
-      const binary = await which(config.binary);
-      if (!binary) {
-        return null;
-      }
-
-      const version = (await getVersion(binary, config.versionArgs)) ?? undefined;
-
-      // Check if configured
-      let isConfigured = false;
-
-      // Check env vars
-      if (config.configEnvVars?.length) {
-        isConfigured = config.configEnvVars.some((v) => !!process.env[v]);
-      }
-
-      // Check config file on disk
-      if (!isConfigured) {
-        isConfigured = await hasConfigFile(config.name);
-      }
-
-      // Fallback: check config directory (backward compat)
-      if (!isConfigured && config.configDir) {
-        const dir = config.configDir.startsWith('~')
-          ? path.join(process.env.HOME || os.homedir(), config.configDir.slice(1))
-          : config.configDir;
-        try {
-          await fs.access(dir);
-          isConfigured = true;
-        } catch {
-          // No config dir
-        }
-      }
-
-      return {
-        name: config.name,
-        binary,
-        version,
-        isConfigured,
-        isACPAgent: config.isACPAgent ?? false,
-      };
+      return withTimeout(detectImpl(), DETECTOR_TIMEOUT, `detect ${config.name}`);
     },
   };
+
+  async function detectImpl(): Promise<DetectedAgent | null> {
+    const binary = await which(config.binary);
+    if (!binary) {
+      return null;
+    }
+
+    const version = (await getVersion(binary, config.versionArgs)) ?? undefined;
+
+    // Check if configured
+    let isConfigured = false;
+
+    // Check env vars
+    if (config.configEnvVars?.length) {
+      isConfigured = config.configEnvVars.some((v) => !!process.env[v]);
+    }
+
+    // Check config file on disk
+    if (!isConfigured) {
+      isConfigured = await hasConfigFile(config.name);
+    }
+
+    // Fallback: check config directory (backward compat)
+    if (!isConfigured && config.configDir) {
+      const dir = config.configDir.startsWith('~')
+        ? path.join(process.env.HOME || os.homedir(), config.configDir.slice(1))
+        : config.configDir;
+      try {
+        await fs.access(dir);
+        isConfigured = true;
+      } catch {
+        // No config dir
+      }
+    }
+
+    return {
+      name: config.name,
+      binary,
+      version,
+      isConfigured,
+      isACPAgent: config.isACPAgent ?? false,
+    };
+  }
 }
 
 /**

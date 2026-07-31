@@ -8,19 +8,19 @@ import { fileURLToPath } from 'node:url';
 // Mock detect.js so which() returns a fake binary path for known binaries.
 // getVersion is a vi.fn so individual tests can override its return value.
 // vi.hoisted ensures the variable is available before the hoisted vi.mock factory runs.
-const { mockGetVersion } = vi.hoisted(() => ({
+const { mockWhich, mockGetVersion } = vi.hoisted(() => ({
+  mockWhich: vi.fn(async (name: string) => `/usr/local/bin/${name}`),
   mockGetVersion: vi.fn<(name: string) => Promise<string | undefined>>(async () => '1.0.0'),
 }));
 
 vi.mock('../../src/detect.js', () => ({
-  which: vi.fn(async (name: string) => {
-    return `/usr/local/bin/${name}`;
-  }),
+  which: mockWhich,
   getVersion: mockGetVersion,
   getPlatform: vi.fn(() => 'linux'),
 }));
 
 import { loadAllDetectors, isAgentDetector, configToDetector } from '../../src/detectors/index.js';
+import { TimeoutError } from '../../src/timeout.js';
 
 describe('detectors/index', () => {
   let tempDir: string;
@@ -31,7 +31,8 @@ describe('detectors/index', () => {
     originalHome = process.env.HOME;
     process.env.HOME = tempDir;
     vi.clearAllMocks();
-    // Reset getVersion to default return value after clearAllMocks
+    // Reset implementations (clearAllMocks keeps mockReturnValue/mockImplementation)
+    mockWhich.mockImplementation(async (name: string) => `/usr/local/bin/${name}`);
     mockGetVersion.mockResolvedValue('1.0.0');
   });
 
@@ -199,6 +200,55 @@ describe('detectors/index', () => {
     const result = await claude!.detect();
     expect(result).toBeDefined();
     expect(result!.version).toBeUndefined();
+  });
+
+  it('detect() rejects with TimeoutError when which() hangs', async () => {
+    // A hanging which() must not block detection forever — detect() rejects
+    // with TimeoutError after DETECTOR_TIMEOUT (10s).
+    vi.useFakeTimers();
+    try {
+      mockWhich.mockReturnValue(new Promise<string>(() => {}));
+
+      const detector = configToDetector({ name: 'hang-test', binary: 'hang' });
+      const pending = detector.detect();
+
+      const assertion = expect(pending).rejects.toBeInstanceOf(TimeoutError);
+      await vi.advanceTimersByTimeAsync(10_000);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('detect() rejects with TimeoutError when getVersion() hangs', async () => {
+    // which() resolves but getVersion() never settles — same timeout applies.
+    vi.useFakeTimers();
+    try {
+      mockGetVersion.mockReturnValue(new Promise<string | undefined>(() => {}));
+
+      const detector = configToDetector({ name: 'hang-version', binary: 'node' });
+      const pending = detector.detect();
+
+      const assertion = expect(pending).rejects.toBeInstanceOf(TimeoutError);
+      await vi.advanceTimersByTimeAsync(10_000);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('detect() resolves normally when work finishes before the timeout', async () => {
+    vi.useFakeTimers();
+    try {
+      const detector = configToDetector({ name: 'fast-test', binary: 'node' });
+      const result = await detector.detect();
+      expect(result).toBeDefined();
+      expect(result!.name).toBe('fast-test');
+      // No leftover fake timers: advancing far past the timeout changes nothing.
+      await vi.advanceTimersByTimeAsync(30_000);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('configDir fallback uses os.homedir() when HOME not set', async () => {
