@@ -195,9 +195,7 @@ describe('which', () => {
       process.env.npm_config_prefix = 'C:\\node-prefix';
       // Bare name doesn't exist; the .cmd shim does (npm on Windows installs
       // claude.cmd rather than extension-less binaries).
-      mockAccess
-        .mockRejectedValueOnce(new Error('ENOENT'))
-        .mockResolvedValueOnce(undefined);
+      mockAccess.mockRejectedValueOnce(new Error('ENOENT')).mockResolvedValueOnce(undefined);
 
       const path = await which('my-agent');
       expect(path).toBe(join('C:\\node-prefix', 'my-agent.cmd'));
