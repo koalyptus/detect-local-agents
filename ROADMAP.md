@@ -43,12 +43,12 @@
 
 ## Phase 5: Bug Fixes, Polish & Productionize
 
-> [Future] Harden and ship with confidence.
+> Harden and ship with confidence.
 
-- [ ] Fix coverage gaps and edge cases
-- [ ] Harden error handling (detector timeouts, malformed config files)
-- [ ] Improve cross-platform detection (Windows AppData, WSL paths)
-- [ ] CI reliability and lint enforcement
-- [ ] Audit docs, generate API reference
+- [x] Fix coverage gaps and edge cases
+- [x] Harden error handling (detector timeouts, malformed config files)
+- [x] Improve cross-platform detection (Windows AppData, WSL paths)
+- [x] CI reliability and lint enforcement
+- [x] Audit docs, generate API reference
 - [ ] Real-world testing on Windows/macOS/Linux
 - [ ] npm publish
