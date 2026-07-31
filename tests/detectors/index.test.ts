@@ -288,28 +288,22 @@ describe('detectors/index', () => {
   });
 
   it('configDir fallback finds dir via os.homedir() when HOME unset and ~/.claude exists', async () => {
-    // When HOME is unset, the ~ branch uses os.homedir(). If the real ~/.claude
-    // directory exists (from a claude installation or other tool), the configDir
-    // fallback should find it — exercising the || os.homedir() sub-branch on line 42.
-    const realHomedir = os.homedir();
-    const claudeDir = path.join(realHomedir, '.claude');
-
-    // Check if real ~/.claude already exists
-    let realClaudeExists = false;
-    try {
-      await fs.access(claudeDir);
-      realClaudeExists = true;
-    } catch {
-      // Doesn't exist — create a temp one (and clean up after)
-    }
-
-    const createdTemp = !realClaudeExists;
-    if (!realClaudeExists) {
-      await fs.mkdir(claudeDir, { recursive: true });
-    }
-
+    // When HOME is unset, the ~ branch uses os.homedir(). Create the .claude
+    // dir at the passwd-based fallback path so the detector finds it.
     const originalHome = process.env.HOME;
     delete process.env.HOME;
+    // os.homedir() now falls back to /etc/passwd (not the tempDir beforeEach set)
+    const passwdHome = os.homedir();
+    const claudeDir = path.join(passwdHome, '.claude');
+
+    let createdTemp = false;
+    try {
+      await fs.access(claudeDir);
+    } catch {
+      await fs.mkdir(claudeDir, { recursive: true });
+      createdTemp = true;
+    }
+
     try {
       const detectors = await loadAllDetectors();
       const claude = detectors.find((d) => d.name === 'claude');
@@ -317,9 +311,6 @@ describe('detectors/index', () => {
 
       const result = await claude!.detect();
       expect(result).toBeDefined();
-      // If real ~/.claude existed (has skills dir inside), fs.access succeeds → isConfigured = true.
-      // If we created it (empty dir but exists = true), isConfigured may still be true
-      // because fs.access just checks directory existence.
       expect(result!.isConfigured).toBe(true);
     } finally {
       process.env.HOME = originalHome;
