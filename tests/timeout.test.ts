@@ -22,9 +22,7 @@ describe('timeout', () => {
   });
 
   it('propagates rejection from the wrapped promise', async () => {
-    await expect(
-      withTimeout(Promise.reject(new Error('boom')), 100),
-    ).rejects.toThrow('boom');
+    await expect(withTimeout(Promise.reject(new Error('boom')), 100)).rejects.toThrow('boom');
   });
 
   it('clears the timer when the promise wins the race', async () => {

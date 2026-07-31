@@ -106,6 +106,36 @@ describe('which', () => {
     );
   });
 
+  it('handles CRLF output from where on win32', async () => {
+    mockPlatform.mockReturnValue('win32');
+
+    // Windows where.exe returns multiple matches joined by \r\n; a plain
+    // split('\n') would keep a trailing \r on the first path.
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: 'C:\\node.exe\r\nC:\\tools\\node.exe\r\n', stderr: '' });
+      }
+      return mockChildProcess;
+    });
+
+    const path = await which('node');
+    expect(path).toBe('C:\\node.exe');
+  });
+
+  it('returns first match only when where returns multiple lines', async () => {
+    mockPlatform.mockReturnValue('win32');
+
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: 'C:\\first.exe\nC:\\second.exe\n', stderr: '' });
+      }
+      return mockChildProcess;
+    });
+
+    const path = await which('node');
+    expect(path).toBe('C:\\first.exe');
+  });
+
   describe('npm global prefix fallback', () => {
     beforeEach(() => {
       // Make which/where command fail so we fall through to npm prefix
@@ -157,6 +187,33 @@ describe('which', () => {
       mockAccess.mockResolvedValue(undefined);
       const path = await which('my-agent');
       expect(path).toBe(join('C:\\node-prefix', 'my-agent'));
+    });
+
+    it('finds .cmd shim when bare name is missing on win32', async () => {
+      mockPlatform.mockReturnValue('win32');
+
+      process.env.npm_config_prefix = 'C:\\node-prefix';
+      // Bare name doesn't exist; the .cmd shim does (npm on Windows installs
+      // claude.cmd rather than extension-less binaries).
+      mockAccess
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockResolvedValueOnce(undefined);
+
+      const path = await which('my-agent');
+      expect(path).toBe(join('C:\\node-prefix', 'my-agent.cmd'));
+    });
+
+    it('finds .exe shim when bare name and .cmd are missing on win32', async () => {
+      mockPlatform.mockReturnValue('win32');
+
+      process.env.npm_config_prefix = 'C:\\node-prefix';
+      mockAccess
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockResolvedValueOnce(undefined);
+
+      const path = await which('my-agent');
+      expect(path).toBe(join('C:\\node-prefix', 'my-agent.exe'));
     });
   });
 });

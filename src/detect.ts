@@ -30,7 +30,10 @@ export async function which(name: string): Promise<string | null> {
   const cmd = getPlatform() === 'win32' ? 'where' : 'which';
   try {
     const { stdout } = await execFileAsync(cmd, [name], { timeout: 5000 });
-    const first = stdout.trim().split('\n')[0];
+    // Split on CRLF or LF and take the first match. A plain split('\n') leaves
+    // a trailing \r on Windows multi-match output (C:\node.exe\r), which breaks
+    // any later path operations.
+    const first = stdout.split(/\r?\n/)[0]?.trim();
     if (first) {
       return first;
     }
@@ -45,13 +48,19 @@ export async function which(name: string): Promise<string | null> {
   }
 
   const binDir = getPlatform() === 'win32' ? prefix : join(prefix, 'bin');
-  const binPath = join(binDir, name);
-  try {
-    await access(binPath);
-    return binPath;
-  } catch {
-    return null;
+  // On Windows, npm installs .cmd/.exe shims (e.g. claude.cmd) rather than
+  // extension-less binaries — check those when the bare name isn't present.
+  const candidates = getPlatform() === 'win32' ? [name, `${name}.cmd`, `${name}.exe`] : [name];
+  for (const candidate of candidates) {
+    const binPath = join(binDir, candidate);
+    try {
+      await access(binPath);
+      return binPath;
+    } catch {
+      // Try next candidate
+    }
   }
+  return null;
 }
 
 /**

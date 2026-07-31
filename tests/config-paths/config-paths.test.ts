@@ -4,7 +4,12 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 
-import { hasConfigFile, getConfigPaths, findAgentConfigPath, readAgentConfig } from '../../src/config-paths.js';
+import {
+  hasConfigFile,
+  getConfigPaths,
+  findAgentConfigPath,
+  readAgentConfig,
+} from '../../src/config-paths.js';
 
 describe('config-paths', () => {
   let tempDir: string;

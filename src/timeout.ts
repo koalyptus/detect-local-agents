@@ -12,11 +12,7 @@ export class TimeoutError extends Error {
   }
 }
 
-export async function withTimeout<T>(
-  promise: Promise<T>,
-  ms: number,
-  label?: string,
-): Promise<T> {
+export async function withTimeout<T>(promise: Promise<T>, ms: number, label?: string): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
 
   const race = Promise.race([
