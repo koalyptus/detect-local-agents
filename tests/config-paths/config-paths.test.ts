@@ -1,4 +1,3 @@
-// tests/config-paths/config-paths.test.ts
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';

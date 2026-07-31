@@ -45,7 +45,7 @@ export function configToDetector(config: DetectorConfig): AgentDetector {
       isConfigured = await hasConfigFile(config.name);
     }
 
-    // Fallback: check config directory (backward compat)
+    // Fallback: check config directory
     if (!isConfigured && config.configDir) {
       const dir = config.configDir.startsWith('~')
         ? path.join(process.env.HOME || os.homedir(), config.configDir.slice(1))
