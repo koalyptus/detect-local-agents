@@ -1,4 +1,3 @@
-// tests/config-paths/config-paths.test.ts
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
@@ -9,6 +8,7 @@ import {
   getConfigPaths,
   findAgentConfigPath,
   readAgentConfig,
+  resolveConfigPath,
 } from '../../src/config-paths.js';
 
 describe('config-paths', () => {
@@ -68,6 +68,12 @@ describe('config-paths', () => {
       const paths = getConfigPaths('claude');
       expect(paths.length).toBeGreaterThan(0);
       expect(paths.some((p) => p.includes('.claude/config.json'))).toBe(true);
+    });
+  });
+
+  describe('resolveConfigPath', () => {
+    it('returns plain paths unchanged', () => {
+      expect(resolveConfigPath('/usr/local/config.json')).toBe('/usr/local/config.json');
     });
   });
 

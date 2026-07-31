@@ -1,8 +1,32 @@
-// src/config-paths.ts
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { detectorConfigs } from './configs.js';
+
+/** Strips leading forward slashes from a path segment. */
+const LEADING_SLASHES = /^\/+/;
+
+/**
+ * Resolve a POSIX-style home-relative path (`~/.agent/config.json`) or
+ * Windows-style variable path (`%APPDATA%/.agent/config.json`) to an
+ * absolute path using the current environment.
+ */
+export function resolveConfigPath(candidatePath: string): string {
+  if (candidatePath.startsWith('~')) {
+    return path.join(process.env.HOME || os.homedir(), candidatePath.slice(1));
+  }
+  if (candidatePath.startsWith('%APPDATA%')) {
+    const base =
+      process.env.APPDATA || path.join(process.env.HOME || os.homedir(), 'AppData', 'Roaming');
+    return path.join(base, candidatePath.replace('%APPDATA%', '').replace(LEADING_SLASHES, ''));
+  }
+  if (candidatePath.startsWith('%USERPROFILE%')) {
+    /* v8 ignore next */
+    const base = process.env.USERPROFILE || process.env.HOME || os.homedir();
+    return path.join(base, candidatePath.replace('%USERPROFILE%', '').replace(LEADING_SLASHES, ''));
+  }
+  return candidatePath;
+}
 
 /**
  * Get standard config file paths for an agent.
@@ -58,23 +82,8 @@ export async function findAgentConfigPath(agentName: string): Promise<string | n
     return null;
   }
 
-  for (const p of paths) {
-    let resolvedPath = p;
-    if (p.startsWith('~')) {
-      resolvedPath = path.join(process.env.HOME || os.homedir(), p.slice(1));
-    } else if (p.startsWith('%APPDATA%')) {
-      const base =
-        process.env.APPDATA || path.join(process.env.HOME || os.homedir(), 'AppData', 'Roaming');
-      resolvedPath = path.join(base, p.replace('%APPDATA%', '').replace(/^\/+/, ''));
-    } else if (p.startsWith('%USERPROFILE%')) {
-      // The ~ branch checks HOME/.claude first; on POSIX this
-      // sub-branch (HOME unset -> os.homedir()) is unreachable because ~ would
-      // have already resolved to the same path. On Windows where ~ paths may
-      // not exist, this fallback is valid but untestable here.
-      /* v8 ignore next */
-      const base = process.env.USERPROFILE || process.env.HOME || os.homedir();
-      resolvedPath = path.join(base, p.replace('%USERPROFILE%', '').replace(/^\/+/, ''));
-    }
+  for (const candidatePath of paths) {
+    const resolvedPath = resolveConfigPath(candidatePath);
 
     try {
       await fs.access(resolvedPath);

@@ -1,4 +1,3 @@
-// src/timeout.ts
 /**
  * Wrap a promise with a timeout.
  * Rejects with a TimeoutError if the promise doesn't settle within `ms`.

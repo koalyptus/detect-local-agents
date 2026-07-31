@@ -4,6 +4,13 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { getPlatform } from './detect/platform.js';
 
+/** Timeout for quick CLI probes (npm config, which/where). */
+const NPM_TIMEOUT = 3000;
+const COMMAND_TIMEOUT = 5000;
+
+/** Matches a dotted version string like "1.0.76" or "1.0.76.1". */
+const VERSION_REGEX = /(\d+\.\d+(?:\.\d+)*)/;
+
 const execAsync = promisify(execCb);
 const execFileAsync = promisify(execFile);
 
@@ -15,7 +22,7 @@ async function getNpmPrefix(): Promise<string | null> {
   }
   try {
     const { stdout } = await execFileAsync('npm', ['config', 'get', 'prefix'], {
-      timeout: 3000,
+      timeout: NPM_TIMEOUT,
     });
     return stdout.trim() || null;
   } catch {
@@ -61,7 +68,7 @@ async function resolveWindowsShim(binary: string): Promise<string | null> {
 export async function which(name: string): Promise<string | null> {
   const cmd = getPlatform() === 'win32' ? 'where' : 'which';
   try {
-    const { stdout } = await execFileAsync(cmd, [name], { timeout: 5000 });
+    const { stdout } = await execFileAsync(cmd, [name], { timeout: COMMAND_TIMEOUT });
     // Split on CRLF or LF and take the first match. A plain split('\n') leaves
     // a trailing \r on Windows multi-match output (C:\node.exe\r), which breaks
     // any later path operations.
@@ -108,10 +115,10 @@ export async function getVersion(
     // shell and an args array triggers Node 22's DEP0190 and doesn't quote
     // spaces in the path correctly.
     const { stdout } = needsShell
-      ? await execAsync(`"${resolved}" ${args.join(' ')}`, { timeout: 5000 })
-      : await execFileAsync(resolved, args, { timeout: 5000 });
+      ? await execAsync(`"${resolved}" ${args.join(' ')}`, { timeout: COMMAND_TIMEOUT })
+      : await execFileAsync(resolved, args, { timeout: COMMAND_TIMEOUT });
     // Match dotted segments only (no trailing dot): "1.0.76." -> "1.0.76".
-    const match = stdout.trim().match(/(\d+\.\d+(?:\.\d+)*)/);
+    const match = stdout.trim().match(VERSION_REGEX);
     return match?.[1] ?? stdout.trim();
   } catch {
     return null;

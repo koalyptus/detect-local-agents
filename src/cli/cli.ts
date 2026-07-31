@@ -8,8 +8,8 @@ export interface CliResult {
   exitCode: number;
 }
 
-function writeStdout(s: string): void {
-  process.stdout.write(s);
+function writeStdout(text: string): void {
+  process.stdout.write(text);
 }
 
 function writeStderr(s: string): void {
@@ -17,7 +17,7 @@ function writeStderr(s: string): void {
 }
 
 function filterAgents(agents: DetectedAgent[], opts: { configuredOnly: boolean }): DetectedAgent[] {
-  return opts.configuredOnly ? agents.filter((a) => a.isConfigured) : agents;
+  return opts.configuredOnly ? agents.filter((agent) => agent.isConfigured) : agents;
 }
 
 /**
