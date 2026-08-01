@@ -78,7 +78,7 @@ export const detectorConfigs: DetectorConfig[] = [
   },
   {
     name: 'tabnine',
-    binary: 'tabnine',
+    binary: 'stardrop',
   },
   {
     name: 'kimi-code',

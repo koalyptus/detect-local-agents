@@ -17,7 +17,7 @@ describe('detectorConfigs', () => {
   it('includes tabnine config entry', () => {
     const tabnineConfig = detectorConfigs.find((c) => c.name === 'tabnine');
     expect(tabnineConfig).toBeDefined();
-    expect(tabnineConfig?.binary).toBe('tabnine');
+    expect(tabnineConfig?.binary).toBe('stardrop');
   });
 
   it('includes ollama config entry', () => {
