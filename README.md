@@ -105,8 +105,67 @@ interface DetectedAgent {
   version?: string; // detected version
   isConfigured?: boolean; // has auth ready
   isACPAgent?: boolean; // needs acpx to run
+  metadata?: Record<string, unknown>; // extra info from file-based detectors
 }
 ```
+
+## API Reference
+
+Everything below is exported from the package root (`import { ... } from 'detect-local-agents'`).
+
+### `detectAgents()`
+
+```typescript
+async function detectAgents(): Promise<DetectedAgent[]>;
+```
+
+Detects all locally installed AI agents. Runs every registered detector (config-based and file-based) in parallel and returns the agents that were found. Detectors that error or time out (10s per detector) are skipped silently. Returns an empty array when nothing is installed.
+
+### `DetectedAgent`
+
+See [DetectedAgent](#detectedagent) above.
+
+### `AgentDetector`
+
+```typescript
+interface AgentDetector {
+  name: string;
+  detect(): Promise<DetectedAgent | null>;
+}
+```
+
+A custom detector: returns a `DetectedAgent` when the agent is present, `null` otherwise.
+
+### `DetectorConfig`
+
+```typescript
+interface DetectorConfig {
+  name: string;
+  binary: string; // command name to look up in PATH
+  versionArgs?: string[]; // args for --version, default ['--version']
+  configEnvVars?: string[]; // env vars that indicate the agent is configured
+  configDir?: string; // ~/.agent style dir; presence marks it configured
+  isACPAgent?: boolean; // true if the agent is ACP-only and needs acpx
+}
+```
+
+The shape of each entry in `detectorConfigs`.
+
+### `detectorConfigs`
+
+```typescript
+const detectorConfigs: DetectorConfig[];
+```
+
+The built-in registry of simple config-based detectors. Add a new simple agent here — see [Adding a New Agent](#adding-a-new-agent).
+
+### `isAgentDetector()`
+
+```typescript
+function isAgentDetector(obj: unknown): obj is AgentDetector;
+```
+
+Type guard for runtime-validating that an object implements the `AgentDetector` interface.
 
 ## Adding a New Agent
 

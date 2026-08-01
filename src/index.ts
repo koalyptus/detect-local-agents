@@ -12,6 +12,8 @@ export { detectorConfigs } from './configs.js';
  */
 export async function detectAgents(): Promise<DetectedAgent[]> {
   const detectors = await loadAllDetectors();
-  const results = await Promise.all(detectors.map((d) => d.detect().catch(() => null)));
+  const results = await Promise.all(
+    detectors.map((detector) => detector.detect().catch(() => null)),
+  );
   return results.filter((a): a is DetectedAgent => a !== null);
 }

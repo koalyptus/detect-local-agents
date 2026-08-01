@@ -2,12 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
 import { which, getVersion } from '../../src/detect.js';
 import { getPlatform } from '../../src/detect/platform.js';
-import { execFile } from 'node:child_process';
+import { exec, execFile } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 
 vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
+  exec: vi.fn(),
 }));
 
 vi.mock('node:fs/promises', () => ({
@@ -19,6 +20,7 @@ vi.mock('../../src/detect/platform.js', () => ({
 }));
 
 const mockExecFile = vi.mocked(execFile);
+const mockExec = vi.mocked(exec);
 const mockAccess = vi.mocked(access);
 const mockPlatform = vi.mocked(getPlatform);
 const mockChildProcess = {} as ChildProcess;
@@ -106,6 +108,36 @@ describe('which', () => {
     );
   });
 
+  it('handles CRLF output from where on win32', async () => {
+    mockPlatform.mockReturnValue('win32');
+
+    // Windows where.exe returns multiple matches joined by \r\n; a plain
+    // split('\n') would keep a trailing \r on the first path.
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: 'C:\\node.exe\r\nC:\\tools\\node.exe\r\n', stderr: '' });
+      }
+      return mockChildProcess;
+    });
+
+    const path = await which('node');
+    expect(path).toBe('C:\\node.exe');
+  });
+
+  it('returns first match only when where returns multiple lines', async () => {
+    mockPlatform.mockReturnValue('win32');
+
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: 'C:\\first.exe\nC:\\second.exe\n', stderr: '' });
+      }
+      return mockChildProcess;
+    });
+
+    const path = await which('node');
+    expect(path).toBe('C:\\first.exe');
+  });
+
   describe('npm global prefix fallback', () => {
     beforeEach(() => {
       // Make which/where command fail so we fall through to npm prefix
@@ -158,12 +190,40 @@ describe('which', () => {
       const path = await which('my-agent');
       expect(path).toBe(join('C:\\node-prefix', 'my-agent'));
     });
+
+    it('finds .cmd shim when bare name is missing on win32', async () => {
+      mockPlatform.mockReturnValue('win32');
+
+      process.env.npm_config_prefix = 'C:\\node-prefix';
+      // Bare name doesn't exist; the .cmd shim does (npm on Windows installs
+      // claude.cmd rather than extension-less binaries).
+      mockAccess.mockRejectedValueOnce(new Error('ENOENT')).mockResolvedValueOnce(undefined);
+
+      const path = await which('my-agent');
+      expect(path).toBe(join('C:\\node-prefix', 'my-agent.cmd'));
+    });
+
+    it('finds .exe shim when bare name and .cmd are missing on win32', async () => {
+      mockPlatform.mockReturnValue('win32');
+
+      process.env.npm_config_prefix = 'C:\\node-prefix';
+      mockAccess
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockRejectedValueOnce(new Error('ENOENT'))
+        .mockResolvedValueOnce(undefined);
+
+      const path = await which('my-agent');
+      expect(path).toBe(join('C:\\node-prefix', 'my-agent.exe'));
+    });
   });
 });
 
 describe('getVersion', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Pin to a non-win32 platform so existing tests are deterministic on every
+    // CI runner; Windows shim behavior has dedicated tests below.
+    mockPlatform.mockReturnValue('linux');
   });
 
   it('gets node version', async () => {
@@ -218,5 +278,100 @@ describe('getVersion', () => {
       expect.anything(),
       expect.anything(),
     );
+  });
+
+  it('strips trailing dot from version output', async () => {
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: '1.0.76.\n', stderr: '' });
+      }
+      return mockChildProcess;
+    });
+
+    const version = await getVersion('copilot', ['--version']);
+    expect(version).toBe('1.0.76');
+  });
+
+  describe('on win32', () => {
+    beforeEach(() => {
+      mockPlatform.mockReturnValue('win32');
+    });
+
+    it('spawns .exe directly without a shell', async () => {
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(null, { stdout: 'v3.2.1\n', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+
+      const version = await getVersion('C:\\tools\\copilot.exe', ['--version']);
+      expect(version).toBe('3.2.1');
+      expect(mockExecFile).toHaveBeenCalledWith(
+        'C:\\tools\\copilot.exe',
+        ['--version'],
+        expect.not.objectContaining({ shell: true }),
+        expect.anything(),
+      );
+    });
+
+    it('resolves npm .cmd shim and runs through the shell', async () => {
+      // Only the .cmd shim exists (npm installs copilot, copilot.cmd).
+      mockAccess.mockImplementation(async (p) => {
+        if (String(p).endsWith('.cmd')) {
+          return undefined;
+        }
+        throw new Error('ENOENT');
+      });
+      mockExec.mockImplementation((_cmd, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(null, { stdout: 'v1.0.76\n', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+
+      const version = await getVersion('C:\\Program Files\\nodejs\\copilot', ['--version']);
+      expect(version).toBe('1.0.76');
+      // exec() (not execFile) — single command string, no DEP0190, proper quoting
+      expect(mockExec).toHaveBeenCalledWith(
+        '"C:\\Program Files\\nodejs\\copilot.cmd" --version',
+        expect.objectContaining({ timeout: 5000 }),
+        expect.anything(),
+      );
+      expect(mockExecFile).not.toHaveBeenCalled();
+    });
+
+    it('falls back to bare path when no shim exists', async () => {
+      // No .cmd/.exe on disk; the bare launcher itself exists.
+      mockAccess.mockImplementation(async (p) => {
+        if (String(p).endsWith('.cmd') || String(p).endsWith('.exe')) {
+          throw new Error('ENOENT');
+        }
+        return undefined;
+      });
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(null, { stdout: 'v2.0.0\n', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+
+      const version = await getVersion('C:\\bin\\mytool', []);
+      expect(version).toBe('2.0.0');
+      expect(mockExecFile).toHaveBeenCalledWith(
+        'C:\\bin\\mytool',
+        [],
+        expect.not.objectContaining({ shell: true }),
+        expect.anything(),
+      );
+    });
+
+    it('returns null when no resolvable shim exists', async () => {
+      mockAccess.mockRejectedValue(new Error('ENOENT'));
+
+      const version = await getVersion('C:\\missing\\tool', []);
+      expect(version).toBeNull();
+      expect(mockExecFile).not.toHaveBeenCalled();
+    });
   });
 });
