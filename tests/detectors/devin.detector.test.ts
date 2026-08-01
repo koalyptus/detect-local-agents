@@ -1,14 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import * as fs from 'node:fs/promises';
+import devinDetector from '../../src/detectors/devin.detector.js';
 
 vi.mock('node:fs/promises', () => ({
   access: vi.fn(),
 }));
 
-import * as fs from 'node:fs/promises';
-
 const mockFsAccess = vi.mocked(fs.access);
-
-import devinDetector from '../../src/detectors/devin.detector.js';
 
 describe('devin detector', () => {
   beforeEach(() => {

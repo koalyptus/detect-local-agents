@@ -1,16 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { which, getVersion } from '../../src/detect.js';
+import junieDetector from '../../src/detectors/junie.detector.js';
 
 vi.mock('../../src/detect.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
 }));
 
-import { which, getVersion } from '../../src/detect.js';
-
 const mockWhich = vi.mocked(which);
 const mockGetVersion = vi.mocked(getVersion);
-
-import junieDetector from '../../src/detectors/junie.detector.js';
 
 describe('junie detector', () => {
   beforeEach(() => {

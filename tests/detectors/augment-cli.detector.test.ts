@@ -1,16 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { which, getVersion } from '../../src/detect.js';
+import augmentDetector from '../../src/detectors/augment-cli.detector.js';
 
 vi.mock('../../src/detect.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
 }));
 
-import { which, getVersion } from '../../src/detect.js';
-
 const mockWhich = vi.mocked(which);
 const mockGetVersion = vi.mocked(getVersion);
-
-import augmentDetector from '../../src/detectors/augment-cli.detector.js';
 
 describe('augment-cli detector', () => {
   beforeEach(() => {
