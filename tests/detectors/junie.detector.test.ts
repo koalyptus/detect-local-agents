@@ -35,6 +35,15 @@ describe('junie detector', () => {
     expect(result?.isConfigured).toBe(false);
   });
 
+  it('returns agent with undefined version when getVersion returns null', async () => {
+    mockWhich.mockResolvedValue('/usr/bin/junie');
+    mockGetVersion.mockResolvedValue(null);
+
+    const result = await junieDetector.detect();
+    expect(result?.name).toBe('junie');
+    expect(result?.version).toBeUndefined();
+  });
+
   it('returns configured when JUNIE_DATA is set', async () => {
     mockWhich.mockResolvedValue('/usr/bin/junie');
     mockGetVersion.mockResolvedValue('1.0.0');

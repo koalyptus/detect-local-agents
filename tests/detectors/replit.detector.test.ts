@@ -34,6 +34,15 @@ describe('replit detector', () => {
     expect(result?.isConfigured).toBe(false);
   });
 
+  it('returns agent with undefined version when getVersion returns null', async () => {
+    mockWhich.mockResolvedValue('/usr/bin/replit');
+    mockGetVersion.mockResolvedValue(null);
+
+    const result = await replitDetector.detect();
+    expect(result?.name).toBe('replit');
+    expect(result?.version).toBeUndefined();
+  });
+
   it('returns configured when REPL_ID is set', async () => {
     mockWhich.mockResolvedValue('/usr/bin/replit');
     mockGetVersion.mockResolvedValue('0.3.1');

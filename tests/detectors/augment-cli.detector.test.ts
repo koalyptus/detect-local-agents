@@ -34,6 +34,15 @@ describe('augment-cli detector', () => {
     expect(result?.isConfigured).toBe(false);
   });
 
+  it('returns agent with undefined version when getVersion returns null', async () => {
+    mockWhich.mockResolvedValue('/usr/bin/auggie');
+    mockGetVersion.mockResolvedValue(null);
+
+    const result = await augmentDetector.detect();
+    expect(result?.name).toBe('augment-cli');
+    expect(result?.version).toBeUndefined();
+  });
+
   it('returns configured when AUGMENT_AGENT is set', async () => {
     mockWhich.mockResolvedValue('/usr/bin/auggie');
     mockGetVersion.mockResolvedValue('1.0.0');
