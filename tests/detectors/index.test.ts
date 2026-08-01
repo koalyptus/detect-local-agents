@@ -109,11 +109,15 @@ describe('detectors/index', () => {
   });
 
   it('configDir fallback returns false when config dir is missing', async () => {
-    const detectors = await loadAllDetectors();
-    const githubCopilot = detectors.find((d) => d.name === 'github-copilot');
-    expect(githubCopilot).toBeDefined();
+    // Use configToDetector directly with a non-existent dir to avoid
+    // depending on what's actually installed on the test machine.
+    const detector = configToDetector({
+      name: 'test-missing-dir',
+      binary: 'node',
+      configDir: '~/.nonexistent-config-dir',
+    });
 
-    const result = await githubCopilot!.detect();
+    const result = await detector.detect();
     expect(result).toBeDefined();
     expect(result!.isConfigured).toBe(false);
   });
@@ -142,11 +146,14 @@ describe('detectors/index', () => {
   });
 
   it('configToDetector handles configDir with ~ prefix', async () => {
-    const detectors = await loadAllDetectors();
-    const githubCopilot = detectors.find((d) => d.name === 'github-copilot');
-    expect(githubCopilot).toBeDefined();
+    // Test the ~ branch of configDir handling with a path that won't exist
+    const detector = configToDetector({
+      name: 'test-tilde-dir',
+      binary: 'node',
+      configDir: '~/.nonexistent-config-dir',
+    });
 
-    const result = await githubCopilot!.detect();
+    const result = await detector.detect();
     expect(result).toBeDefined();
     expect(result!.isConfigured).toBe(false);
   });
