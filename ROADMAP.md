@@ -65,7 +65,7 @@
 - [x] Rename `copilot` → `github-copilot` to match Vercel's spec
 - [x] Add new detectors: devin, replit, cowork, augment-cli, junie, cursor-cli
 - [x] Tests for all new detectors and sync script
-- [ ] PR
+- [x] PR
 
 ### Phase 6c: Polish & Ship
 
