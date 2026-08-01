@@ -6,6 +6,11 @@ import type { DetectorConfig } from './types.js';
  */
 export const detectorConfigs: DetectorConfig[] = [
   {
+    name: 'cowork',
+    binary: 'claude',
+    configEnvVars: ['CLAUDE_CODE_IS_COWORK'],
+  },
+  {
     name: 'claude',
     binary: 'claude',
     configEnvVars: ['ANTHROPIC_API_KEY', 'CLAUDE_API_KEY'],
@@ -33,7 +38,7 @@ export const detectorConfigs: DetectorConfig[] = [
     configDir: '~/.hermes',
   },
   {
-    name: 'copilot',
+    name: 'github-copilot',
     binary: 'copilot',
     // Uses GitHub auth - no simple env var check
   },

@@ -1,0 +1,45 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('../../src/detect.js', () => ({
+  which: vi.fn(),
+  getVersion: vi.fn(),
+}));
+
+import { which, getVersion } from '../../src/detect.js';
+
+const mockWhich = vi.mocked(which);
+const mockGetVersion = vi.mocked(getVersion);
+
+import replitDetector from '../../src/detectors/replit.detector.js';
+
+describe('replit detector', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    delete process.env['REPL_ID'];
+  });
+
+  it('returns null when replit not found', async () => {
+    mockWhich.mockResolvedValue(null);
+    expect(await replitDetector.detect()).toBeNull();
+  });
+
+  it('returns agent when replit found (not configured)', async () => {
+    mockWhich.mockResolvedValue('/usr/bin/replit');
+    mockGetVersion.mockResolvedValue('0.3.1');
+
+    const result = await replitDetector.detect();
+    expect(result?.name).toBe('replit');
+    expect(result?.binary).toBe('/usr/bin/replit');
+    expect(result?.version).toBe('0.3.1');
+    expect(result?.isConfigured).toBe(false);
+  });
+
+  it('returns configured when REPL_ID is set', async () => {
+    mockWhich.mockResolvedValue('/usr/bin/replit');
+    mockGetVersion.mockResolvedValue('0.3.1');
+    process.env['REPL_ID'] = 'abc-123';
+
+    const result = await replitDetector.detect();
+    expect(result?.isConfigured).toBe(true);
+  });
+});

@@ -2,26 +2,26 @@ import type { AgentDetector, DetectedAgent } from '../types.js';
 import { which, getVersion } from '../detect.js';
 
 const detector: AgentDetector = {
-  name: 'cursor',
+  name: 'junie',
 
   async detect(): Promise<DetectedAgent | null> {
-    const binary = await which('cursor-agent');
+    const binary = await which('junie');
     if (!binary) {
       return null;
     }
 
     const version = (await getVersion(binary)) ?? undefined;
 
-    // Vercel's cursor-cli detection: CURSOR_AGENT env or CURSOR_EXTENSION_HOST_ROLE=agent-exec
-    const isCursorCli =
-      !!process.env['CURSOR_AGENT'] ||
-      process.env['CURSOR_EXTENSION_HOST_ROLE'] === 'agent-exec';
+    // Vercel's spec uses env_set JUNIE_DATA | JUNIE_SHIM_PATH
+    const isConfigured = !!(
+      process.env['JUNIE_DATA'] ?? process.env['JUNIE_SHIM_PATH']
+    );
 
     return {
-      name: isCursorCli ? 'cursor-cli' : 'cursor',
+      name: 'junie',
       binary,
       version,
-      isACPAgent: true,
+      isConfigured,
     };
   },
 };

@@ -110,10 +110,10 @@ describe('detectors/index', () => {
 
   it('configDir fallback returns false when config dir is missing', async () => {
     const detectors = await loadAllDetectors();
-    const copilot = detectors.find((d) => d.name === 'copilot');
-    expect(copilot).toBeDefined();
+    const githubCopilot = detectors.find((d) => d.name === 'github-copilot');
+    expect(githubCopilot).toBeDefined();
 
-    const result = await copilot!.detect();
+    const result = await githubCopilot!.detect();
     expect(result).toBeDefined();
     expect(result!.isConfigured).toBe(false);
   });
@@ -143,10 +143,10 @@ describe('detectors/index', () => {
 
   it('configToDetector handles configDir with ~ prefix', async () => {
     const detectors = await loadAllDetectors();
-    const copilot = detectors.find((d) => d.name === 'copilot');
-    expect(copilot).toBeDefined();
+    const githubCopilot = detectors.find((d) => d.name === 'github-copilot');
+    expect(githubCopilot).toBeDefined();
 
-    const result = await copilot!.detect();
+    const result = await githubCopilot!.detect();
     expect(result).toBeDefined();
     expect(result!.isConfigured).toBe(false);
   });

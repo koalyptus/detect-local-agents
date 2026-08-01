@@ -56,15 +56,15 @@
 
 ### Phase 6a: Reference & Sync
 
-- [ ] Vendor `agents.json` + `agents.schema.json` from Vercel's detect-agent repo
-- [ ] Add `scripts/sync-vercel-agents.sh` for upstream sync
-- [ ] Add `.github/workflows/check-vercel-detect-agents.yml` (fortnightly check)
+- [x] Vendor `agents.json` + `agents.schema.json` from Vercel's detect-agent repo
+- [x] Add `scripts/sync-vercel-agents.sh` for upstream sync
+- [x] Add `.github/workflows/check-vercel-detect-agents.yml` (fortnightly check)
 
 ### Phase 6b: New Detectors
 
-- [ ] Rename `copilot` → `github-copilot` to match Vercel's spec
-- [ ] Add new detectors: devin, replit, cowork, augment-cli, junie, cursor-cli
-- [ ] Tests for all new detectors and sync script
+- [x] Rename `copilot` → `github-copilot` to match Vercel's spec
+- [x] Add new detectors: devin, replit, cowork, augment-cli, junie, cursor-cli
+- [x] Tests for all new detectors and sync script
 - [ ] PR
 
 ### Phase 6c: Polish & Ship

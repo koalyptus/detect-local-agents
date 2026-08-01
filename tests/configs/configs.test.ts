@@ -73,4 +73,27 @@ describe('detectorConfigs', () => {
     expect(config?.configDir).toBe('~/.aider');
     expect(config?.configEnvVars).toContain('AIDER_ANTHROPIC_API_KEY');
   });
+
+  describe('Phase 6: Vercel integration', () => {
+    it('includes cowork config entry before claude', () => {
+      const coworkIdx = detectorConfigs.findIndex((c) => c.name === 'cowork');
+      const claudeIdx = detectorConfigs.findIndex((c) => c.name === 'claude');
+      expect(coworkIdx).toBeGreaterThanOrEqual(0);
+      expect(claudeIdx).toBeGreaterThanOrEqual(0);
+      expect(coworkIdx).toBeLessThan(claudeIdx);
+    });
+
+    it('cowork uses claude binary with CLAUDE_CODE_IS_COWORK env', () => {
+      const config = detectorConfigs.find((c) => c.name === 'cowork');
+      expect(config?.binary).toBe('claude');
+      expect(config?.configEnvVars).toContain('CLAUDE_CODE_IS_COWORK');
+    });
+
+    it('github-copilot replaces copilot', () => {
+      const config = detectorConfigs.find((c) => c.name === 'github-copilot');
+      expect(config).toBeDefined();
+      expect(config?.binary).toBe('copilot');
+      expect(detectorConfigs.find((c) => c.name === 'copilot')).toBeUndefined();
+    });
+  });
 });

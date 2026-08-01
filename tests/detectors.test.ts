@@ -32,6 +32,8 @@ describe('cursor detector', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockWhich.mockResolvedValue(null);
+    delete process.env['CURSOR_AGENT'];
+    delete process.env['CURSOR_EXTENSION_HOST_ROLE'];
   });
 
   it('returns null when cursor-agent not found', async () => {
@@ -46,7 +48,7 @@ describe('cursor detector', () => {
     expect(result).toBeNull();
   });
 
-  it('returns agent when cursor-agent found', async () => {
+  it('returns cursor when cursor-agent found (no env vars)', async () => {
     mockWhich.mockImplementation(async (name) => {
       if (name === 'cursor-agent') {
         return '/usr/bin/cursor-agent';
@@ -58,6 +60,24 @@ describe('cursor detector', () => {
     expect(result).not.toBeNull();
     expect(result?.name).toBe('cursor');
     expect(result?.binary).toBe('/usr/bin/cursor-agent');
+    expect(result?.isACPAgent).toBe(true);
+  });
+
+  it('returns cursor-cli when CURSOR_AGENT env is set', async () => {
+    mockWhich.mockResolvedValue('/usr/bin/cursor-agent');
+    process.env['CURSOR_AGENT'] = 'true';
+
+    const result = await cursorDetector.detect();
+    expect(result?.name).toBe('cursor-cli');
+    expect(result?.isACPAgent).toBe(true);
+  });
+
+  it('returns cursor-cli when CURSOR_EXTENSION_HOST_ROLE is agent-exec', async () => {
+    mockWhich.mockResolvedValue('/usr/bin/cursor-agent');
+    process.env['CURSOR_EXTENSION_HOST_ROLE'] = 'agent-exec';
+
+    const result = await cursorDetector.detect();
+    expect(result?.name).toBe('cursor-cli');
     expect(result?.isACPAgent).toBe(true);
   });
 });
