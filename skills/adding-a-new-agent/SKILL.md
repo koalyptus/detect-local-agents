@@ -1,6 +1,6 @@
 ---
 name: adding-a-new-agent
-description: "Add detection for a new AI agent: config entry or file-based detector."
+description: 'Add detection for a new AI agent: config entry or file-based detector.'
 license: MIT
 metadata:
   tags: [AI Agents, Detection, TypeScript, Contribution]
@@ -12,9 +12,9 @@ Add detection for a new AI agent to `detect-local-agents`.
 
 ## Quick Decision
 
-| Condition | Path |
-|-----------|------|
-| Agent has a binary in PATH + simple config check | [Config entry](#config-entry) |
+| Condition                                                | Path                                        |
+| -------------------------------------------------------- | ------------------------------------------- |
+| Agent has a binary in PATH + simple config check         | [Config entry](#config-entry)               |
 | Agent needs custom logic (file probes, env markers, pip) | [File-based detector](#file-based-detector) |
 
 When in doubt, start with a config entry. It's one object literal and zero new files.
@@ -45,10 +45,10 @@ Add an entry to `src/configs.ts` in the `detectorConfigs` array. The entry is au
 
 ### Configured meaning
 
-| Output | Meaning |
-|--------|---------|
-| `isConfigured: true` | Auth tokens set, config files present, or config dir exists |
-| `isConfigured: false` | Binary found on disk but no sign of user setup |
+| Output                | Meaning                                                     |
+| --------------------- | ----------------------------------------------------------- |
+| `isConfigured: true`  | Auth tokens set, config files present, or config dir exists |
+| `isConfigured: false` | Binary found on disk but no sign of user setup              |
 
 ### nameResolver (rare)
 
@@ -106,11 +106,11 @@ export default detector;
 
 ### Common patterns
 
-| Pattern | Example |
-|---------|---------|
-| Binary + env var | `augment-cli.detector.ts` — `which('auggie')` + `AUGMENT_AGENT` |
-| File existence | `devin.detector.ts` — `fs.access('/opt/.devin')` |
-| Binary + multiple env | `junie.detector.ts` — `JUNIE_DATA` or `JUNIE_SHIM_PATH` |
+| Pattern                | Example                                                             |
+| ---------------------- | ------------------------------------------------------------------- |
+| Binary + env var       | `augment-cli.detector.ts` — `which('auggie')` + `AUGMENT_AGENT`     |
+| File existence         | `devin.detector.ts` — `fs.access('/opt/.devin')`                    |
+| Binary + multiple env  | `junie.detector.ts` — `JUNIE_DATA` or `JUNIE_SHIM_PATH`             |
 | Binary + name override | `cursor.detector.ts` — returns `cursor-cli` when `CURSOR_AGENT` set |
 
 ### Available helpers from `src/detect.js`
