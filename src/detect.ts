@@ -6,7 +6,7 @@ import { getPlatform } from './detect/platform.js';
 
 /** Timeout for quick CLI probes (npm config, which/where). */
 const NPM_TIMEOUT = 3000;
-const COMMAND_TIMEOUT = 5000;
+const COMMAND_TIMEOUT = 10_000;
 
 /** Matches a dotted version string like "1.0.76" or "1.0.76.1". */
 const VERSION_REGEX = /(\d+\.\d+(?:\.\d+)*)/;

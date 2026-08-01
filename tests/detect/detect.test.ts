@@ -335,7 +335,7 @@ describe('getVersion', () => {
       // exec() (not execFile) — single command string, no DEP0190, proper quoting
       expect(mockExec).toHaveBeenCalledWith(
         '"C:\\Program Files\\nodejs\\copilot.cmd" --version',
-        expect.objectContaining({ timeout: 5000 }),
+        expect.objectContaining({ timeout: 10_000 }),
         expect.anything(),
       );
       expect(mockExecFile).not.toHaveBeenCalled();
