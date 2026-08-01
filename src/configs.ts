@@ -38,7 +38,7 @@ export const detectorConfigs: DetectorConfig[] = [
     binary: 'copilot',
     // GitHub Copilot auth is managed by gh CLI or VS Code extension
     configEnvVars: ['GITHUB_TOKEN', 'GH_TOKEN'],
-    configDir: '~/.config/github-copilot',
+    configDir: '~/.copilot',
   },
   {
     name: 'pi',
