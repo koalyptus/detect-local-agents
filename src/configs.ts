@@ -10,8 +10,7 @@ export const detectorConfigs: DetectorConfig[] = [
     binary: 'claude',
     configEnvVars: ['ANTHROPIC_API_KEY', 'CLAUDE_API_KEY'],
     configDir: '~/.claude',
-    nameResolver: (env) =>
-      env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude',
+    nameResolver: (env) => (env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude'),
   },
   {
     name: 'codex',
