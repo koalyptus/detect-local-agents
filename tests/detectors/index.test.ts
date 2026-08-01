@@ -177,6 +177,24 @@ describe('detectors/index', () => {
     expect(result!.isConfigured).toBe(false);
   });
 
+  it('configToDetector uses nameResolver when provided', async () => {
+    const detector = configToDetector({
+      name: 'claude',
+      binary: 'node', // always available
+      nameResolver: (env) => (env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude'),
+    });
+
+    // Without env var: returns 'claude'
+    const result1 = await detector.detect();
+    expect(result1?.name).toBe('claude');
+
+    // With env var: returns 'cowork'
+    process.env['CLAUDE_CODE_IS_COWORK'] = 'true';
+    const result2 = await detector.detect();
+    expect(result2?.name).toBe('cowork');
+    delete process.env['CLAUDE_CODE_IS_COWORK'];
+  });
+
   it('detect returns version from getVersion', async () => {
     // default: getVersion returns '1.0.0'
     const detectors = await loadAllDetectors();

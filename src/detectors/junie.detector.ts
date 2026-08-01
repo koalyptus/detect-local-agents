@@ -13,9 +13,7 @@ const detector: AgentDetector = {
     const version = (await getVersion(binary)) ?? undefined;
 
     // Vercel's spec uses env_set JUNIE_DATA | JUNIE_SHIM_PATH
-    const isConfigured = !!(
-      process.env['JUNIE_DATA'] ?? process.env['JUNIE_SHIM_PATH']
-    );
+    const isConfigured = !!(process.env['JUNIE_DATA'] ?? process.env['JUNIE_SHIM_PATH']);
 
     return {
       name: 'junie',

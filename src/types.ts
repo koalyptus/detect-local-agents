@@ -23,4 +23,6 @@ export interface DetectorConfig {
   configEnvVars?: string[];
   configDir?: string;
   isACPAgent?: boolean;
+  /** Override the detected agent name based on runtime env. */
+  nameResolver?: (env: Record<string, string | undefined>) => string;
 }

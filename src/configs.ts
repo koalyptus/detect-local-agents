@@ -6,15 +6,12 @@ import type { DetectorConfig } from './types.js';
  */
 export const detectorConfigs: DetectorConfig[] = [
   {
-    name: 'cowork',
-    binary: 'claude',
-    configEnvVars: ['CLAUDE_CODE_IS_COWORK'],
-  },
-  {
     name: 'claude',
     binary: 'claude',
     configEnvVars: ['ANTHROPIC_API_KEY', 'CLAUDE_API_KEY'],
     configDir: '~/.claude',
+    nameResolver: (env) =>
+      env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude',
   },
   {
     name: 'codex',

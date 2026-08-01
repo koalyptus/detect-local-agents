@@ -2,7 +2,7 @@ name: Check Vercel detect-agent for updates
 
 on:
   schedule:
-    - cron: '0 9 1,15 * *'  # 1st and 15th of each month
+    - cron: '0 9 1,15 * *' # 1st and 15th of each month
   workflow_dispatch:
 
 jobs:

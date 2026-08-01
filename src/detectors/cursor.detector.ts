@@ -14,8 +14,7 @@ const detector: AgentDetector = {
 
     // Vercel's cursor-cli detection: CURSOR_AGENT env or CURSOR_EXTENSION_HOST_ROLE=agent-exec
     const isCursorCli =
-      !!process.env['CURSOR_AGENT'] ||
-      process.env['CURSOR_EXTENSION_HOST_ROLE'] === 'agent-exec';
+      !!process.env['CURSOR_AGENT'] || process.env['CURSOR_EXTENSION_HOST_ROLE'] === 'agent-exec';
 
     return {
       name: isCursorCli ? 'cursor-cli' : 'cursor',

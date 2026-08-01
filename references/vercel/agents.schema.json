@@ -43,10 +43,7 @@
         "description": { "type": "string" },
         "match": {
           "description": "The condition that detects this agent. Always a combinator (`anyOf`/`allOf`) so every agent's match has a uniform `conditions` array; wrap a single leaf in `anyOf`.",
-          "oneOf": [
-            { "$ref": "#/definitions/anyOf" },
-            { "$ref": "#/definitions/allOf" }
-          ]
+          "oneOf": [{ "$ref": "#/definitions/anyOf" }, { "$ref": "#/definitions/allOf" }]
         }
       }
     },

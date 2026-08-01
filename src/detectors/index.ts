@@ -59,7 +59,9 @@ export function configToDetector(config: DetectorConfig): AgentDetector {
     }
 
     return {
-      name: config.name,
+      name: config.nameResolver
+        ? config.nameResolver(process.env)
+        : config.name,
       binary,
       version,
       isConfigured,
