@@ -4,6 +4,8 @@ Detect locally installed AI agents in TypeScript. Extensible architecture to eas
 
 ## Use Case
 
+## Use Case
+
 This package detects **what's installed**, not **how to invoke**. Use it for:
 
 - **Setup wizards** — "We detected Claude Code. Want to use Anthropic API?"
@@ -12,6 +14,35 @@ This package detects **what's installed**, not **how to invoke**. Use it for:
 - **UI awareness** — "Detected agents: claude, codex, goose"
 
 The package answers: **"Which providers does this user already have configured?"**
+
+## How Detection Works
+
+Each agent has a **detector** — either a simple config entry or a custom file-based detector. All detectors run in parallel at startup.
+
+### Config-based detectors
+
+Most agents are detected via a simple entry in `src/configs.ts`:
+
+```typescript
+{
+  name: 'ollama',
+  binary: 'ollama',        // binary to find in PATH via `which`/`where`
+  configDir: '~/.ollama',  // optional: directory whose presence = configured
+}
+```
+
+The detection pipeline for each config entry:
+
+1. **Binary check** — run `which` (Unix) or `where` (Windows) to find the binary in PATH. If not found → agent is absent.
+2. **Version probe** — run `<binary> --version` (configurable via `versionArgs`). Timeout: 10 seconds.
+3. **Configured check** — three checks in order; first hit wins:
+   - **Env vars** — are any `configEnvVars` set? (e.g. `ANTHROPIC_API_KEY`)
+   - **Config file** — does `config.json` exist in the agent's config dir?
+   - **Config directory** — does `configDir` exist at all?
+
+### File-based detectors
+
+Agents with non-standard detection logic get a `*.detector.ts` file in `src/detectors/`. These run the same binary check but can use custom probes (file existence, pip packages, environment markers, etc.).
 
 ## Install
 
@@ -100,14 +131,25 @@ Exit codes:
 
 ```typescript
 interface DetectedAgent {
-  name: string; // 'claude', 'codex', 'goose', etc.
-  binary: string; // absolute path
-  version?: string; // detected version
-  isConfigured?: boolean; // has auth ready
+  name: string; // 'claude', 'codex', 'ollama', etc.
+  binary: string; // absolute path to the binary
+  version?: string; // version string from --version (null if probe timed out)
+  isConfigured?: boolean; // has auth/config ready (see below)
   isACPAgent?: boolean; // needs acpx to run
   metadata?: Record<string, unknown>; // extra info from file-based detectors
 }
 ```
+
+### Field details
+
+| Field          | Description                                                                                                                                                                                                                                                                              |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`         | Agent identifier matching Vercel's `detect-agent` spec where applicable.                                                                                                                                                                                                                 |
+| `binary`       | Absolute path to the detected binary. Cross-platform: forward slashes on Unix, backslashes on Windows.                                                                                                                                                                                   |
+| `version`      | Output of `<binary> --version`, parsed for a semver-like string. `null` if the probe timed out (10s) or the binary doesn't support `--version`.                                                                                                                                          |
+| `isConfigured` | `true` if the agent has authentication or config set up. Checked in order: env vars (`ANTHROPIC_API_KEY`, etc.), config file (`config.json` in the agent's config dir), config directory presence. `false` means the binary is installed but there's no sign the user has set it up yet. |
+| `isACPAgent`   | `true` if the agent speaks the Agent Communication Protocol and must be launched through `acpx`.                                                                                                                                                                                         |
+| `metadata`     | Arbitrary data from file-based detectors (e.g. pip package versions, ACP target lists). Not set by config-based detectors.                                                                                                                                                               |
 
 ## API Reference
 
@@ -146,10 +188,12 @@ interface DetectorConfig {
   configEnvVars?: string[]; // env vars that indicate the agent is configured
   configDir?: string; // ~/.agent style dir; presence marks it configured
   isACPAgent?: boolean; // true if the agent is ACP-only and needs acpx
+  nameResolver?: (env: Record<string, string | undefined>) => string;
+  // override the detected name based on runtime env
 }
 ```
 
-The shape of each entry in `detectorConfigs`.
+The shape of each entry in `detectorConfigs`. The optional `nameResolver` allows a single binary to report different agent names depending on environment (e.g. Claude Code reports as "cowork" when `CLAUDE_CODE_IS_COWORK` is set).
 
 ### `detectorConfigs`
 
@@ -198,16 +242,16 @@ const detector: AgentDetector = {
 export default detector;
 ```
 
-## Supported Agents (34 total)
+## Supported Agents
 
-### Simple config entries (25)
+### Config-based
 
-- Claude Code (`claude`)
+- Claude Code (`claude`) — also reports as "cowork" when `CLAUDE_CODE_IS_COWORK` is set
 - Codex (`codex`)
 - OpenCode (`opencode`)
 - Goose (`goose`)
 - Hermes (`hermes`)
-- Copilot (`copilot`)
+- GitHub Copilot (`copilot`)
 - Pi (`pi`)
 - Aider (`aider`)
 - Cline (`cline`)
@@ -228,14 +272,18 @@ export default detector;
 - OpenClaw (`openclaw`)
 - QwenPaw (`qwenpaw`)
 
-### File-based detectors (9)
+### File-based
 
-- Antigravity (`agy` or `gemini`) ⚡ — checks agy first, falls back to gemini
-- Cursor (`cursor-agent`) ⚡ — ACP
-- Rovo Dev (`acli rovodev`) ⚡ — special probe
-- acpx ⚡ — ACP proxy with target listing
+- Cursor (`cursor-agent`) — also reports as "cursor-cli" when in agent-exec mode ⚡
+- Devin — file-based check at `/opt/.devin` ⚡
+- Replit (`replit`) — binary + `REPL_ID` env ⚡
+- Augment CLI (`auggie`) — binary + `AUGMENT_AGENT` env ⚡
+- Junie (`junie`) — binary + `JUNIE_DATA` env ⚡
+- Antigravity (`agy` or `gemini`) ⚡
+- Rovo Dev (`acli rovodev`) ⚡
+- acpx ⚡
 - Orca (`orca`) ⚡
 - Windsurf (`windsurf`/`codeium`) ⚡
-- SWE-agent ⚡ — pip/binary detection
-- mini-coding-agent ⚡ — pip detection
-- OpenHands SDK ⚡ — pip detection
+- SWE-agent ⚡
+- mini-coding-agent ⚡
+- OpenHands SDK ⚡
