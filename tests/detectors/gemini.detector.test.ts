@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { which, getVersion } from '../../src/detect-utils.js';
+import { which, getVersion } from '../../src/detect/utils.js';
 import { access } from 'node:fs/promises';
 import geminiDetector from '../../src/detectors/gemini.detector.js';
 
-vi.mock('../../src/detect-utils.js', () => ({
+vi.mock('../../src/detect/utils.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
 }));

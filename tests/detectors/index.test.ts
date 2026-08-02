@@ -13,7 +13,7 @@ const { mockWhich, mockGetVersion } = vi.hoisted(() => ({
   mockGetVersion: vi.fn<(name: string) => Promise<string | undefined>>(async () => '1.0.0'),
 }));
 
-vi.mock('../../src/detect-utils.js', () => ({
+vi.mock('../../src/detect/utils.js', () => ({
   which: mockWhich,
   getVersion: mockGetVersion,
   getPlatform: vi.fn(() => 'linux'),

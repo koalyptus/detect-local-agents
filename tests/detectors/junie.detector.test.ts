@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { which, getVersion } from '../../src/detect-utils.js';
+import { which, getVersion } from '../../src/detect/utils.js';
 import junieDetector from '../../src/detectors/junie.detector.js';
 
-vi.mock('../../src/detect-utils.js', () => ({
+vi.mock('../../src/detect/utils.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
 }));

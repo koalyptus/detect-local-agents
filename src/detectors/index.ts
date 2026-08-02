@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { AgentDetector, DetectedAgent, DetectorConfig } from '../types.js';
-import { which, getVersion } from '../detect-utils.js';
+import { which, getVersion } from '../detect/utils.js';
 import { detectorConfigs } from '../configs.js';
 import { hasConfigFile } from '../config-paths.js';
 import { withTimeout } from '../timeout.js';

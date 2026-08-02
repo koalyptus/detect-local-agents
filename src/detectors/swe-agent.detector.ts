@@ -1,6 +1,6 @@
 import type { AgentDetector, DetectedAgent } from '../types.js';
 import { findPipPackage } from '../detect/pip.js';
-import { which, getVersion } from '../detect-utils.js';
+import { which, getVersion } from '../detect/utils.js';
 
 const detector: AgentDetector = {
   name: 'swe-agent',

@@ -1,6 +1,6 @@
 // src/detectors/rovodev.detector.ts
 import type { AgentDetector, DetectedAgent } from '../types.js';
-import { which } from '../detect-utils.js';
+import { which } from '../detect/utils.js';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 

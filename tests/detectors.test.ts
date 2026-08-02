@@ -10,7 +10,7 @@ import cursorDetector from '../src/detectors/cursor.detector.js';
 import rovodevDetector from '../src/detectors/rovodev.detector.js';
 
 // Mock the detect module
-vi.mock('../src/detect-utils.js', () => ({
+vi.mock('../src/detect/utils.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
 }));
@@ -20,7 +20,7 @@ vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
 }));
 
-import { which, getVersion } from '../src/detect-utils.js';
+import { which, getVersion } from '../src/detect/utils.js';
 import { execFile } from 'node:child_process';
 
 const mockWhich = vi.mocked(which);

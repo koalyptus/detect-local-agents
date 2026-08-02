@@ -2,7 +2,7 @@ import { exec as execCb, execFile } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import { getPlatform } from './detect/platform.js';
+import { getPlatform } from './platform.js';
 
 /** Timeout for quick CLI probes (npm config, which/where). */
 const NPM_TIMEOUT = 3000;

@@ -1,5 +1,5 @@
 import type { AgentDetector, DetectedAgent } from '../types.js';
-import { which } from '../detect-utils.js';
+import { which } from '../detect/utils.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';

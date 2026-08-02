@@ -223,7 +223,7 @@ Type guard for runtime-validating that an object implements the `AgentDetector` 
 ```typescript
 // src/detectors/myagent.detector.ts
 import type { AgentDetector, DetectedAgent } from '../types.js';
-import { which } from '../detect-utils.js';
+import { which } from '../detect/utils.js';
 
 const detector: AgentDetector = {
   name: 'myagent',
