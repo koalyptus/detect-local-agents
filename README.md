@@ -4,8 +4,6 @@ Detect locally installed AI agents in TypeScript. Extensible architecture to eas
 
 ## Use Case
 
-## Use Case
-
 This package detects **what's installed**, not **how to invoke**. Use it for:
 
 - **Setup wizards** — "We detected Claude Code. Want to use Anthropic API?"
@@ -248,7 +246,7 @@ export default detector;
 - OpenCode (`opencode`)
 - Goose (`goose`)
 - Hermes (`hermes`)
-- GitHub Copilot (`copilot`)
+- GitHub Copilot (`github-copilot`)
 - Pi (`pi`)
 - Aider (`aider`)
 - Cline (`cline`)
@@ -257,7 +255,7 @@ export default detector;
 - Amp (`amp`)
 - Roo Code (`roo-code`)
 - Continue (`continue`)
-- Tabnine (`tabnine`)
+- Tabnine (`stardrop`)
 - Kimi Code CLI (`kimi`)
 - Kiro (`kiro`)
 - MiMoCode (`mimocode`)
