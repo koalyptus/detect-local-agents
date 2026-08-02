@@ -83,7 +83,7 @@ Create `src/detectors/<name>.detector.ts`. The file is **auto-discovered** — n
 ```typescript
 // src/detectors/myagent.detector.ts
 import type { AgentDetector, DetectedAgent } from '../types.js';
-import { which, getVersion } from '../detect.js';
+import { which, getVersion } from '../detect-utils.js';
 
 const detector: AgentDetector = {
   name: 'myagent',
@@ -113,7 +113,7 @@ export default detector;
 | Binary + multiple env  | `junie.detector.ts` — `JUNIE_DATA` or `JUNIE_SHIM_PATH`             |
 | Binary + name override | `cursor.detector.ts` — returns `cursor-cli` when `CURSOR_AGENT` set |
 
-### Available helpers from `src/detect.js`
+### Available helpers from `src/detect-utils.js`
 
 - `which(cmd)` — find binary in PATH, returns absolute path or null
 - `getVersion(binary, args?)` — run `<binary> --version`, returns version string or null
@@ -122,6 +122,6 @@ export default detector;
 ## After Adding
 
 1. Add a test in `tests/detectors/<name>.detector.test.ts`
-2. Mock `../../src/detect.js` if using `which`/`getVersion`
+2. Mock `../../src/detect-utils.js` if using `which`/`getVersion`
 3. Run `npx vitest run --coverage` — must stay at 100%
 4. Run `npx eslint .` — must be 0 errors, 0 warnings
