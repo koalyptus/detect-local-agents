@@ -1,4 +1,4 @@
-import type { DetectorConfig } from './types.js';
+import type { DetectorConfig } from '../types.js';
 
 /**
  * Built-in detector configs.
