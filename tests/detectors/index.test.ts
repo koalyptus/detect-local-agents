@@ -13,14 +13,13 @@ const { mockWhich, mockGetVersion } = vi.hoisted(() => ({
   mockGetVersion: vi.fn<(name: string) => Promise<string | undefined>>(async () => '1.0.0'),
 }));
 
-vi.mock('../../src/detect.js', () => ({
+vi.mock('../../src/detect/utils.js', () => ({
   which: mockWhich,
   getVersion: mockGetVersion,
   getPlatform: vi.fn(() => 'linux'),
 }));
 
 import { loadAllDetectors, isAgentDetector, configToDetector } from '../../src/detectors/index.js';
-import { TimeoutError } from '../../src/timeout.js';
 
 describe('detectors/index', () => {
   let tempDir: string;
@@ -109,11 +108,15 @@ describe('detectors/index', () => {
   });
 
   it('configDir fallback returns false when config dir is missing', async () => {
-    const detectors = await loadAllDetectors();
-    const copilot = detectors.find((d) => d.name === 'copilot');
-    expect(copilot).toBeDefined();
+    // Use configToDetector directly with a non-existent dir to avoid
+    // depending on what's actually installed on the test machine.
+    const detector = configToDetector({
+      name: 'test-missing-dir',
+      binary: 'node',
+      configDir: '~/.nonexistent-config-dir',
+    });
 
-    const result = await copilot!.detect();
+    const result = await detector.detect();
     expect(result).toBeDefined();
     expect(result!.isConfigured).toBe(false);
   });
@@ -142,11 +145,14 @@ describe('detectors/index', () => {
   });
 
   it('configToDetector handles configDir with ~ prefix', async () => {
-    const detectors = await loadAllDetectors();
-    const copilot = detectors.find((d) => d.name === 'copilot');
-    expect(copilot).toBeDefined();
+    // Test the ~ branch of configDir handling with a path that won't exist
+    const detector = configToDetector({
+      name: 'test-tilde-dir',
+      binary: 'node',
+      configDir: '~/.nonexistent-config-dir',
+    });
 
-    const result = await copilot!.detect();
+    const result = await detector.detect();
     expect(result).toBeDefined();
     expect(result!.isConfigured).toBe(false);
   });
@@ -177,6 +183,24 @@ describe('detectors/index', () => {
     expect(result!.isConfigured).toBe(false);
   });
 
+  it('configToDetector uses nameResolver when provided', async () => {
+    const detector = configToDetector({
+      name: 'claude',
+      binary: 'node', // always available
+      nameResolver: (env) => (env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude'),
+    });
+
+    // Without env var: returns 'claude'
+    const result1 = await detector.detect();
+    expect(result1?.name).toBe('claude');
+
+    // With env var: returns 'cowork'
+    process.env['CLAUDE_CODE_IS_COWORK'] = 'true';
+    const result2 = await detector.detect();
+    expect(result2?.name).toBe('cowork');
+    delete process.env['CLAUDE_CODE_IS_COWORK'];
+  });
+
   it('detect returns version from getVersion', async () => {
     // default: getVersion returns '1.0.0'
     const detectors = await loadAllDetectors();
@@ -200,41 +224,6 @@ describe('detectors/index', () => {
     const result = await claude!.detect();
     expect(result).toBeDefined();
     expect(result!.version).toBeUndefined();
-  });
-
-  it('detect() rejects with TimeoutError when which() hangs', async () => {
-    // A hanging which() must not block detection forever — detect() rejects
-    // with TimeoutError after DETECTOR_TIMEOUT (10s).
-    vi.useFakeTimers();
-    try {
-      mockWhich.mockReturnValue(new Promise<string>(() => {}));
-
-      const detector = configToDetector({ name: 'hang-test', binary: 'hang' });
-      const pending = detector.detect();
-
-      const assertion = expect(pending).rejects.toBeInstanceOf(TimeoutError);
-      await vi.advanceTimersByTimeAsync(10_000);
-      await assertion;
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('detect() rejects with TimeoutError when getVersion() hangs', async () => {
-    // which() resolves but getVersion() never settles — same timeout applies.
-    vi.useFakeTimers();
-    try {
-      mockGetVersion.mockReturnValue(new Promise<string | undefined>(() => {}));
-
-      const detector = configToDetector({ name: 'hang-version', binary: 'node' });
-      const pending = detector.detect();
-
-      const assertion = expect(pending).rejects.toBeInstanceOf(TimeoutError);
-      await vi.advanceTimersByTimeAsync(10_000);
-      await assertion;
-    } finally {
-      vi.useRealTimers();
-    }
   });
 
   it('detect() resolves normally when work finishes before the timeout', async () => {

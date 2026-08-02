@@ -4,13 +4,13 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
-import { isAgentDetector, loadAllDetectors } from '../src/detectors/index.js';
-import { hasConfigFile } from '../src/config-paths.js';
-import cursorDetector from '../src/detectors/cursor.detector.js';
-import rovodevDetector from '../src/detectors/rovodev.detector.js';
+import { isAgentDetector, loadAllDetectors } from '../../src/detectors/index.js';
+import { hasConfigFile } from '../../src/config/config-paths.js';
+import cursorDetector from '../../src/detectors/cursor.detector.js';
+import rovodevDetector from '../../src/detectors/rovodev.detector.js';
 
 // Mock the detect module
-vi.mock('../src/detect.js', () => ({
+vi.mock('../../src/detect/utils.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
 }));
@@ -20,7 +20,7 @@ vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
 }));
 
-import { which, getVersion } from '../src/detect.js';
+import { which, getVersion } from '../../src/detect/utils.js';
 import { execFile } from 'node:child_process';
 
 const mockWhich = vi.mocked(which);
@@ -32,6 +32,8 @@ describe('cursor detector', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockWhich.mockResolvedValue(null);
+    delete process.env['CURSOR_AGENT'];
+    delete process.env['CURSOR_EXTENSION_HOST_ROLE'];
   });
 
   it('returns null when cursor-agent not found', async () => {
@@ -46,7 +48,7 @@ describe('cursor detector', () => {
     expect(result).toBeNull();
   });
 
-  it('returns agent when cursor-agent found', async () => {
+  it('returns cursor when cursor-agent found (no env vars)', async () => {
     mockWhich.mockImplementation(async (name) => {
       if (name === 'cursor-agent') {
         return '/usr/bin/cursor-agent';
@@ -58,6 +60,24 @@ describe('cursor detector', () => {
     expect(result).not.toBeNull();
     expect(result?.name).toBe('cursor');
     expect(result?.binary).toBe('/usr/bin/cursor-agent');
+    expect(result?.isACPAgent).toBe(true);
+  });
+
+  it('returns cursor-cli when CURSOR_AGENT env is set', async () => {
+    mockWhich.mockResolvedValue('/usr/bin/cursor-agent');
+    process.env['CURSOR_AGENT'] = 'true';
+
+    const result = await cursorDetector.detect();
+    expect(result?.name).toBe('cursor-cli');
+    expect(result?.isACPAgent).toBe(true);
+  });
+
+  it('returns cursor-cli when CURSOR_EXTENSION_HOST_ROLE is agent-exec', async () => {
+    mockWhich.mockResolvedValue('/usr/bin/cursor-agent');
+    process.env['CURSOR_EXTENSION_HOST_ROLE'] = 'agent-exec';
+
+    const result = await cursorDetector.detect();
+    expect(result?.name).toBe('cursor-cli');
     expect(result?.isACPAgent).toBe(true);
   });
 });
@@ -244,7 +264,7 @@ describe('orca detector', () => {
   it('returns null when orca not found', async () => {
     mockWhich.mockResolvedValue(null);
 
-    const { default: orca } = await import('../src/detectors/orca.detector.js');
+    const { default: orca } = await import('../../src/detectors/orca.detector.js');
     const result = await orca.detect();
     expect(result).toBeNull();
   });
@@ -252,7 +272,7 @@ describe('orca detector', () => {
   it('returns agent when orca found', async () => {
     mockWhich.mockResolvedValue('/usr/bin/orca');
 
-    const { default: orca } = await import('../src/detectors/orca.detector.js');
+    const { default: orca } = await import('../../src/detectors/orca.detector.js');
     const result = await orca.detect();
     expect(result).not.toBeNull();
     expect(result?.name).toBe('orca');
@@ -269,7 +289,7 @@ describe('windsurf detector', () => {
   it('returns null when neither windsurf nor codeium found', async () => {
     mockWhich.mockResolvedValue(null);
 
-    const { default: windsurf } = await import('../src/detectors/windsurf.detector.js');
+    const { default: windsurf } = await import('../../src/detectors/windsurf.detector.js');
     const result = await windsurf.detect();
     expect(result).toBeNull();
   });
@@ -282,7 +302,7 @@ describe('windsurf detector', () => {
       return null;
     });
 
-    const { default: windsurf } = await import('../src/detectors/windsurf.detector.js');
+    const { default: windsurf } = await import('../../src/detectors/windsurf.detector.js');
     const result = await windsurf.detect();
     expect(result).not.toBeNull();
     expect(result?.name).toBe('windsurf');
@@ -316,7 +336,7 @@ describe('swe-agent detector', () => {
       return mockChildProcess;
     });
 
-    const { default: sweAgent } = await import('../src/detectors/swe-agent.detector.js');
+    const { default: sweAgent } = await import('../../src/detectors/swe-agent.detector.js');
     const result = await sweAgent.detect();
     expect(result).toBeNull();
   });

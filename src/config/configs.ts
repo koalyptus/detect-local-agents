@@ -1,4 +1,4 @@
-import type { DetectorConfig } from './types.js';
+import type { DetectorConfig } from '../types.js';
 
 /**
  * Built-in detector configs.
@@ -10,6 +10,7 @@ export const detectorConfigs: DetectorConfig[] = [
     binary: 'claude',
     configEnvVars: ['ANTHROPIC_API_KEY', 'CLAUDE_API_KEY'],
     configDir: '~/.claude',
+    nameResolver: (env) => (env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude'),
   },
   {
     name: 'codex',
@@ -33,9 +34,11 @@ export const detectorConfigs: DetectorConfig[] = [
     configDir: '~/.hermes',
   },
   {
-    name: 'copilot',
+    name: 'github-copilot',
     binary: 'copilot',
-    // Uses GitHub auth - no simple env var check
+    // GitHub Copilot auth is managed by gh CLI or VS Code extension
+    configEnvVars: ['GITHUB_TOKEN', 'GH_TOKEN'],
+    configDir: '~/.copilot',
   },
   {
     name: 'pi',
@@ -54,6 +57,7 @@ export const detectorConfigs: DetectorConfig[] = [
   {
     name: 'ollama',
     binary: 'ollama',
+    configDir: '~/.ollama',
   },
   {
     name: 'grok',
@@ -74,7 +78,7 @@ export const detectorConfigs: DetectorConfig[] = [
   },
   {
     name: 'tabnine',
-    binary: 'tabnine',
+    binary: 'stardrop',
   },
   {
     name: 'kimi-code',

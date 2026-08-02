@@ -9,7 +9,7 @@ import {
   findAgentConfigPath,
   readAgentConfig,
   resolveConfigPath,
-} from '../../src/config-paths.js';
+} from '../../src/config/config-paths.js';
 
 describe('config-paths', () => {
   let tempDir: string;

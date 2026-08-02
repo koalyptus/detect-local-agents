@@ -1,0 +1,25 @@
+name: Check Vercel detect-agent for updates
+
+on:
+  schedule:
+    - cron: '0 9 1,15 * *' # 1st and 15th of each month
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Fetch latest agents.json
+        run: |
+          curl -sL "https://raw.githubusercontent.com/vercel/detect-agent/main/agents.json" > /tmp/latest.json
+
+      - name: Compare with vendored copy
+        run: |
+          if ! diff -q references/vercel/agents.json /tmp/latest.json > /dev/null 2>&1; then
+            echo "::warning::Vercel agents.json has changed — run scripts/sync-vercel-agents.sh"
+            diff references/vercel/agents.json /tmp/latest.json || true
+            exit 1
+          fi
+          echo "Vercel agents.json is up to date."

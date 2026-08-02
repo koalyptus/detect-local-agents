@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectorConfigs } from '../../src/configs.js';
+import { detectorConfigs } from '../../src/config/configs.js';
 
 describe('detectorConfigs', () => {
   it('includes roo-code config entry', () => {
@@ -17,7 +17,7 @@ describe('detectorConfigs', () => {
   it('includes tabnine config entry', () => {
     const tabnineConfig = detectorConfigs.find((c) => c.name === 'tabnine');
     expect(tabnineConfig).toBeDefined();
-    expect(tabnineConfig?.binary).toBe('tabnine');
+    expect(tabnineConfig?.binary).toBe('stardrop');
   });
 
   it('includes ollama config entry', () => {
@@ -72,5 +72,31 @@ describe('detectorConfigs', () => {
     const config = detectorConfigs.find((c) => c.name === 'aider');
     expect(config?.configDir).toBe('~/.aider');
     expect(config?.configEnvVars).toContain('AIDER_ANTHROPIC_API_KEY');
+  });
+
+  describe('Phase 6: Vercel integration', () => {
+    it('claude config has nameResolver for cowork mode', () => {
+      const config = detectorConfigs.find((c) => c.name === 'claude');
+      expect(config?.nameResolver).toBeDefined();
+    });
+
+    it('claude nameResolver returns cowork when CLAUDE_CODE_IS_COWORK is set', () => {
+      const config = detectorConfigs.find((c) => c.name === 'claude');
+      const name = config?.nameResolver?.({ CLAUDE_CODE_IS_COWORK: 'true' });
+      expect(name).toBe('cowork');
+    });
+
+    it('claude nameResolver returns claude when CLAUDE_CODE_IS_COWORK is not set', () => {
+      const config = detectorConfigs.find((c) => c.name === 'claude');
+      const name = config?.nameResolver?.({});
+      expect(name).toBe('claude');
+    });
+
+    it('github-copilot replaces copilot', () => {
+      const config = detectorConfigs.find((c) => c.name === 'github-copilot');
+      expect(config).toBeDefined();
+      expect(config?.binary).toBe('copilot');
+      expect(detectorConfigs.find((c) => c.name === 'copilot')).toBeUndefined();
+    });
   });
 });

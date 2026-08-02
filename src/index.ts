@@ -4,7 +4,7 @@ import { loadAllDetectors } from './detectors/index.js';
 
 export type { DetectedAgent, AgentDetector, DetectorConfig } from './types.js';
 export { isAgentDetector } from './detectors/index.js';
-export { detectorConfigs } from './configs.js';
+export { detectorConfigs } from './config/configs.js';
 
 /**
  * Detect all locally installed AI agents.

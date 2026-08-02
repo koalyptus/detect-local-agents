@@ -2,25 +2,24 @@ import type { AgentDetector, DetectedAgent } from '../types.js';
 import { which, getVersion } from '../detect/utils.js';
 
 const detector: AgentDetector = {
-  name: 'cursor',
+  name: 'augment-cli',
 
   async detect(): Promise<DetectedAgent | null> {
-    const binary = await which('cursor-agent');
+    const binary = await which('auggie');
     if (!binary) {
       return null;
     }
 
     const version = (await getVersion(binary)) ?? undefined;
 
-    // Vercel's cursor-cli detection: CURSOR_AGENT env or CURSOR_EXTENSION_HOST_ROLE=agent-exec
-    const isCursorCli =
-      !!process.env['CURSOR_AGENT'] || process.env['CURSOR_EXTENSION_HOST_ROLE'] === 'agent-exec';
+    // Vercel's spec uses env_set AUGMENT_AGENT for runtime detection
+    const isConfigured = !!process.env['AUGMENT_AGENT'];
 
     return {
-      name: isCursorCli ? 'cursor-cli' : 'cursor',
+      name: 'augment-cli',
       binary,
       version,
-      isACPAgent: true,
+      isConfigured,
     };
   },
 };

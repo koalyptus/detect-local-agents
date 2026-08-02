@@ -49,6 +49,26 @@
 - [x] Harden error handling (detector timeouts, malformed config files)
 - [x] Improve cross-platform detection (Windows AppData, WSL paths)
 - [x] CI reliability and lint enforcement
-- [x] Audit docs, generate API reference
+
+## Phase 6: Vercel detect-agent Integration
+
+> Leverage Vercel's declarative agent spec to expand detection coverage.
+
+### Phase 6a: Reference & Sync
+
+- [x] Vendor `agents.json` + `agents.schema.json` from Vercel's detect-agent repo
+- [x] Add `scripts/sync-vercel-agents.sh` for upstream sync
+- [x] Add `.github/workflows/check-vercel-detect-agents.yml` (fortnightly check)
+
+### Phase 6b: New Detectors
+
+- [x] Rename `copilot` → `github-copilot` to match Vercel's spec
+- [x] Add new detectors: devin, replit, cowork, augment-cli, junie, cursor-cli
+- [x] Tests for all new detectors and sync script
+- [x] PR
+
+### Phase 6c: Polish & Ship
+
+- [ ] Audit docs, generate API reference
 - [ ] Real-world testing on Windows/macOS/Linux
 - [ ] npm publish

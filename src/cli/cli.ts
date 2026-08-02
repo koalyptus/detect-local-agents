@@ -62,15 +62,6 @@ export async function runCli(argv: string[]): Promise<CliResult> {
       (args) => sharedHandler(args),
     )
     .command(
-      'ls',
-      'Alias for default detect command',
-      (y) =>
-        y
-          .option('json', { type: 'boolean', default: false })
-          .option('configured', { type: 'boolean', default: false }),
-      (args) => sharedHandler(args),
-    )
-    .command(
       'info <name>',
       'Show details for a single agent by name',
       (y) =>

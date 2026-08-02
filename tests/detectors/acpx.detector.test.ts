@@ -8,7 +8,7 @@ const { mockWhich, mockExecFileAsync } = vi.hoisted(() => ({
   mockExecFileAsync: vi.fn(),
 }));
 
-vi.mock('../../src/detect.js', () => ({
+vi.mock('../../src/detect/utils.js', () => ({
   which: mockWhich,
   getVersion: vi.fn(),
 }));

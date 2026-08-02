@@ -1,5 +1,5 @@
 import type { AgentDetector, DetectedAgent } from '../types.js';
-import { which, getVersion } from '../detect.js';
+import { which, getVersion } from '../detect/utils.js';
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { homedir } from 'node:os';

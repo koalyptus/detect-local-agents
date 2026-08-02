@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { PathLike } from 'node:fs';
 
-vi.mock('../../src/detect.js', () => ({
+vi.mock('../../src/detect/utils.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
 }));
@@ -15,7 +15,7 @@ vi.mock('node:fs/promises', () => ({
   readdir: vi.fn(),
 }));
 
-import { which } from '../../src/detect.js';
+import { which } from '../../src/detect/utils.js';
 import { getPlatform } from '../../src/detect/platform.js';
 import * as fs from 'node:fs/promises';
 

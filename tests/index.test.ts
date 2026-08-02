@@ -1,25 +1,25 @@
 // tests/index.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { detectAgents } from '../../src/index.js';
+import { detectAgents } from '../src/index.js';
 
 // Mock the detect module
-vi.mock('../../src/detect.js', () => ({
+vi.mock('../src/detect/utils.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
 }));
 
 // Mock the detectors/index to control which configs are used
-vi.mock('../../src/detectors/index.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../src/detectors/index.js')>();
+vi.mock('../src/detectors/index.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/detectors/index.js')>();
   return {
     ...actual,
     loadAllDetectors: vi.fn(),
   };
 });
 
-import { which, getVersion } from '../../src/detect.js';
-import { loadAllDetectors } from '../../src/detectors/index.js';
-import type { AgentDetector } from '../../src/types.js';
+import { which, getVersion } from '../src/detect/utils.js';
+import { loadAllDetectors } from '../src/detectors/index.js';
+import type { AgentDetector } from '../src/types.js';
 
 const mockWhich = vi.mocked(which);
 const mockGetVersion = vi.mocked(getVersion);

@@ -2,25 +2,24 @@ import type { AgentDetector, DetectedAgent } from '../types.js';
 import { which, getVersion } from '../detect/utils.js';
 
 const detector: AgentDetector = {
-  name: 'cursor',
+  name: 'replit',
 
   async detect(): Promise<DetectedAgent | null> {
-    const binary = await which('cursor-agent');
+    const binary = await which('replit');
     if (!binary) {
       return null;
     }
 
     const version = (await getVersion(binary)) ?? undefined;
 
-    // Vercel's cursor-cli detection: CURSOR_AGENT env or CURSOR_EXTENSION_HOST_ROLE=agent-exec
-    const isCursorCli =
-      !!process.env['CURSOR_AGENT'] || process.env['CURSOR_EXTENSION_HOST_ROLE'] === 'agent-exec';
+    // Vercel's spec uses env_set REPL_ID for runtime detection
+    const isConfigured = !!process.env['REPL_ID'];
 
     return {
-      name: isCursorCli ? 'cursor-cli' : 'cursor',
+      name: 'replit',
       binary,
       version,
-      isACPAgent: true,
+      isConfigured,
     };
   },
 };
