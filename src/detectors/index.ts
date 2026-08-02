@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { AgentDetector, DetectedAgent, DetectorConfig } from '../types.js';
 import { which, getVersion } from '../detect/utils.js';
 import { detectorConfigs } from '../config/configs.js';
-import { hasConfigFile } from '../config-paths.js';
+import { hasConfigFile } from '../config/config-paths.js';
 import { withTimeout } from '../timeout.js';
 
 /** Per-detector timeout in milliseconds. */

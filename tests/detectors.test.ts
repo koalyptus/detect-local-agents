@@ -5,7 +5,7 @@ import * as os from 'node:os';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
 import { isAgentDetector, loadAllDetectors } from '../src/detectors/index.js';
-import { hasConfigFile } from '../src/config-paths.js';
+import { hasConfigFile } from '../src/config/config-paths.js';
 import cursorDetector from '../src/detectors/cursor.detector.js';
 import rovodevDetector from '../src/detectors/rovodev.detector.js';
 
