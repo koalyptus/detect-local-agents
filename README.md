@@ -19,7 +19,7 @@ Each agent has a **detector** — either a simple config entry or a custom file-
 
 ### Config-based detectors
 
-Most agents are detected via a simple entry in `src/configs.ts`:
+Most agents are detected via a simple entry in `src/config/configs.ts`:
 
 ```typescript
 {
@@ -208,7 +208,7 @@ Type guard for runtime-validating that an object implements the `AgentDetector` 
 
 ## Adding a New Agent
 
-**Simple agents** — add a config entry in `src/configs.ts`:
+**Simple agents** — add a config entry in `src/config/configs.ts`:
 
 ```typescript
 {

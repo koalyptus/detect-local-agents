@@ -21,7 +21,7 @@ When in doubt, start with a config entry. It's one object literal and zero new f
 
 ## Config Entry
 
-Add an entry to `src/configs.ts` in the `detectorConfigs` array. The entry is auto-discovered at startup — no registration step.
+Add an entry to `src/config/configs.ts` in the `detectorConfigs` array. The entry is auto-discovered at startup — no registration step.
 
 ```typescript
 {

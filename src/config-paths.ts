@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { detectorConfigs } from './configs.js';
+import { detectorConfigs } from './config/configs.js';
 
 /** Strips leading forward slashes from a path segment. */
 const LEADING_SLASHES = /^\/+/;
