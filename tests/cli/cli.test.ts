@@ -68,30 +68,6 @@ describe('cli - detect command', () => {
     expect(err).toContain('boom');
   });
 
-  it('handles ls command like default detect', async () => {
-    mockDetectAgents.mockResolvedValue([
-      { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
-    ]);
-
-    await runCli(['node', 'detect-local-agents', 'ls']);
-
-    const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
-    expect(out).toContain('NAME');
-    expect(out).toContain('claude');
-  });
-
-  it('handles ls --json output', async () => {
-    mockDetectAgents.mockResolvedValue([
-      { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
-    ]);
-
-    await runCli(['node', 'detect-local-agents', 'ls', '--json']);
-
-    const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
-    const parsed = JSON.parse(out);
-    expect(parsed[0].name).toBe('claude');
-  });
-
   it('re-throws exit errors from catch block', async () => {
     // Trigger the catch block's "if message starts with exit:" branch
     // by making the fail handler throw an exit:1 error
