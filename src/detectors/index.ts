@@ -6,10 +6,6 @@ import type { AgentDetector, DetectedAgent, DetectorConfig } from '../types.js';
 import { which, getVersion } from '../detect/utils.js';
 import { detectorConfigs } from '../config/configs.js';
 import { hasConfigFile } from '../config/config-paths.js';
-import { withTimeout } from '../timeout.js';
-
-/** Per-detector timeout in milliseconds. */
-const DETECTOR_TIMEOUT = 10_000;
 
 /**
  * Create a detector from a config entry.
@@ -20,7 +16,7 @@ export function configToDetector(config: DetectorConfig): AgentDetector {
     name: config.name,
 
     async detect(): Promise<DetectedAgent | null> {
-      return withTimeout(detectImpl(), DETECTOR_TIMEOUT, `detect ${config.name}`);
+      return detectImpl();
     },
   };
 

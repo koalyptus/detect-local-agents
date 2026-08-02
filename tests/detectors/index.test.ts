@@ -20,7 +20,6 @@ vi.mock('../../src/detect/utils.js', () => ({
 }));
 
 import { loadAllDetectors, isAgentDetector, configToDetector } from '../../src/detectors/index.js';
-import { TimeoutError } from '../../src/timeout.js';
 
 describe('detectors/index', () => {
   let tempDir: string;
@@ -225,41 +224,6 @@ describe('detectors/index', () => {
     const result = await claude!.detect();
     expect(result).toBeDefined();
     expect(result!.version).toBeUndefined();
-  });
-
-  it('detect() rejects with TimeoutError when which() hangs', async () => {
-    // A hanging which() must not block detection forever — detect() rejects
-    // with TimeoutError after DETECTOR_TIMEOUT (10s).
-    vi.useFakeTimers();
-    try {
-      mockWhich.mockReturnValue(new Promise<string>(() => {}));
-
-      const detector = configToDetector({ name: 'hang-test', binary: 'hang' });
-      const pending = detector.detect();
-
-      const assertion = expect(pending).rejects.toBeInstanceOf(TimeoutError);
-      await vi.advanceTimersByTimeAsync(10_000);
-      await assertion;
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('detect() rejects with TimeoutError when getVersion() hangs', async () => {
-    // which() resolves but getVersion() never settles — same timeout applies.
-    vi.useFakeTimers();
-    try {
-      mockGetVersion.mockReturnValue(new Promise<string | undefined>(() => {}));
-
-      const detector = configToDetector({ name: 'hang-version', binary: 'node' });
-      const pending = detector.detect();
-
-      const assertion = expect(pending).rejects.toBeInstanceOf(TimeoutError);
-      await vi.advanceTimersByTimeAsync(10_000);
-      await assertion;
-    } finally {
-      vi.useRealTimers();
-    }
   });
 
   it('detect() resolves normally when work finishes before the timeout', async () => {
