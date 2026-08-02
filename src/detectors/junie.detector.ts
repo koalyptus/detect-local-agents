@@ -1,5 +1,5 @@
 import type { AgentDetector, DetectedAgent } from '../types.js';
-import { which, getVersion } from '../detect.js';
+import { which, getVersion } from '../detect-utils.js';
 
 const detector: AgentDetector = {
   name: 'junie',

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { which, getVersion } from '../../src/detect.js';
+import { which, getVersion } from '../../src/detect-utils.js';
 import replitDetector from '../../src/detectors/replit.detector.js';
 
-vi.mock('../../src/detect.js', () => ({
+vi.mock('../../src/detect-utils.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
 }));

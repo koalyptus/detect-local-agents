@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
-import { which, getVersion } from '../../src/detect.js';
+import { which, getVersion } from '../../src/detect-utils.js';
 import { getPlatform } from '../../src/detect/platform.js';
 import { exec, execFile } from 'node:child_process';
 import { access } from 'node:fs/promises';

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
 
-vi.mock('../../src/detect.js', () => ({
+vi.mock('../../src/detect-utils.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
 }));
@@ -10,7 +10,7 @@ vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
 }));
 
-import { which, getVersion } from '../../src/detect.js';
+import { which, getVersion } from '../../src/detect-utils.js';
 import { execFile } from 'node:child_process';
 
 const mockWhich = vi.mocked(which);

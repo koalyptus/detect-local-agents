@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { detectAgents } from '../../src/index.js';
 
 // Mock the detect module
-vi.mock('../../src/detect.js', () => ({
+vi.mock('../../src/detect-utils.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
 }));
@@ -17,7 +17,7 @@ vi.mock('../../src/detectors/index.js', async (importOriginal) => {
   };
 });
 
-import { which, getVersion } from '../../src/detect.js';
+import { which, getVersion } from '../../src/detect-utils.js';
 import { loadAllDetectors } from '../../src/detectors/index.js';
 import type { AgentDetector } from '../../src/types.js';
 
