@@ -112,9 +112,6 @@ npx detect-local-agents --json
 # Only show agents with auth/configured
 npx detect-local-agents --configured
 
-# Same as default
-npx detect-local-agents ls
-
 # Single-agent details (prints null if not found, exit 0)
 npx detect-local-agents info claude
 
