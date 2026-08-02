@@ -4,13 +4,13 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
-import { isAgentDetector, loadAllDetectors } from '../src/detectors/index.js';
-import { hasConfigFile } from '../src/config/config-paths.js';
-import cursorDetector from '../src/detectors/cursor.detector.js';
-import rovodevDetector from '../src/detectors/rovodev.detector.js';
+import { isAgentDetector, loadAllDetectors } from '../../src/detectors/index.js';
+import { hasConfigFile } from '../../src/config/config-paths.js';
+import cursorDetector from '../../src/detectors/cursor.detector.js';
+import rovodevDetector from '../../src/detectors/rovodev.detector.js';
 
 // Mock the detect module
-vi.mock('../src/detect/utils.js', () => ({
+vi.mock('../../src/detect/utils.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
 }));
@@ -20,7 +20,7 @@ vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
 }));
 
-import { which, getVersion } from '../src/detect/utils.js';
+import { which, getVersion } from '../../src/detect/utils.js';
 import { execFile } from 'node:child_process';
 
 const mockWhich = vi.mocked(which);
@@ -264,7 +264,7 @@ describe('orca detector', () => {
   it('returns null when orca not found', async () => {
     mockWhich.mockResolvedValue(null);
 
-    const { default: orca } = await import('../src/detectors/orca.detector.js');
+    const { default: orca } = await import('../../src/detectors/orca.detector.js');
     const result = await orca.detect();
     expect(result).toBeNull();
   });
@@ -272,7 +272,7 @@ describe('orca detector', () => {
   it('returns agent when orca found', async () => {
     mockWhich.mockResolvedValue('/usr/bin/orca');
 
-    const { default: orca } = await import('../src/detectors/orca.detector.js');
+    const { default: orca } = await import('../../src/detectors/orca.detector.js');
     const result = await orca.detect();
     expect(result).not.toBeNull();
     expect(result?.name).toBe('orca');
@@ -289,7 +289,7 @@ describe('windsurf detector', () => {
   it('returns null when neither windsurf nor codeium found', async () => {
     mockWhich.mockResolvedValue(null);
 
-    const { default: windsurf } = await import('../src/detectors/windsurf.detector.js');
+    const { default: windsurf } = await import('../../src/detectors/windsurf.detector.js');
     const result = await windsurf.detect();
     expect(result).toBeNull();
   });
@@ -302,7 +302,7 @@ describe('windsurf detector', () => {
       return null;
     });
 
-    const { default: windsurf } = await import('../src/detectors/windsurf.detector.js');
+    const { default: windsurf } = await import('../../src/detectors/windsurf.detector.js');
     const result = await windsurf.detect();
     expect(result).not.toBeNull();
     expect(result?.name).toBe('windsurf');
@@ -336,7 +336,7 @@ describe('swe-agent detector', () => {
       return mockChildProcess;
     });
 
-    const { default: sweAgent } = await import('../src/detectors/swe-agent.detector.js');
+    const { default: sweAgent } = await import('../../src/detectors/swe-agent.detector.js');
     const result = await sweAgent.detect();
     expect(result).toBeNull();
   });
