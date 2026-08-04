@@ -280,5 +280,6 @@ export default detector;
 - Orca (`orca`) ⚡
 - Windsurf (`windsurf`/`codeium`) ⚡
 - SWE-agent ⚡
+  +- LM Studio (`lms`) ⚡
 - mini-coding-agent ⚡
 - OpenHands SDK ⚡
