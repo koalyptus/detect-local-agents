@@ -1,6 +1,6 @@
 {
   "name": "detect-local-agents",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Detect locally installed AI agents in TypeScript. Extensible architecture to easily support new agents.",
   "type": "module",
   "main": "./dist/index.js",
@@ -47,7 +47,7 @@
     "@eslint/js": "^9.15.0",
     "@types/node": "^22.10.0",
     "@types/yargs": "^17.0.35",
-    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/coverage-v8": "^3.2.6",
     "detect-local-agents": "file:",
     "eslint": "^9.15.0",
     "eslint-config-prettier": "^9.1.0",
