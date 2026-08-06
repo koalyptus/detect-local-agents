@@ -158,6 +158,17 @@ describe('cli - info command', () => {
 });
 
 describe('cli - auto-run guard', () => {
+  beforeEach(() => {
+    // autoRun() below runs the real CLI, which writes its output to stdout.
+    // Without these spies the formatted output leaks into the test reporter.
+    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('detects direct invocation from cli.js', () => {
     expect(isInvokedDirectly(['node', '/path/to/cli.js'])).toBe(true);
   });
