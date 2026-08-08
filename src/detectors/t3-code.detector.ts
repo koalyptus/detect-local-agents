@@ -33,7 +33,12 @@ function getCommonPaths(platform: string): string[] {
         'C:\\Program Files (x86)\\T3 Code\\T3 Code.exe',
       ];
       if (localAppData) {
-        candidates.push(`${localAppData}\\Programs\\T3 Code\\T3 Code.exe`);
+        // The install dir uses a stable name (`t3code`) but the .exe name
+        // includes a channel suffix like "T3 Code (Alpha).exe" that changes
+        // across releases.  Scan the directory for any .exe that isn't the
+        // uninstaller.
+        const installDir = `${localAppData}\\Programs\\t3code`;
+        candidates.push(installDir);
       }
       return candidates;
     }
@@ -84,9 +89,21 @@ const detector: AgentDetector = {
       const paths = getCommonPaths(platform);
       for (const p of paths) {
         try {
-          await fs.access(p);
-          binary = p;
-          break;
+          const stat = await fs.stat(p);
+          if (stat.isDirectory()) {
+            // Scan directory for .exe files (Windows install dirs)
+            const entries = await fs.readdir(p);
+            const exe = entries.find(
+              (e) => e.endsWith('.exe') && !e.toLowerCase().includes('uninstall'),
+            );
+            if (exe) {
+              binary = join(p, exe);
+              break;
+            }
+          } else {
+            binary = p;
+            break;
+          }
         } catch {
           // try next candidate
         }
@@ -101,7 +118,7 @@ const detector: AgentDetector = {
 
     // 3. isConfigured: the user-data/config directory must exist
     let isConfigured = false;
-    const configDir = getConfigDir(getPlatform());
+    const configDir = getConfigDir(platform);
     if (configDir) {
       try {
         await fs.access(configDir);

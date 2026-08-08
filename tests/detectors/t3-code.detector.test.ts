@@ -12,6 +12,8 @@ vi.mock('../../src/detect/platform.js', () => ({
 
 vi.mock('node:fs/promises', () => ({
   access: vi.fn(),
+  stat: vi.fn(),
+  readdir: vi.fn(),
 }));
 
 vi.mock('node:os', () => ({
@@ -28,6 +30,8 @@ const mockWhich = vi.mocked(which);
 const mockGetVersion = vi.mocked(getVersion);
 const mockPlatform = vi.mocked(getPlatform);
 const mockFsAccess = vi.mocked(fs.access);
+const mockFsStat = vi.mocked(fs.stat);
+const mockFsReaddir = vi.mocked(fs.readdir);
 const mockHomedir = vi.mocked(homedir);
 
 describe('t3-code detector', () => {
@@ -41,6 +45,8 @@ describe('t3-code detector', () => {
     mockGetVersion.mockResolvedValue(null);
     mockPlatform.mockReturnValue('linux');
     mockFsAccess.mockRejectedValue(new Error('not found'));
+    mockFsStat.mockRejectedValue(new Error('not found'));
+    mockFsReaddir.mockRejectedValue(new Error('not found'));
     mockHomedir.mockReturnValue('/home/test');
     originalHome = process.env.HOME;
     originalAppData = process.env.APPDATA;
@@ -69,7 +75,7 @@ describe('t3-code detector', () => {
   it('returns null when not found via which or common paths (t3-code and t3)', async () => {
     mockPlatform.mockReturnValue('linux');
     mockWhich.mockResolvedValue(null);
-    mockFsAccess.mockRejectedValue(new Error('not found'));
+    mockFsStat.mockRejectedValue(new Error('not found'));
 
     expect(await t3CodeDetector.detect()).toBeNull();
   });
@@ -87,9 +93,7 @@ describe('t3-code detector', () => {
 
   it('returns agent when found via which (t3 npm CLI)', async () => {
     // which('t3-code') returns null, which('t3') succeeds
-    mockWhich
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce('/home/test/.npm-global/bin/t3');
+    mockWhich.mockResolvedValueOnce(null).mockResolvedValueOnce('/home/test/.npm-global/bin/t3');
     mockGetVersion.mockResolvedValue('1.2.0');
 
     const result = await t3CodeDetector.detect();
@@ -110,9 +114,9 @@ describe('t3-code detector', () => {
   it('returns agent when found via linux common path (/opt/t3code)', async () => {
     mockWhich.mockResolvedValue(null);
     mockPlatform.mockReturnValue('linux');
-    mockFsAccess.mockImplementation(async (p: unknown) => {
+    mockFsStat.mockImplementation(async (p: unknown) => {
       if (String(p) === '/opt/t3code/T3 Code') {
-        return;
+        return { isDirectory: () => false } as Awaited<ReturnType<typeof fs.stat>>;
       }
       throw new Error('not found');
     });
@@ -126,9 +130,9 @@ describe('t3-code detector', () => {
     mockWhich.mockResolvedValue(null);
     mockPlatform.mockReturnValue('linux');
     // First two paths reject, third resolves
-    mockFsAccess.mockImplementation(async (p: unknown) => {
+    mockFsStat.mockImplementation(async (p: unknown) => {
       if (String(p) === '/opt/homebrew/bin/t3') {
-        return;
+        return { isDirectory: () => false } as Awaited<ReturnType<typeof fs.stat>>;
       }
       throw new Error('not found');
     });
@@ -141,9 +145,9 @@ describe('t3-code detector', () => {
   it('returns agent when found via macOS /Applications path', async () => {
     mockWhich.mockResolvedValue(null);
     mockPlatform.mockReturnValue('darwin');
-    mockFsAccess.mockImplementation(async (p: unknown) => {
+    mockFsStat.mockImplementation(async (p: unknown) => {
       if (String(p) === '/Applications/T3 Code.app/Contents/MacOS/T3 Code') {
-        return;
+        return { isDirectory: () => false } as Awaited<ReturnType<typeof fs.stat>>;
       }
       throw new Error('not found');
     });
@@ -156,9 +160,9 @@ describe('t3-code detector', () => {
   it('returns agent when found via macOS homebrew path', async () => {
     mockWhich.mockResolvedValue(null);
     mockPlatform.mockReturnValue('darwin');
-    mockFsAccess.mockImplementation(async (p: unknown) => {
+    mockFsStat.mockImplementation(async (p: unknown) => {
       if (String(p) === '/opt/homebrew/bin/t3') {
-        return;
+        return { isDirectory: () => false } as Awaited<ReturnType<typeof fs.stat>>;
       }
       throw new Error('not found');
     });
@@ -172,9 +176,9 @@ describe('t3-code detector', () => {
     mockWhich.mockResolvedValue(null);
     mockPlatform.mockReturnValue('win32');
     process.env.APPDATA = 'C:\\Users\\test\\AppData\\Roaming';
-    mockFsAccess.mockImplementation(async (p: unknown) => {
+    mockFsStat.mockImplementation(async (p: unknown) => {
       if (String(p) === 'C:\\Program Files\\T3 Code\\T3 Code.exe') {
-        return;
+        return { isDirectory: () => false } as Awaited<ReturnType<typeof fs.stat>>;
       }
       throw new Error('not found');
     });
@@ -184,28 +188,38 @@ describe('t3-code detector', () => {
     expect(result?.binary).toBe('C:\\Program Files\\T3 Code\\T3 Code.exe');
   });
 
-  it('returns agent when found via windows LOCALAPPDATA path (third candidate)', async () => {
+  it('returns agent when found via windows LOCALAPPDATA directory scan', async () => {
     mockWhich.mockResolvedValue(null);
     mockPlatform.mockReturnValue('win32');
     process.env.APPDATA = 'C:\\Users\\test\\AppData\\Roaming';
     process.env.LOCALAPPDATA = 'C:\\Users\\test\\AppData\\Local';
-    mockFsAccess.mockImplementation(async (p: unknown) => {
-      if (String(p) === 'C:\\Users\\test\\AppData\\Local\\Programs\\T3 Code\\T3 Code.exe') {
-        return;
+    const installDir = 'C:\\Users\\test\\AppData\\Local\\Programs\\t3code';
+    mockFsStat.mockImplementation(async (p: unknown) => {
+      if (String(p) === installDir) {
+        return { isDirectory: () => true } as Awaited<ReturnType<typeof fs.stat>>;
+      }
+      throw new Error('not found');
+    });
+    mockFsReaddir.mockImplementation(async (p: unknown) => {
+      if (String(p) === installDir) {
+        return ['T3 Code (Alpha).exe', 'Uninstall T3 Code (Alpha).exe', 'resources'] as Awaited<
+          ReturnType<typeof fs.readdir>
+        >;
       }
       throw new Error('not found');
     });
 
     const result = await t3CodeDetector.detect();
     expect(result?.name).toBe('t3-code');
-    expect(result?.binary).toBe('C:\\Users\\test\\AppData\\Local\\Programs\\T3 Code\\T3 Code.exe');
+    // join() on Linux uses forward slashes; normalize for comparison
+    expect(result?.binary).toBe(join(installDir, 'T3 Code (Alpha).exe'));
   });
 
   it('returns null when windows common paths all fail', async () => {
     mockWhich.mockResolvedValue(null);
     mockPlatform.mockReturnValue('win32');
     process.env.APPDATA = 'C:\\Users\\test\\AppData\\Roaming';
-    mockFsAccess.mockRejectedValue(new Error('not found'));
+    mockFsStat.mockRejectedValue(new Error('not found'));
 
     expect(await t3CodeDetector.detect()).toBeNull();
   });
@@ -214,9 +228,11 @@ describe('t3-code detector', () => {
     mockWhich.mockResolvedValue('/usr/local/bin/t3-code');
     mockGetVersion.mockResolvedValue('0.0.32');
     mockPlatform.mockReturnValue('linux');
-    // getConfigDir resolves to ~/.config/t3code — make it the first access call that resolves
+    const configDir = join('/home/test', '.config', 't3code');
+    // stat is used for fallback path detection (binary found via which, so stat won't be called)
+    // access is used for isConfigured check
     mockFsAccess.mockImplementation(async (p: unknown) => {
-      if (String(p) === join('/home/test', '.config', 't3code')) {
+      if (String(p) === configDir) {
         return;
       }
       throw new Error('not found');
@@ -230,8 +246,9 @@ describe('t3-code detector', () => {
     mockWhich.mockResolvedValue('/Applications/T3 Code.app/Contents/MacOS/T3 Code');
     mockGetVersion.mockResolvedValue('0.0.32');
     mockPlatform.mockReturnValue('darwin');
+    const configDir = join('/home/test', 'Library', 'Application Support', 't3code');
     mockFsAccess.mockImplementation(async (p: unknown) => {
-      if (String(p) === join('/home/test', 'Library', 'Application Support', 't3code')) {
+      if (String(p) === configDir) {
         return;
       }
       throw new Error('not found');
@@ -246,9 +263,10 @@ describe('t3-code detector', () => {
     mockGetVersion.mockResolvedValue('0.0.32');
     mockPlatform.mockReturnValue('win32');
     process.env.APPDATA = 'C:\\Users\\test\\AppData\\Roaming';
+    // getConfigDir uses forward-slash join: APPDATA + '/t3code'
+    const configDir = 'C:\\Users\\test\\AppData\\Roaming/t3code';
     mockFsAccess.mockImplementation(async (p: unknown) => {
-      // getConfigDir uses forward-slash join: APPDATA + '/t3code'
-      if (String(p) === 'C:\\Users\\test\\AppData\\Roaming/t3code') {
+      if (String(p) === configDir) {
         return;
       }
       throw new Error('not found');
@@ -275,7 +293,7 @@ describe('t3-code detector', () => {
     mockPlatform.mockReturnValue('win32');
     delete process.env.APPDATA;
     // getConfigDir returns null → isConfigured stays false
-    mockFsAccess.mockRejectedValue(new Error('not found'));
+    mockFsStat.mockRejectedValue(new Error('not found'));
 
     const result = await t3CodeDetector.detect();
     expect(result?.isConfigured).toBe(false);
@@ -285,7 +303,7 @@ describe('t3-code detector', () => {
     mockWhich.mockResolvedValue('/usr/bin/t3-code');
     mockGetVersion.mockResolvedValue('0.0.32');
     mockPlatform.mockReturnValue('aix');
-    mockFsAccess.mockRejectedValue(new Error('not found'));
+    mockFsStat.mockRejectedValue(new Error('not found'));
 
     const result = await t3CodeDetector.detect();
     expect(result?.isConfigured).toBe(false);
@@ -294,7 +312,7 @@ describe('t3-code detector', () => {
   it('returns null on unsupported platform when binary not found', async () => {
     mockWhich.mockResolvedValue(null);
     mockPlatform.mockReturnValue('aix');
-    mockFsAccess.mockRejectedValue(new Error('not found'));
+    mockFsStat.mockRejectedValue(new Error('not found'));
 
     expect(await t3CodeDetector.detect()).toBeNull();
   });
@@ -306,7 +324,7 @@ describe('t3-code detector', () => {
     mockWhich.mockResolvedValue('/usr/local/bin/t3-code');
     mockGetVersion.mockResolvedValue('1.0.0');
     mockPlatform.mockReturnValue('linux');
-    mockFsAccess.mockRejectedValue(new Error('not found'));
+    mockFsStat.mockRejectedValue(new Error('not found'));
 
     const result = await t3CodeDetector.detect();
     expect(result).not.toBeNull();
