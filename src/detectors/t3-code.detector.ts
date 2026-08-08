@@ -7,15 +7,17 @@ import { homedir } from 'node:os';
 
 /**
  * T3 Code — https://t3.codes/
- * Open-source control plane for coding agents (Electron desktop app).
- * Distributed as native installers (AppImage, .app, .exe), not an npm PATH binary.
- * Detection falls back to platform-specific install locations + config dir.
+ * Open-source control plane for coding agents.
+ * Available as both an Electron desktop app and an npm CLI (`t3`).
+ * Detection checks PATH for both binary names, then falls back to
+ * platform-specific install locations + config dir.
  */
 
-// Candidate binary / app paths per platform. Checked in order; first hit wins.
-const LINUX_PATHS = ['/opt/t3code/T3 Code', '/usr/local/bin/t3-code'];
+// Candidate binary / app paths per platform (fallback when not on PATH).
+// Checked in order; first hit wins.
+const LINUX_PATHS = ['/opt/t3code/T3 Code', '/usr/local/bin/t3-code', '/opt/homebrew/bin/t3'];
 
-const MACOS_PATHS = ['/Applications/T3 Code.app/Contents/MacOS/T3 Code'];
+const MACOS_PATHS = ['/Applications/T3 Code.app/Contents/MacOS/T3 Code', '/opt/homebrew/bin/t3'];
 
 function getCommonPaths(platform: string): string[] {
   switch (platform) {
@@ -73,8 +75,8 @@ const detector: AgentDetector = {
   name: 't3-code',
 
   async detect(): Promise<DetectedAgent | null> {
-    // 1. Try PATH
-    let binary = await which('t3-code');
+    // 1. Try PATH — desktop app CLI alias first, then npm CLI name
+    let binary = (await which('t3-code')) ?? (await which('t3'));
 
     // 2. Fall back to platform-specific install paths
     const platform = getPlatform();

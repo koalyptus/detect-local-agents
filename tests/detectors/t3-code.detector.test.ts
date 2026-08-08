@@ -33,6 +33,7 @@ const mockHomedir = vi.mocked(homedir);
 describe('t3-code detector', () => {
   let originalHome: string | undefined;
   let originalAppData: string | undefined;
+  let originalLocalAppData: string | undefined;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -43,6 +44,7 @@ describe('t3-code detector', () => {
     mockHomedir.mockReturnValue('/home/test');
     originalHome = process.env.HOME;
     originalAppData = process.env.APPDATA;
+    originalLocalAppData = process.env.LOCALAPPDATA;
     process.env.HOME = '/home/test';
   });
 
@@ -57,9 +59,14 @@ describe('t3-code detector', () => {
     } else {
       process.env.APPDATA = originalAppData;
     }
+    if (originalLocalAppData === undefined) {
+      delete process.env.LOCALAPPDATA;
+    } else {
+      process.env.LOCALAPPDATA = originalLocalAppData;
+    }
   });
 
-  it('returns null when not found via which or common paths', async () => {
+  it('returns null when not found via which or common paths (t3-code and t3)', async () => {
     mockPlatform.mockReturnValue('linux');
     mockWhich.mockResolvedValue(null);
     mockFsAccess.mockRejectedValue(new Error('not found'));
@@ -67,7 +74,7 @@ describe('t3-code detector', () => {
     expect(await t3CodeDetector.detect()).toBeNull();
   });
 
-  it('returns agent when found via which', async () => {
+  it('returns agent when found via which (t3-code)', async () => {
     mockWhich.mockResolvedValue('/usr/local/bin/t3-code');
     mockGetVersion.mockResolvedValue('0.0.32');
 
@@ -76,6 +83,20 @@ describe('t3-code detector', () => {
     expect(result?.name).toBe('t3-code');
     expect(result?.binary).toBe('/usr/local/bin/t3-code');
     expect(result?.version).toBe('0.0.32');
+  });
+
+  it('returns agent when found via which (t3 npm CLI)', async () => {
+    // which('t3-code') returns null, which('t3') succeeds
+    mockWhich
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce('/home/test/.npm-global/bin/t3');
+    mockGetVersion.mockResolvedValue('1.2.0');
+
+    const result = await t3CodeDetector.detect();
+    expect(result).not.toBeNull();
+    expect(result?.name).toBe('t3-code');
+    expect(result?.binary).toBe('/home/test/.npm-global/bin/t3');
+    expect(result?.version).toBe('1.2.0');
   });
 
   it('returns version undefined when getVersion returns null', async () => {
@@ -101,12 +122,12 @@ describe('t3-code detector', () => {
     expect(result?.binary).toBe('/opt/t3code/T3 Code');
   });
 
-  it('returns agent when found via linux second common path (/usr/local/bin)', async () => {
+  it('returns agent when found via linux third common path (homebrew)', async () => {
     mockWhich.mockResolvedValue(null);
     mockPlatform.mockReturnValue('linux');
-    // First path rejects, second resolves
+    // First two paths reject, third resolves
     mockFsAccess.mockImplementation(async (p: unknown) => {
-      if (String(p) === '/usr/local/bin/t3-code') {
+      if (String(p) === '/opt/homebrew/bin/t3') {
         return;
       }
       throw new Error('not found');
@@ -114,7 +135,7 @@ describe('t3-code detector', () => {
 
     const result = await t3CodeDetector.detect();
     expect(result?.name).toBe('t3-code');
-    expect(result?.binary).toBe('/usr/local/bin/t3-code');
+    expect(result?.binary).toBe('/opt/homebrew/bin/t3');
   });
 
   it('returns agent when found via macOS /Applications path', async () => {
@@ -130,6 +151,21 @@ describe('t3-code detector', () => {
     const result = await t3CodeDetector.detect();
     expect(result?.name).toBe('t3-code');
     expect(result?.binary).toBe('/Applications/T3 Code.app/Contents/MacOS/T3 Code');
+  });
+
+  it('returns agent when found via macOS homebrew path', async () => {
+    mockWhich.mockResolvedValue(null);
+    mockPlatform.mockReturnValue('darwin');
+    mockFsAccess.mockImplementation(async (p: unknown) => {
+      if (String(p) === '/opt/homebrew/bin/t3') {
+        return;
+      }
+      throw new Error('not found');
+    });
+
+    const result = await t3CodeDetector.detect();
+    expect(result?.name).toBe('t3-code');
+    expect(result?.binary).toBe('/opt/homebrew/bin/t3');
   });
 
   it('returns agent when found via windows first common path', async () => {
