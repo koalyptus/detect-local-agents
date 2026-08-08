@@ -283,4 +283,4 @@ export default detector;
 - LM Studio (`lms`) ⚡
 - mini-coding-agent ⚡
 - OpenHands SDK ⚡
-- T3 Code (`t3-code`) — Electron desktop control plane for coding agents ⚡
+- T3 Code (`t3-code`) ⚡

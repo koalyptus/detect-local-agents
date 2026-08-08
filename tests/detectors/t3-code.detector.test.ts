@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { join } from 'node:path';
+import { which, getVersion } from '../../src/detect/utils.js';
+import { getPlatform } from '../../src/detect/platform.js';
+import * as fs from 'node:fs/promises';
+import { homedir } from 'node:os';
+import t3CodeDetector from '../../src/detectors/t3-code.detector.js';
 
 vi.mock('../../src/detect/utils.js', () => ({
   which: vi.fn(),
@@ -19,12 +24,6 @@ vi.mock('node:fs/promises', () => ({
 vi.mock('node:os', () => ({
   homedir: vi.fn(),
 }));
-
-import { which, getVersion } from '../../src/detect/utils.js';
-import { getPlatform } from '../../src/detect/platform.js';
-import * as fs from 'node:fs/promises';
-import { homedir } from 'node:os';
-import t3CodeDetector from '../../src/detectors/t3-code.detector.js';
 
 const mockWhich = vi.mocked(which);
 const mockGetVersion = vi.mocked(getVersion);
@@ -72,7 +71,7 @@ describe('t3-code detector', () => {
     }
   });
 
-  it('returns null when not found via which or common paths (t3-code and t3)', async () => {
+  it('returns null when not found via which or common paths', async () => {
     mockPlatform.mockReturnValue('linux');
     mockWhich.mockResolvedValue(null);
     mockFsStat.mockRejectedValue(new Error('not found'));
@@ -89,18 +88,6 @@ describe('t3-code detector', () => {
     expect(result?.name).toBe('t3-code');
     expect(result?.binary).toBe('/usr/local/bin/t3-code');
     expect(result?.version).toBe('0.0.32');
-  });
-
-  it('returns agent when found via which (t3 npm CLI)', async () => {
-    // which('t3-code') returns null, which('t3') succeeds
-    mockWhich.mockResolvedValueOnce(null).mockResolvedValueOnce('/home/test/.npm-global/bin/t3');
-    mockGetVersion.mockResolvedValue('1.2.0');
-
-    const result = await t3CodeDetector.detect();
-    expect(result).not.toBeNull();
-    expect(result?.name).toBe('t3-code');
-    expect(result?.binary).toBe('/home/test/.npm-global/bin/t3');
-    expect(result?.version).toBe('1.2.0');
   });
 
   it('returns version undefined when getVersion returns null', async () => {
