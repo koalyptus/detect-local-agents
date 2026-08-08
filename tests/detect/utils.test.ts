@@ -3,7 +3,7 @@ import type { ChildProcess } from 'node:child_process';
 import { which, getVersion } from '../../src/detect/utils.js';
 import { getPlatform } from '../../src/detect/platform.js';
 import { exec, execFile } from 'node:child_process';
-import { access } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 vi.mock('node:child_process', () => ({
@@ -13,6 +13,7 @@ vi.mock('node:child_process', () => ({
 
 vi.mock('node:fs/promises', () => ({
   access: vi.fn(),
+  readFile: vi.fn(),
 }));
 
 vi.mock('../../src/detect/platform.js', () => ({
@@ -22,6 +23,7 @@ vi.mock('../../src/detect/platform.js', () => ({
 const mockExecFile = vi.mocked(execFile);
 const mockExec = vi.mocked(exec);
 const mockAccess = vi.mocked(access);
+const mockReadFile = vi.mocked(readFile);
 const mockPlatform = vi.mocked(getPlatform);
 const mockChildProcess = {} as ChildProcess;
 
@@ -372,6 +374,146 @@ describe('getVersion', () => {
       const version = await getVersion('C:\\missing\\tool', []);
       expect(version).toBeNull();
       expect(mockExecFile).not.toHaveBeenCalled();
+    });
+
+    describe('PE version fallback', () => {
+      it('reads version from PE binary when --version fails', async () => {
+        mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+          if (typeof callback === 'function') {
+            callback(new Error('not supported'), { stdout: '', stderr: '' });
+          }
+          return mockChildProcess;
+        });
+
+        // Build a minimal VS_VERSIONINFO buffer (as found inside PE .rsrc)
+        // Layout: header(6) + szKey("VS_VERSION_INFO\0" in UTF-16LE = 34 bytes)
+        //         + padding(0) + Value(VS_FIXEDFILEINFO = 52 bytes)
+        const key = Buffer.from('VS_VERSION_INFO\0', 'utf16le'); // 34 bytes
+        const headerLen = 6;
+        const padding = (4 - ((headerLen + key.length) % 4)) % 4; // 0
+        const valueOffset = headerLen + key.length + padding; // 40
+        const totalLen = valueOffset + 52; // 94 bytes
+        const buf = Buffer.alloc(128);
+        // VS_VERSIONINFO header
+        buf.writeUInt16LE(totalLen, 0); // wLength
+        buf.writeUInt16LE(52, 2); // wValueLength = sizeof(VS_FIXEDFILEINFO)
+        buf.writeUInt16LE(0, 4); // wType = 0 (binary)
+        // szKey
+        key.copy(buf, headerLen);
+        // VS_FIXEDFILEINFO at valueOffset
+        buf.writeUInt32LE(0xfeef04bd, valueOffset); // dwSignature
+        // dwFileVersionMS at valueOffset+8: major=0, minor=32
+        buf.writeUInt32LE((0 << 16) | 32, valueOffset + 8);
+        // dwFileVersionLS at valueOffset+12: build=0, revision=0
+        buf.writeUInt32LE(0, valueOffset + 12);
+
+        mockReadFile.mockResolvedValue(buf);
+
+        const version = await getVersion('C:\\test\\app.exe');
+        expect(version).toBe('0.32');
+      });
+
+      it('parses 4-component version (build + revision)', async () => {
+        mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+          if (typeof callback === 'function') {
+            callback(new Error('not supported'), { stdout: '', stderr: '' });
+          }
+          return mockChildProcess;
+        });
+
+        const key = Buffer.from('VS_VERSION_INFO\0', 'utf16le');
+        const headerLen = 6;
+        const padding = (4 - ((headerLen + key.length) % 4)) % 4;
+        const valueOffset = headerLen + key.length + padding;
+        const buf = Buffer.alloc(128);
+        buf.writeUInt16LE(0, 0);
+        buf.writeUInt16LE(52, 2);
+        buf.writeUInt16LE(0, 4);
+        key.copy(buf, headerLen);
+        // Signature
+        buf.writeUInt32LE(0xfeef04bd, valueOffset);
+        // fileVersionMS: major=1, minor=2
+        buf.writeUInt32LE((1 << 16) | 2, valueOffset + 8);
+        // fileVersionLS: build=3, revision=4
+        buf.writeUInt32LE((3 << 16) | 4, valueOffset + 12);
+
+        mockReadFile.mockResolvedValue(buf);
+
+        const version = await getVersion('C:\\test\\app.exe');
+        expect(version).toBe('1.2.3.4');
+      });
+
+      it('strips trailing zero build when revision is zero', async () => {
+        mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+          if (typeof callback === 'function') {
+            callback(new Error('not supported'), { stdout: '', stderr: '' });
+          }
+          return mockChildProcess;
+        });
+
+        const key = Buffer.from('VS_VERSION_INFO\0', 'utf16le');
+        const headerLen = 6;
+        const padding = (4 - ((headerLen + key.length) % 4)) % 4;
+        const valueOffset = headerLen + key.length + padding;
+        const buf = Buffer.alloc(128);
+        buf.writeUInt16LE(0, 0);
+        buf.writeUInt16LE(52, 2);
+        buf.writeUInt16LE(0, 4);
+        key.copy(buf, headerLen);
+        buf.writeUInt32LE(0xfeef04bd, valueOffset);
+        // fileVersionMS: major=0, minor=0
+        buf.writeUInt32LE((0 << 16) | 0, valueOffset + 8);
+        // fileVersionLS: build=32, revision=0
+        buf.writeUInt32LE((32 << 16) | 0, valueOffset + 12);
+
+        mockReadFile.mockResolvedValue(buf);
+
+        const version = await getVersion('C:\\test\\app.exe');
+        expect(version).toBe('0.0.32');
+      });
+
+      it('returns null when PE file has no version info', async () => {
+        mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+          if (typeof callback === 'function') {
+            callback(new Error('not supported'), { stdout: '', stderr: '' });
+          }
+          return mockChildProcess;
+        });
+
+        // Buffer without the PE version signature
+        mockReadFile.mockResolvedValue(Buffer.alloc(128));
+
+        const version = await getVersion('C:\\test\\app.exe');
+        expect(version).toBeNull();
+      });
+
+      it('returns null when readFile throws', async () => {
+        mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+          if (typeof callback === 'function') {
+            callback(new Error('not supported'), { stdout: '', stderr: '' });
+          }
+          return mockChildProcess;
+        });
+
+        mockReadFile.mockRejectedValue(new Error('EACCES'));
+
+        const version = await getVersion('C:\\test\\app.exe');
+        expect(version).toBeNull();
+      });
+
+      it('does not use PE fallback on non-win32', async () => {
+        mockPlatform.mockReturnValue('linux');
+        mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+          if (typeof callback === 'function') {
+            callback(new Error('not supported'), { stdout: '', stderr: '' });
+          }
+          return mockChildProcess;
+        });
+
+        const version = await getVersion('/usr/bin/app');
+        expect(version).toBeNull();
+        expect(mockReadFile).not.toHaveBeenCalled();
+      });
     });
   });
 });

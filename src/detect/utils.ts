@@ -1,5 +1,5 @@
 import { exec as execCb, execFile } from 'node:child_process';
-import { access } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { getPlatform } from './platform.js';
@@ -11,8 +11,45 @@ const COMMAND_TIMEOUT = 10_000;
 /** Matches a dotted version string like "1.0.76" or "1.0.76.1". */
 const VERSION_REGEX = /(\d+\.\d+(?:\.\d+)*)/;
 
+/** PE VS_FIXEDFILEINFO signature (little-endian bytes for 0xFEEF04BD). */
+const PE_VERSION_SIGNATURE = Buffer.from([0xbd, 0x04, 0xef, 0xfe]);
+
 const execAsync = promisify(execCb);
 const execFileAsync = promisify(execFile);
+
+/**
+ * Read the product version from a Windows PE (.exe/.dll) file by locating
+ * VS_FIXEDFILEINFO in the binary.  No child process required.
+ * Returns null on any read/parse failure or non-PE files.
+ */
+async function getWindowsFileVersion(binaryPath: string): Promise<string | null> {
+  try {
+    const buffer = await readFile(binaryPath);
+    // VS_FIXEDFILEINFO signature 0xFEEF04BD — scan the binary for the
+    // 4-byte signature; once located, the file version fields sit 8 and
+    // 12 bytes after it.
+    const found = buffer.indexOf(PE_VERSION_SIGNATURE);
+    if (found === -1 || found + 16 > buffer.length) {
+      return null;
+    }
+    const fileVersionMS = buffer.readUInt32LE(found + 8);
+    const fileVersionLS = buffer.readUInt32LE(found + 12);
+    const major = (fileVersionMS >>> 16) & 0xffff;
+    const minor = fileVersionMS & 0xffff;
+    const build = (fileVersionLS >>> 16) & 0xffff;
+    const revision = fileVersionLS & 0xffff;
+    let version = `${major}.${minor}`;
+    if (build !== 0 || revision !== 0) {
+      version += `.${build}`;
+    }
+    if (revision !== 0) {
+      version += `.${revision}`;
+    }
+    return version;
+  } catch {
+    return null;
+  }
+}
 
 async function getNpmPrefix(): Promise<string | null> {
   // npm sets npm_config_prefix as an env var when running under npm scripts.
@@ -97,7 +134,8 @@ export async function which(name: string): Promise<string | null> {
  * Get version string by running a command. Returns version or null.
  * On Windows, resolves npm .cmd/.exe shims and runs .cmd/.bat through the
  * shell via exec() — a single command string avoids DEP0190 and properly
- * handles spaces in paths.
+ * handles spaces in paths.  Falls back to reading the PE embedded version
+ * when --version does not work (e.g. Electron desktop apps).
  */
 export async function getVersion(
   binary: string,
@@ -121,6 +159,11 @@ export async function getVersion(
     const match = stdout.trim().match(VERSION_REGEX);
     return match?.[1] ?? stdout.trim();
   } catch {
+    // --version may not be supported (e.g. Electron desktop apps).
+    // Fall back to reading the PE embedded version on Windows.
+    if (isWin) {
+      return getWindowsFileVersion(resolved);
+    }
     return null;
   }
 }
