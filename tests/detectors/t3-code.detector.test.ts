@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { join } from 'node:path';
+
 vi.mock('../../src/detect/utils.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
@@ -178,7 +180,7 @@ describe('t3-code detector', () => {
     mockPlatform.mockReturnValue('linux');
     // getConfigDir resolves to ~/.config/t3code — make it the first access call that resolves
     mockFsAccess.mockImplementation(async (p: unknown) => {
-      if (String(p) === '/home/test/.config/t3code') {
+      if (String(p) === join('/home/test', '.config', 't3code')) {
         return;
       }
       throw new Error('not found');
@@ -193,7 +195,7 @@ describe('t3-code detector', () => {
     mockGetVersion.mockResolvedValue('0.0.32');
     mockPlatform.mockReturnValue('darwin');
     mockFsAccess.mockImplementation(async (p: unknown) => {
-      if (String(p) === '/home/test/Library/Application Support/t3code') {
+      if (String(p) === join('/home/test', 'Library', 'Application Support', 't3code')) {
         return;
       }
       throw new Error('not found');
