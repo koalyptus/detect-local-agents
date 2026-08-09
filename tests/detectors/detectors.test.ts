@@ -8,10 +8,14 @@ import { hasConfigFile } from '../../src/config/config-paths.js';
 import cursorDetector from '../../src/detectors/cursor.detector.js';
 
 // Mock the detect module
-vi.mock('../../src/detect/utils.js', () => ({
-  which: vi.fn(),
-  getVersion: vi.fn(),
-}));
+vi.mock('../../src/detect/utils.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/detect/utils.js')>();
+  return {
+    ...actual,
+    which: vi.fn(),
+    getVersion: vi.fn(),
+  };
+});
 
 import { which, getVersion } from '../../src/detect/utils.js';
 

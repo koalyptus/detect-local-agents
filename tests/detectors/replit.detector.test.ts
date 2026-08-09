@@ -2,10 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { which, getVersion } from '../../src/detect/utils.js';
 import replitDetector from '../../src/detectors/replit.detector.js';
 
-vi.mock('../../src/detect/utils.js', () => ({
-  which: vi.fn(),
-  getVersion: vi.fn(),
-}));
+vi.mock('../../src/detect/utils.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/detect/utils.js')>();
+  return {
+    ...actual,
+    which: vi.fn(),
+    getVersion: vi.fn(),
+  };
+});
 
 const mockWhich = vi.mocked(which);
 const mockGetVersion = vi.mocked(getVersion);

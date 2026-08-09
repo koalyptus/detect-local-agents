@@ -6,10 +6,14 @@ import * as fs from 'node:fs/promises';
 import { homedir } from 'node:os';
 import t3CodeDetector from '../../src/detectors/t3-code.detector.js';
 
-vi.mock('../../src/detect/utils.js', () => ({
-  which: vi.fn(),
-  getVersion: vi.fn(),
-}));
+vi.mock('../../src/detect/utils.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/detect/utils.js')>();
+  return {
+    ...actual,
+    which: vi.fn(),
+    getVersion: vi.fn(),
+  };
+});
 
 vi.mock('../../src/detect/platform.js', () => ({
   getPlatform: vi.fn(),

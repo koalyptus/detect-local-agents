@@ -1,13 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
 
-vi.mock('../../src/detect/utils.js', () => ({
-  which: vi.fn(),
-  getVersion: vi.fn(),
-}));
+vi.mock('../../src/detect/utils.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/detect/utils.js')>();
+  return {
+    ...actual,
+    which: vi.fn(),
+    getVersion: vi.fn(),
+  };
+});
 
 vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
+  exec: vi.fn(),
 }));
 
 import { which, getVersion } from '../../src/detect/utils.js';
