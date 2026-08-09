@@ -2,7 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import type { AgentDetector, DetectedAgent, DetectorConfig } from '../types.js';
+import type { AgentDetector, ConfigSource, DetectedAgent, DetectorConfig } from '../types.js';
 import { which, getVersion } from '../detect/utils.js';
 import { detectorConfigs } from '../config/configs.js';
 import { hasConfigFile } from '../config/config-paths.js';
@@ -28,27 +28,32 @@ export function configToDetector(config: DetectorConfig): AgentDetector {
 
     const version = (await getVersion(binary, config.versionArgs)) ?? undefined;
 
-    // Check if configured
-    let isConfigured = false;
+    // Check if configured. The first matching signal wins; configSource records
+    // which signal it was. The cascade order and short-circuiting are unchanged.
+    let configSource: ConfigSource | undefined;
 
     // Check env vars
     if (config.configEnvVars?.length) {
-      isConfigured = config.configEnvVars.some((v) => !!process.env[v]);
+      if (config.configEnvVars.some((v) => !!process.env[v])) {
+        configSource = 'env';
+      }
     }
 
     // Check config file on disk
-    if (!isConfigured) {
-      isConfigured = await hasConfigFile(config.name);
+    if (!configSource) {
+      if (await hasConfigFile(config.name)) {
+        configSource = 'config-file';
+      }
     }
 
     // Fallback: check config directory
-    if (!isConfigured && config.configDir) {
+    if (!configSource && config.configDir) {
       const dir = config.configDir.startsWith('~')
         ? path.join(process.env.HOME || os.homedir(), config.configDir.slice(1))
         : config.configDir;
       try {
         await fs.access(dir);
-        isConfigured = true;
+        configSource = 'config-dir';
       } catch {
         // No config dir
       }
@@ -58,7 +63,8 @@ export function configToDetector(config: DetectorConfig): AgentDetector {
       name: config.nameResolver ? config.nameResolver(process.env) : config.name,
       binary,
       version,
-      isConfigured,
+      isConfigured: configSource !== undefined,
+      ...(configSource ? { configSource } : {}),
       isACPAgent: config.isACPAgent ?? false,
     };
   }
