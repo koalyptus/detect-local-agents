@@ -292,6 +292,43 @@ describe('getVersion', () => {
     expect(version).toBe('1.0.76');
   });
 
+  it('falls back to stderr when stdout has no version', async () => {
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: '', stderr: 'mytool v4.5.6\n' });
+      }
+      return mockChildProcess;
+    });
+
+    const version = await getVersion('mytool', ['--version']);
+    expect(version).toBe('4.5.6');
+  });
+
+  it('prefers stdout over stderr when both have versions', async () => {
+    // Regression guard: a dotted number in a stderr warning must not win.
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: 'v1.2.3\n', stderr: 'Warning: 9.9.9 deprecated\n' });
+      }
+      return mockChildProcess;
+    });
+
+    const version = await getVersion('mytool', ['--version']);
+    expect(version).toBe('1.2.3');
+  });
+
+  it('returns raw stdout when neither stream has a version', async () => {
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: 'some output\n', stderr: 'Warning: 404\n' });
+      }
+      return mockChildProcess;
+    });
+
+    const version = await getVersion('mytool', ['--version']);
+    expect(version).toBe('some output');
+  });
+
   describe('on win32', () => {
     beforeEach(() => {
       mockPlatform.mockReturnValue('win32');
