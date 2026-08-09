@@ -79,19 +79,19 @@ describe('t3-code detector', () => {
     expect(await t3CodeDetector.detect()).toBeNull();
   });
 
-  it('returns agent when found via which (t3-code)', async () => {
-    mockWhich.mockResolvedValue('/usr/local/bin/t3-code');
+  it('returns agent when found via which (t3)', async () => {
+    mockWhich.mockResolvedValue('/usr/local/bin/t3');
     mockGetVersion.mockResolvedValue('0.0.32');
 
     const result = await t3CodeDetector.detect();
     expect(result).not.toBeNull();
     expect(result?.name).toBe('t3-code');
-    expect(result?.binary).toBe('/usr/local/bin/t3-code');
+    expect(result?.binary).toBe('/usr/local/bin/t3');
     expect(result?.version).toBe('0.0.32');
   });
 
   it('returns version undefined when getVersion returns null', async () => {
-    mockWhich.mockResolvedValue('/usr/local/bin/t3-code');
+    mockWhich.mockResolvedValue('/usr/local/bin/t3');
     mockGetVersion.mockResolvedValue(null);
 
     const result = await t3CodeDetector.detect();
@@ -212,7 +212,7 @@ describe('t3-code detector', () => {
   });
 
   it('sets isConfigured true when config dir exists on linux', async () => {
-    mockWhich.mockResolvedValue('/usr/local/bin/t3-code');
+    mockWhich.mockResolvedValue('/usr/local/bin/t3');
     mockGetVersion.mockResolvedValue('0.0.32');
     mockPlatform.mockReturnValue('linux');
     const configDir = join('/home/test', '.config', 't3code');
@@ -264,7 +264,7 @@ describe('t3-code detector', () => {
   });
 
   it('sets isConfigured false when config dir does not exist', async () => {
-    mockWhich.mockResolvedValue('/usr/local/bin/t3-code');
+    mockWhich.mockResolvedValue('/usr/local/bin/t3');
     mockGetVersion.mockResolvedValue('0.0.32');
     mockPlatform.mockReturnValue('linux');
     // config dir access also rejects → isConfigured false
@@ -287,7 +287,7 @@ describe('t3-code detector', () => {
   });
 
   it('sets isConfigured false on unsupported platform', async () => {
-    mockWhich.mockResolvedValue('/usr/bin/t3-code');
+    mockWhich.mockResolvedValue('/usr/bin/t3');
     mockGetVersion.mockResolvedValue('0.0.32');
     mockPlatform.mockReturnValue('aix');
     mockFsStat.mockRejectedValue(new Error('not found'));
@@ -308,7 +308,7 @@ describe('t3-code detector', () => {
     // getConfigDir: HOME empty, homedir() returns '' → home falsy → returns null → isConfigured false
     delete process.env.HOME;
     mockHomedir.mockReturnValue('');
-    mockWhich.mockResolvedValue('/usr/local/bin/t3-code');
+    mockWhich.mockResolvedValue('/usr/local/bin/t3');
     mockGetVersion.mockResolvedValue('1.0.0');
     mockPlatform.mockReturnValue('linux');
     mockFsStat.mockRejectedValue(new Error('not found'));

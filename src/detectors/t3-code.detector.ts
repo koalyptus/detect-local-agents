@@ -81,7 +81,7 @@ const detector: AgentDetector = {
 
   async detect(): Promise<DetectedAgent | null> {
     // 1. Try PATH — desktop app CLI alias first, then npm CLI name
-    let binary = await which('t3-code');
+    let binary = await which('t3');
 
     // 2. Fall back to platform-specific install paths
     const platform = getPlatform();
