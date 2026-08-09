@@ -304,6 +304,20 @@ describe('getVersion', () => {
     expect(version).toBe('4.5.6');
   });
 
+  it('adopts dotted number from stderr warning when stdout is empty', async () => {
+    // Documented tradeoff: with no stdout version, a dotted number in a
+    // stderr warning is adopted rather than returning undefined.
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: '', stderr: 'Warning: 9.9.9 deprecated\n' });
+      }
+      return mockChildProcess;
+    });
+
+    const version = await getVersion('mytool', ['--version']);
+    expect(version).toBe('9.9.9');
+  });
+
   it('prefers stdout over stderr when both have versions', async () => {
     // Regression guard: a dotted number in a stderr warning must not win.
     mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
