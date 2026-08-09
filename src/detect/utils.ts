@@ -3,6 +3,7 @@ import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { getPlatform } from './platform.js';
+import type { ConfigSource } from '../types.js';
 
 /** Timeout for quick CLI probes (npm config, which/where). */
 const NPM_TIMEOUT = 3000;
@@ -125,5 +126,32 @@ export async function getVersion(
     return match?.[1] ?? stdout.trim();
   } catch {
     return null;
+  }
+}
+
+/**
+ * Attach `configSource` to a detected agent when a source is known.
+ * Callers pass a source only when the agent counts as configured, which keeps
+ * the invariant "configSource set ⇒ isConfigured is true" a single decision
+ * at each call site.
+ */
+export function withConfigSource<T extends object>(
+  agent: T,
+  configSource: ConfigSource | undefined,
+): T & { configSource?: ConfigSource } {
+  return configSource ? { ...agent, configSource } : agent;
+}
+
+/**
+ * Return 'config-dir' when `dir` exists (even if empty), else undefined.
+ * The config/user-data directory is the weakest "configured" signal: it is
+ * created by a first run, even an aborted one.
+ */
+export async function configSourceFromDir(dir: string): Promise<ConfigSource | undefined> {
+  try {
+    await access(dir);
+    return 'config-dir';
+  } catch {
+    return undefined;
   }
 }

@@ -1,5 +1,5 @@
 import type { AgentDetector, ConfigSource, DetectedAgent } from '../types.js';
-import { which, getVersion } from '../detect/utils.js';
+import { which, getVersion, configSourceFromDir, withConfigSource } from '../detect/utils.js';
 import { getPlatform } from '../detect/platform.js';
 import * as fs from 'node:fs/promises';
 import { join } from 'node:path';
@@ -117,26 +117,13 @@ const detector: AgentDetector = {
     const version = (await getVersion(binary)) ?? undefined;
 
     // 3. isConfigured: the user-data/config directory must exist
-    let isConfigured = false;
-    let configSource: ConfigSource | undefined;
     const configDir = getConfigDir(platform);
-    if (configDir) {
-      try {
-        await fs.access(configDir);
-        isConfigured = true;
-        configSource = 'config-dir';
-      } catch {
-        // Not configured yet — app installed but never run
-      }
-    }
+    const configSource: ConfigSource | undefined = configDir
+      ? await configSourceFromDir(configDir)
+      : undefined;
+    const isConfigured = configSource !== undefined;
 
-    return {
-      name: 't3-code',
-      binary,
-      version,
-      isConfigured,
-      ...(configSource ? { configSource } : {}),
-    };
+    return withConfigSource({ name: 't3-code', binary, version, isConfigured }, configSource);
   },
 };
 

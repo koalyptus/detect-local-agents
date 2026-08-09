@@ -1,8 +1,7 @@
 import type { AgentDetector, ConfigSource, DetectedAgent } from '../types.js';
-import { which, getVersion } from '../detect/utils.js';
+import { which, getVersion, configSourceFromDir, withConfigSource } from '../detect/utils.js';
 import { getPlatform } from '../detect/platform.js';
 import { homedir } from 'node:os';
-import * as fs from 'node:fs/promises';
 import { join } from 'node:path';
 
 /**
@@ -50,25 +49,12 @@ const detector: AgentDetector = {
     // LM Studio has no API-key env var; "configured" means the desktop
     // app has been run at least once (home dir was created).
     const homeDir = getLmStudioHome();
-    let isConfigured = false;
-    let configSource: ConfigSource | undefined;
-    if (homeDir) {
-      try {
-        await fs.access(homeDir);
-        isConfigured = true;
-        configSource = 'config-dir';
-      } catch {
-        // Home dir doesn't exist — not configured
-      }
-    }
+    const configSource: ConfigSource | undefined = homeDir
+      ? await configSourceFromDir(homeDir)
+      : undefined;
+    const isConfigured = configSource !== undefined;
 
-    return {
-      name: 'lmstudio',
-      binary,
-      version,
-      isConfigured,
-      ...(configSource ? { configSource } : {}),
-    };
+    return withConfigSource({ name: 'lmstudio', binary, version, isConfigured }, configSource);
   },
 };
 

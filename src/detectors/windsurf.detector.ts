@@ -1,5 +1,5 @@
 import type { AgentDetector, ConfigSource, DetectedAgent } from '../types.js';
-import { which } from '../detect/utils.js';
+import { which, configSourceFromDir, withConfigSource } from '../detect/utils.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
@@ -53,26 +53,24 @@ const detector: AgentDetector = {
     // Check for Codeium/Windsurf config directory
     const configDirs = [path.join(os.homedir(), '.codeium'), path.join(os.homedir(), '.windsurf')];
 
-    let isConfigured = false;
     let configSource: ConfigSource | undefined;
     for (const dir of configDirs) {
-      try {
-        await fs.access(dir);
-        isConfigured = true;
-        configSource = 'config-dir';
+      configSource = await configSourceFromDir(dir);
+      if (configSource) {
         break;
-      } catch {
-        continue;
       }
     }
+    const isConfigured = configSource !== undefined;
 
-    return {
-      name: 'windsurf',
-      binary,
-      isConfigured,
-      ...(configSource ? { configSource } : {}),
-      isACPAgent: true,
-    };
+    return withConfigSource(
+      {
+        name: 'windsurf',
+        binary,
+        isConfigured,
+        isACPAgent: true,
+      },
+      configSource,
+    );
   },
 };
 

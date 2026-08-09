@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { AgentDetector, ConfigSource, DetectedAgent, DetectorConfig } from '../types.js';
-import { which, getVersion } from '../detect/utils.js';
+import { which, getVersion, configSourceFromDir, withConfigSource } from '../detect/utils.js';
 import { detectorConfigs } from '../config/configs.js';
 import { hasConfigFile } from '../config/config-paths.js';
 
@@ -51,22 +51,19 @@ export function configToDetector(config: DetectorConfig): AgentDetector {
       const dir = config.configDir.startsWith('~')
         ? path.join(process.env.HOME || os.homedir(), config.configDir.slice(1))
         : config.configDir;
-      try {
-        await fs.access(dir);
-        configSource = 'config-dir';
-      } catch {
-        // No config dir
-      }
+      configSource = await configSourceFromDir(dir);
     }
 
-    return {
-      name: config.nameResolver ? config.nameResolver(process.env) : config.name,
-      binary,
-      version,
-      isConfigured: configSource !== undefined,
-      ...(configSource ? { configSource } : {}),
-      isACPAgent: config.isACPAgent ?? false,
-    };
+    return withConfigSource(
+      {
+        name: config.nameResolver ? config.nameResolver(process.env) : config.name,
+        binary,
+        version,
+        isConfigured: configSource !== undefined,
+        isACPAgent: config.isACPAgent ?? false,
+      },
+      configSource,
+    );
   }
 }
 

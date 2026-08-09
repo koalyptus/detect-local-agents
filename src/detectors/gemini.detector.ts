@@ -1,6 +1,5 @@
 import type { AgentDetector, ConfigSource, DetectedAgent } from '../types.js';
-import { which, getVersion } from '../detect/utils.js';
-import { access } from 'node:fs/promises';
+import { which, getVersion, configSourceFromDir, withConfigSource } from '../detect/utils.js';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 
@@ -21,26 +20,12 @@ const detector: AgentDetector = {
 
     // Check configured status: env vars or config directory
     const envConfigured = !!(process.env['GOOGLE_API_KEY'] ?? process.env['ANTIGRAVITY_API_KEY']);
-    let isConfigured = envConfigured;
-    let configSource: ConfigSource | undefined = envConfigured ? 'env' : undefined;
-    if (!isConfigured) {
-      try {
-        const geminiDir = join(homedir(), '.gemini');
-        await access(geminiDir);
-        isConfigured = true;
-        configSource = 'config-dir';
-      } catch {
-        // Not configured via config dir
-      }
-    }
+    const configSource: ConfigSource | undefined = envConfigured
+      ? 'env'
+      : await configSourceFromDir(join(homedir(), '.gemini'));
+    const isConfigured = configSource !== undefined;
 
-    return {
-      name,
-      binary,
-      version,
-      isConfigured,
-      ...(configSource ? { configSource } : {}),
-    };
+    return withConfigSource({ name, binary, version, isConfigured }, configSource);
   },
 };
 

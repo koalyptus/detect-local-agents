@@ -1,5 +1,5 @@
 import type { AgentDetector, DetectedAgent } from '../types.js';
-import { which, getVersion } from '../detect/utils.js';
+import { which, getVersion, withConfigSource } from '../detect/utils.js';
 
 const detector: AgentDetector = {
   name: 'junie',
@@ -15,13 +15,10 @@ const detector: AgentDetector = {
     // Vercel's spec uses env_set JUNIE_DATA | JUNIE_SHIM_PATH
     const isConfigured = !!(process.env['JUNIE_DATA'] ?? process.env['JUNIE_SHIM_PATH']);
 
-    return {
-      name: 'junie',
-      binary,
-      version,
-      isConfigured,
-      ...(isConfigured ? { configSource: 'env' as const } : {}),
-    };
+    return withConfigSource(
+      { name: 'junie', binary, version, isConfigured },
+      isConfigured ? 'env' : undefined,
+    );
   },
 };
 
