@@ -114,11 +114,14 @@ export async function getVersion(
     // command string) rather than execFile + shell:true — execFile with
     // shell and an args array triggers Node 22's DEP0190 and doesn't quote
     // spaces in the path correctly.
-    const { stdout } = needsShell
+    const { stdout, stderr } = needsShell
       ? await execAsync(`"${resolved}" ${args.join(' ')}`, { timeout: COMMAND_TIMEOUT })
       : await execFileAsync(resolved, args, { timeout: COMMAND_TIMEOUT });
     // Match dotted segments only (no trailing dot): "1.0.76." -> "1.0.76".
-    const match = stdout.trim().match(VERSION_REGEX);
+    // stdout is authoritative; stderr is only a fallback for CLIs that print
+    // their version banner to stderr. Concatenating both streams could pick
+    // up a stray dotted number from a stderr warning, so try stdout first.
+    const match = stdout.trim().match(VERSION_REGEX) ?? stderr.trim().match(VERSION_REGEX);
     return match?.[1] ?? stdout.trim();
   } catch {
     return null;
