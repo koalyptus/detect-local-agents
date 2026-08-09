@@ -42,6 +42,48 @@ The detection pipeline for each config entry:
 
 Agents with non-standard detection logic get a `*.detector.ts` file in `src/detectors/`. These run the same binary check but can use custom probes (file existence, pip packages, environment markers, etc.).
 
+### Detection flow
+
+```mermaid
+flowchart TD
+    Start["detectAgents()"] --> Load["loadAllDetectors()"]
+    Load -->|"config entries<br/>(detectorConfigs)"| CB
+    Load -->|"*.detector.ts<br/>auto-discovered"| FB
+
+    subgraph CB["Config-based detectors"]
+        direction TB
+        C1["configToDetector(config)"] --> C2{"binary in PATH?<br/>(which/where)"}
+        C2 -->|"not found"| CNull["agent not reported"]
+        C2 -->|"found"| C3["version probe: --version<br/>(10s timeout)"]
+        C3 --> C4{"configured? first hit wins"}
+        C4 -->|"env var set"| C5["configSource: 'env'"]
+        C4 -->|"config.json exists<br/>in configDir"| C6["configSource: 'config-file'"]
+        C4 -->|"configDir exists"| C7["configSource: 'config-dir'"]
+        C4 -->|"no signal"| C8["isConfigured: false"]
+        C5 --> C9["isConfigured: true + configSource"]
+        C6 --> C9
+        C7 --> C9
+    end
+
+    subgraph FB["File-based detectors"]
+        direction TB
+        F1["custom detector"] --> F2{"binary check + custom probes:<br/>files, pip, env markers, runtime exec"}
+        F2 -->|"agent absent"| FNull["agent not reported"]
+        F2 -->|"no setup evidence"| F3["isConfigured: false"]
+        F2 -->|"evidence found"| F4["isConfigured: true + configSource<br/>('env' | 'config-dir' | 'probe')"]
+    end
+
+    CNull --> R["Promise.all — errors skipped silently,<br/>nulls filtered out"]
+    C8 --> R
+    C9 --> R
+    FNull --> R
+    F3 --> R
+    F4 --> R
+
+    R --> Out["DetectedAgent[]"]
+    Out --> CLI["CLI: table + CONFIGURED column,<br/>--configured / --json flags"]
+```
+
 ## Install
 
 ```bash
