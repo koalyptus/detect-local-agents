@@ -107,7 +107,7 @@ npx detect-local-agents
 # JSON output
 npx detect-local-agents --json
 
-# Only show agents with auth/configured
+# Only show configured agents
 npx detect-local-agents --configured
 
 # Single-agent details (prints null if not found, exit 0)
@@ -129,7 +129,8 @@ interface DetectedAgent {
   name: string; // 'claude', 'codex', 'ollama', etc.
   binary: string; // absolute path to the binary
   version?: string; // version string from --version (null if probe timed out)
-  isConfigured?: boolean; // has auth/config ready (see below)
+  isConfigured?: boolean; // true if any setup signal exists (see below)
+  configSource?: 'env' | 'config-file' | 'config-dir' | 'probe'; // how isConfigured was determined (see below)
   isACPAgent?: boolean; // needs acpx to run
   metadata?: Record<string, unknown>; // extra info from file-based detectors
 }
@@ -137,14 +138,15 @@ interface DetectedAgent {
 
 ### Field details
 
-| Field          | Description                                                                                                                                                                                                                                                                              |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`         | Agent identifier matching Vercel's `detect-agent` spec where applicable.                                                                                                                                                                                                                 |
-| `binary`       | Absolute path to the detected binary. Cross-platform: forward slashes on Unix, backslashes on Windows.                                                                                                                                                                                   |
-| `version`      | Output of `<binary> --version`, parsed for a semver-like string. `null` if the probe timed out (10s) or the binary doesn't support `--version`.                                                                                                                                          |
-| `isConfigured` | `true` if the agent has authentication or config set up. Checked in order: env vars (`ANTHROPIC_API_KEY`, etc.), config file (`config.json` in the agent's config dir), config directory presence. `false` means the binary is installed but there's no sign the user has set it up yet. |
-| `isACPAgent`   | `true` if the agent speaks the Agent Communication Protocol and must be launched through `acpx`.                                                                                                                                                                                         |
-| `metadata`     | Arbitrary data from file-based detectors (e.g. pip package versions, ACP target lists). Not set by config-based detectors.                                                                                                                                                               |
+| Field          | Description                                                                                                                                                                                                                                                                                                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`         | Agent identifier matching Vercel's `detect-agent` spec where applicable.                                                                                                                                                                                                                                                                                                                     |
+| `binary`       | Absolute path to the detected binary. Cross-platform: forward slashes on Unix, backslashes on Windows.                                                                                                                                                                                                                                                                                       |
+| `version`      | Output of `<binary> --version`, parsed for a semver-like string. `null` if the probe timed out (10s) or the binary doesn't support `--version`.                                                                                                                                                                                                                                              |
+| `isConfigured` | `true` if there is a setup signal for the agent on this machine — checked in order: an env var is set (`ANTHROPIC_API_KEY`, etc.), a config file exists (`config.json` in the agent's config dir), or the config directory exists. It is evidence the agent was set up, not proof the credentials are valid or working. `false` means the binary is installed but no setup signal was found. |
+| `configSource` | How `isConfigured` was determined: `'env'` (an env var is set), `'config-file'` (a config file exists), `'config-dir'` (the config directory exists), or `'probe'` (a runtime probe of the binary succeeded — used by `acpx` and `rovodev`). Only present when `isConfigured` is `true`. Earlier in the list = stronger evidence.                                                            |
+| `isACPAgent`   | `true` if the agent speaks the Agent Communication Protocol and must be launched through `acpx`.                                                                                                                                                                                                                                                                                             |
+| `metadata`     | Arbitrary data from file-based detectors (e.g. pip package versions, ACP target lists). Not set by config-based detectors.                                                                                                                                                                                                                                                                   |
 
 ## API Reference
 
