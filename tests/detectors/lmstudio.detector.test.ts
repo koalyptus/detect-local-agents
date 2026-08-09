@@ -73,6 +73,7 @@ describe('lmstudio detector', () => {
 
     const result = await lmstudioDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('config-dir');
   });
 
   it('sets isConfigured false when home dir does not exist', async () => {
@@ -82,6 +83,7 @@ describe('lmstudio detector', () => {
 
     const result = await lmstudioDetector.detect();
     expect(result?.isConfigured).toBe(false);
+    expect(result?.configSource).toBeUndefined();
   });
 
   it('returns version as undefined when getVersion returns null', async () => {

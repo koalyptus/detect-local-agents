@@ -1,4 +1,4 @@
-import type { AgentDetector, DetectedAgent } from '../types.js';
+import type { AgentDetector, ConfigSource, DetectedAgent } from '../types.js';
 import { which, getVersion } from '../detect/utils.js';
 import { getPlatform } from '../detect/platform.js';
 import * as fs from 'node:fs/promises';
@@ -118,11 +118,13 @@ const detector: AgentDetector = {
 
     // 3. isConfigured: the user-data/config directory must exist
     let isConfigured = false;
+    let configSource: ConfigSource | undefined;
     const configDir = getConfigDir(platform);
     if (configDir) {
       try {
         await fs.access(configDir);
         isConfigured = true;
+        configSource = 'config-dir';
       } catch {
         // Not configured yet — app installed but never run
       }
@@ -133,6 +135,7 @@ const detector: AgentDetector = {
       binary,
       version,
       isConfigured,
+      ...(configSource ? { configSource } : {}),
     };
   },
 };

@@ -25,5 +25,9 @@ describe('devin detector', () => {
     expect(result?.name).toBe('devin');
     expect(result?.binary).toBe('/opt/.devin');
     expect(result?.isConfigured).toBe(true);
+    // Deliberate omission: the /opt/.devin marker signals "this machine is a
+    // Devin sandbox", not a user-configured agent signal. It is neither the
+    // agent's config file nor its config dir, so configSource stays undefined.
+    expect(result?.configSource).toBeUndefined();
   });
 });

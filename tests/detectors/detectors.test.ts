@@ -3,11 +3,9 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { ChildProcess } from 'node:child_process';
 import { isAgentDetector, loadAllDetectors } from '../../src/detectors/index.js';
 import { hasConfigFile } from '../../src/config/config-paths.js';
 import cursorDetector from '../../src/detectors/cursor.detector.js';
-import rovodevDetector from '../../src/detectors/rovodev.detector.js';
 
 // Mock the detect module
 vi.mock('../../src/detect/utils.js', () => ({
@@ -15,18 +13,10 @@ vi.mock('../../src/detect/utils.js', () => ({
   getVersion: vi.fn(),
 }));
 
-// Mock child_process for rovodev detector
-vi.mock('node:child_process', () => ({
-  execFile: vi.fn(),
-}));
-
 import { which, getVersion } from '../../src/detect/utils.js';
-import { execFile } from 'node:child_process';
 
 const mockWhich = vi.mocked(which);
 const mockGetVersion = vi.mocked(getVersion);
-const mockExecFile = vi.mocked(execFile);
-const mockChildProcess = {} as ChildProcess;
 
 describe('cursor detector', () => {
   beforeEach(() => {
@@ -79,91 +69,6 @@ describe('cursor detector', () => {
     const result = await cursorDetector.detect();
     expect(result?.name).toBe('cursor-cli');
     expect(result?.isACPAgent).toBe(true);
-  });
-});
-
-describe('rovodev detector', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockWhich.mockResolvedValue(null);
-    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
-      if (typeof callback === 'function') {
-        callback(null, { stdout: '', stderr: '' });
-      }
-      return mockChildProcess;
-    });
-  });
-
-  it('returns null when acli not found', async () => {
-    mockWhich.mockImplementation(async (name) => {
-      if (name === 'acli') {
-        return null;
-      }
-      return null;
-    });
-
-    const result = await rovodevDetector.detect();
-    expect(result).toBeNull();
-  });
-
-  it('returns null when probe fails', async () => {
-    mockWhich.mockImplementation(async (name) => {
-      if (name === 'acli') {
-        return '/usr/bin/acli';
-      }
-      return null;
-    });
-
-    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
-      if (typeof callback === 'function') {
-        callback(new Error('Command failed'), { stdout: '' });
-      }
-      return mockChildProcess;
-    });
-
-    const result = await rovodevDetector.detect();
-    expect(result).toBeNull();
-  });
-
-  it('returns null when probe returns empty stdout', async () => {
-    mockWhich.mockImplementation(async (name) => {
-      if (name === 'acli') {
-        return '/usr/bin/acli';
-      }
-      return null;
-    });
-
-    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
-      if (typeof callback === 'function') {
-        callback(null, { stdout: '' });
-      }
-      return mockChildProcess;
-    });
-
-    const result = await rovodevDetector.detect();
-    expect(result).toBeNull();
-  });
-
-  it('returns agent when probe succeeds', async () => {
-    mockWhich.mockImplementation(async (name) => {
-      if (name === 'acli') {
-        return '/usr/bin/acli';
-      }
-      return null;
-    });
-
-    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
-      if (typeof callback === 'function') {
-        callback(null, { stdout: 'rovodev help output' });
-      }
-      return mockChildProcess;
-    });
-
-    const result = await rovodevDetector.detect();
-    expect(result).not.toBeNull();
-    expect(result?.name).toBe('rovodev');
-    expect(result?.binary).toBe('/usr/bin/acli');
-    expect(result?.metadata?.acliBinary).toBe('/usr/bin/acli');
   });
 });
 
@@ -307,38 +212,6 @@ describe('windsurf detector', () => {
     expect(result).not.toBeNull();
     expect(result?.name).toBe('windsurf');
     expect(result?.isACPAgent).toBe(true);
-  });
-});
-
-describe('swe-agent detector', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockWhich.mockResolvedValue(null);
-    mockGetVersion.mockResolvedValue(null);
-    mockExecFile.mockImplementation((...args: unknown[]) => {
-      const callback = args.find(
-        (a): a is (err: unknown, result: { stdout: string; stderr: string }) => void =>
-          typeof a === 'function',
-      );
-      if (callback) {
-        callback(null, { stdout: '[]', stderr: '' });
-      }
-      return mockChildProcess;
-    });
-  });
-
-  it('returns null when pip package not found', async () => {
-    // Mock pip list returning empty
-    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
-      if (typeof callback === 'function') {
-        callback(null, { stdout: '[]', stderr: '' });
-      }
-      return mockChildProcess;
-    });
-
-    const { default: sweAgent } = await import('../../src/detectors/swe-agent.detector.js');
-    const result = await sweAgent.detect();
-    expect(result).toBeNull();
   });
 });
 

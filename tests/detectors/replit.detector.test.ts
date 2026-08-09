@@ -30,6 +30,7 @@ describe('replit detector', () => {
     expect(result?.binary).toBe('/usr/bin/replit');
     expect(result?.version).toBe('0.3.1');
     expect(result?.isConfigured).toBe(false);
+    expect(result?.configSource).toBeUndefined();
   });
 
   it('returns agent with undefined version when getVersion returns null', async () => {
@@ -48,5 +49,6 @@ describe('replit detector', () => {
 
     const result = await replitDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('env');
   });
 });

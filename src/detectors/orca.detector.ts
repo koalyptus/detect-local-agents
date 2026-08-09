@@ -1,4 +1,4 @@
-import type { AgentDetector, DetectedAgent } from '../types.js';
+import type { AgentDetector, ConfigSource, DetectedAgent } from '../types.js';
 import { which } from '../detect/utils.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
@@ -17,10 +17,12 @@ const detector: AgentDetector = {
     const orcaDir = path.join(os.homedir(), '.orca');
     let managedAgents: string[] = [];
     let isConfigured = false;
+    let configSource: ConfigSource | undefined;
 
     try {
       await fs.access(orcaDir);
       isConfigured = true;
+      configSource = 'config-dir';
       // Try reading config files in .orca/ to list managed agents
       const entries = await fs.readdir(orcaDir);
       managedAgents = entries.filter(
@@ -34,6 +36,7 @@ const detector: AgentDetector = {
       name: 'orca',
       binary,
       isConfigured,
+      ...(configSource ? { configSource } : {}),
       metadata: { managedAgents },
       isACPAgent: true,
     };

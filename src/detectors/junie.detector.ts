@@ -20,6 +20,7 @@ const detector: AgentDetector = {
       binary,
       version,
       isConfigured,
+      ...(isConfigured ? { configSource: 'env' as const } : {}),
     };
   },
 };

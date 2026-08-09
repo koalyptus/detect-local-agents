@@ -1,4 +1,4 @@
-import type { AgentDetector, DetectedAgent } from '../types.js';
+import type { AgentDetector, ConfigSource, DetectedAgent } from '../types.js';
 import { which, getVersion } from '../detect/utils.js';
 import { getPlatform } from '../detect/platform.js';
 import { homedir } from 'node:os';
@@ -51,10 +51,12 @@ const detector: AgentDetector = {
     // app has been run at least once (home dir was created).
     const homeDir = getLmStudioHome();
     let isConfigured = false;
+    let configSource: ConfigSource | undefined;
     if (homeDir) {
       try {
         await fs.access(homeDir);
         isConfigured = true;
+        configSource = 'config-dir';
       } catch {
         // Home dir doesn't exist — not configured
       }
@@ -65,6 +67,7 @@ const detector: AgentDetector = {
       binary,
       version,
       isConfigured,
+      ...(configSource ? { configSource } : {}),
     };
   },
 };

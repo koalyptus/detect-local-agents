@@ -6,6 +6,9 @@ const detector: AgentDetector = {
   name: 'swe-agent',
 
   async detect(): Promise<DetectedAgent | null> {
+    // Same env expression at both return sites (binary branch and pip fallback)
+    const isConfigured = !!(process.env['OPENAI_API_KEY'] ?? process.env['ANTHROPIC_API_KEY']);
+
     // Check for binary first
     const binary = await which('sweagent');
     if (binary) {
@@ -14,7 +17,8 @@ const detector: AgentDetector = {
         name: 'swe-agent',
         binary,
         version,
-        isConfigured: !!(process.env['OPENAI_API_KEY'] ?? process.env['ANTHROPIC_API_KEY']),
+        isConfigured,
+        ...(isConfigured ? { configSource: 'env' as const } : {}),
       };
     }
 
@@ -28,7 +32,8 @@ const detector: AgentDetector = {
       name: 'swe-agent',
       binary: 'sweagent',
       version: pkg.version,
-      isConfigured: !!(process.env['OPENAI_API_KEY'] ?? process.env['ANTHROPIC_API_KEY']),
+      isConfigured,
+      ...(isConfigured ? { configSource: 'env' as const } : {}),
     };
   },
 };

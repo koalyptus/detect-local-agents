@@ -227,6 +227,7 @@ describe('t3-code detector', () => {
 
     const result = await t3CodeDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('config-dir');
   });
 
   it('sets isConfigured true when config dir exists on macOS', async () => {
@@ -272,6 +273,7 @@ describe('t3-code detector', () => {
 
     const result = await t3CodeDetector.detect();
     expect(result?.isConfigured).toBe(false);
+    expect(result?.configSource).toBeUndefined();
   });
 
   it('sets isConfigured false on win32 when APPDATA is not set', async () => {
