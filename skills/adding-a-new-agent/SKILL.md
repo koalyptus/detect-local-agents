@@ -156,20 +156,24 @@ export default detector;
 - `configSourceFromDir(dir)` — returns `'config-dir'` when the dir exists, else `undefined`
 - `getPlatform()` — `process.platform` (mockable in tests), from `src/detect/platform.ts`
 
-### Mocking `utils.js` in tests
+### Mocking in tests
 
-Detectors that use `withConfigSource` / `configSourceFromDir` import the real
-helpers from `utils.js`, so a blank replacement mock leaves them `undefined`
-and the detector **throws at runtime**. Spread the real module and override
-only what you mock:
+Copy the mock header from an existing detector test whose shape matches
+yours — there's no need to write one from scratch:
 
-```typescript
-vi.mock('../../src/detect/utils.js', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/detect/utils.js')>()),
-  which: vi.fn(),
-  getVersion: vi.fn(),
-}));
-```
+- `tests/detectors/rovodev.detector.test.ts` — static `vi.mock` factory
+  stubbing only the helpers the detector imports
+- `tests/detectors/acpx.detector.test.ts` — static factory plus `vi.hoisted`
+  shared mocks
+- `tests/detectors/invariant.test.ts` — no `utils.js` mock at all: it stubs
+  the OS seams (`node:child_process`, `node:fs/promises`, `platform.js`) so
+  every helper runs real
+
+Whatever you copy, the factory must provide every helper the detector
+imports — a blank replacement mock leaves them `undefined` and the detector
+throws at runtime. If your detector imports `withConfigSource` /
+`configSourceFromDir`, mock the OS seams (invariant style) or add a static
+stand-in; avoid the dynamic `importOriginal` spread.
 
 ## After Adding
 
