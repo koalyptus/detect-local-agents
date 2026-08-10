@@ -78,8 +78,6 @@ swallowed and nulls filtered out -> DetectedAgent[]
 `-- CLI: table with CONFIGURED column, --configured / --json flags
 ```
 
-Plain text on purpose: npmjs.com does not render Mermaid, and this README doubles as the npm package page. GitHub renders this block identically.
-
 ## Install
 
 ```bash
@@ -327,21 +325,7 @@ export default detector;
 
 ## Contributing
 
-Contributions are welcome — new agents, new detectors, and detection bug reports. This section covers the practical facts: how to run the checks CI runs, the coverage gate, and what a useful bug report contains.
-
-### Getting started
-
-```bash
-git clone https://github.com/koalyptus/detect-local-agents.git
-cd detect-local-agents
-npm install
-```
-
-Requires Node >= 20 (`engines` in `package.json`). The CLI works immediately:
-
-```bash
-npx detect-local-agents
-```
+Contributions are more than welcome! New agents, new detectors, and detection bug reports. Development requires Node >= 20 (`engines` in `package.json`). This section covers the practical facts: how to run the checks CI runs, the coverage gate, and what a useful bug report contains.
 
 ### Before opening a pull request
 
