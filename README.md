@@ -324,3 +324,65 @@ export default detector;
 - mini-coding-agent ⚡
 - OpenHands SDK ⚡
 - T3 Code (`t3-code`) ⚡
+
+## Contributing
+
+Contributions are welcome — new agents, new detectors, and detection bug reports. This section covers the practical facts: how to run the checks CI runs, the coverage gate, and what a useful bug report contains.
+
+### Getting started
+
+```bash
+git clone https://github.com/koalyptus/detect-local-agents.git
+cd detect-local-agents
+npm install
+```
+
+Requires Node >= 20 (`engines` in `package.json`). The CLI works immediately:
+
+```bash
+npx detect-local-agents
+```
+
+### Before opening a pull request
+
+Run the same five checks CI runs, in the same order:
+
+```bash
+npm run format:check
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+- `build` (`tsc` emit) is a gate **distinct** from `typecheck` (`tsc --noEmit`) — passing one does not prove the other, so CI runs both.
+- Autofixers exist if a check fails: `npm run format` (prettier --write) and `npm run lint:fix` (eslint --fix).
+- CI runs this sequence on a 3 OS × Node 20/22 matrix — 6 cells in total — so a fully green local run saves a full round trip.
+
+### Test coverage
+
+Coverage is enforced at **100%** on branches, functions, lines, and statements in `vitest.config.ts`. An untested branch fails `npm test` locally, not just in CI. If a line is genuinely unreachable, explain why in the PR rather than lowering the threshold.
+
+### Adding a new agent
+
+See [Adding a New Agent](#adding-a-new-agent) for the mechanics. Two decisions matter:
+
+- **Config entry vs file-based detector** — most agents are a simple config entry in `src/config/configs.ts` (a binary plus optional env vars and/or a config dir). Reach for a `*.detector.ts` file only when the agent needs custom logic: file probes, env markers, runtime probes.
+- **What counts as "configured"?** — `isConfigured` means there is evidence of setup, not that auth is valid. If the agent reports a `configSource`, it must be one of `'env' | 'config-file' | 'config-dir' | 'probe'`.
+
+Every new agent needs: a test covering **both** the detected and not-detected paths, an entry in [Supported Agents](#supported-agents), and the platforms you actually verified on (real hardware beats assumption, especially on Windows).
+
+> **Using an AI coding agent?** Load [`skills/adding-a-new-agent/SKILL.md`](skills/adding-a-new-agent/SKILL.md) before starting. It encodes the config-vs-detector decision, the `configSource` contract, the test-mocking pattern the coverage gate requires, and the pitfalls that have bitten previous contributors. Skill-aware tools discover it automatically from the `skills/` directory; other tools just need the file in context.
+
+### Reporting a detection bug
+
+Include:
+
+- **OS** (and version)
+- **Install method** — npm / Homebrew / Volta / pnpm / bun / scoop / official installer
+- **`npx detect-local-agents --json` output**
+- **The binary's real location** — `which <binary>` on Unix, `where <binary>` on Windows
+
+### Commit messages
+
+Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `chore:`, ...). Small, focused commits are preferred over one squashed change.
