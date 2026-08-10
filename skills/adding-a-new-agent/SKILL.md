@@ -158,9 +158,10 @@ export default detector;
 
 ### Mocking `utils.js` in tests
 
-Every detector imports the real `withConfigSource` / `configSourceFromDir` from
-`utils.js`, so a blank replacement mock leaves them `undefined` and the detector
-**throws at runtime**. Spread the real module and override only what you mock:
+Detectors that use `withConfigSource` / `configSourceFromDir` import the real
+helpers from `utils.js`, so a blank replacement mock leaves them `undefined`
+and the detector **throws at runtime**. Spread the real module and override
+only what you mock:
 
 ```typescript
 vi.mock('../../src/detect/utils.js', async (importOriginal) => ({
