@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { PathLike } from 'node:fs';
 
-vi.mock('../../src/detect/utils.js', () => ({
-  which: vi.fn(),
-  getVersion: vi.fn(),
-}));
+vi.mock('../../src/detect/utils.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/detect/utils.js')>();
+  return {
+    ...actual,
+    which: vi.fn(),
+    getVersion: vi.fn(),
+  };
+});
 
 vi.mock('../../src/detect/platform.js', () => ({
   getPlatform: vi.fn(),
@@ -50,6 +54,7 @@ describe('windsurf detector', () => {
     expect(result?.name).toBe('windsurf');
     expect(result?.binary).toBe('/usr/local/bin/windsurf');
     expect(result?.isACPAgent).toBe(true);
+    expect(result?.configSource).toBeUndefined();
   });
 
   it('returns agent when codeium binary found via which', async () => {
@@ -102,6 +107,7 @@ describe('windsurf detector', () => {
 
     const result = await windsurfDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('config-dir');
   });
 
   it('detects as configured when .windsurf directory exists', async () => {
@@ -115,6 +121,7 @@ describe('windsurf detector', () => {
 
     const result = await windsurfDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('config-dir');
   });
 
   it('covers macOS common install paths and fs.access loop', async () => {

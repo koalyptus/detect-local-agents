@@ -2,10 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { which, getVersion } from '../../src/detect/utils.js';
 import junieDetector from '../../src/detectors/junie.detector.js';
 
-vi.mock('../../src/detect/utils.js', () => ({
-  which: vi.fn(),
-  getVersion: vi.fn(),
-}));
+vi.mock('../../src/detect/utils.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/detect/utils.js')>();
+  return {
+    ...actual,
+    which: vi.fn(),
+    getVersion: vi.fn(),
+  };
+});
 
 const mockWhich = vi.mocked(which);
 const mockGetVersion = vi.mocked(getVersion);
@@ -31,6 +35,7 @@ describe('junie detector', () => {
     expect(result?.binary).toBe('/usr/bin/junie');
     expect(result?.version).toBe('1.0.0');
     expect(result?.isConfigured).toBe(false);
+    expect(result?.configSource).toBeUndefined();
   });
 
   it('returns agent with undefined version when getVersion returns null', async () => {
@@ -49,6 +54,7 @@ describe('junie detector', () => {
 
     const result = await junieDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('env');
   });
 
   it('returns configured when JUNIE_SHIM_PATH is set', async () => {
@@ -58,5 +64,6 @@ describe('junie detector', () => {
 
     const result = await junieDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('env');
   });
 });

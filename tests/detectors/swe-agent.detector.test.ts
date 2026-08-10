@@ -1,13 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
 
-vi.mock('../../src/detect/utils.js', () => ({
-  which: vi.fn(),
-  getVersion: vi.fn(),
-}));
+vi.mock('../../src/detect/utils.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/detect/utils.js')>();
+  return {
+    ...actual,
+    which: vi.fn(),
+    getVersion: vi.fn(),
+  };
+});
 
 vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
+  exec: vi.fn(),
 }));
 
 import { which, getVersion } from '../../src/detect/utils.js';
@@ -60,6 +65,7 @@ describe('swe-agent detector', () => {
     expect(result?.name).toBe('swe-agent');
     expect(result?.binary).toBe('/usr/bin/sweagent');
     expect(result?.version).toBe('0.2.0');
+    expect(result?.configSource).toBeUndefined();
   });
 
   it('returns agent when sweagent binary found but version unavailable', async () => {
@@ -85,6 +91,7 @@ describe('swe-agent detector', () => {
     expect(result?.name).toBe('swe-agent');
     expect(result?.binary).toBe('sweagent');
     expect(result?.version).toBe('0.1.0');
+    expect(result?.configSource).toBeUndefined();
   });
 
   it('returns agent with isConfigured true when env vars set', async () => {
@@ -96,11 +103,39 @@ describe('swe-agent detector', () => {
 
     const result = await sweAgentDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('env');
 
     if (orig === undefined) {
       delete process.env['OPENAI_API_KEY'];
     } else {
       process.env['OPENAI_API_KEY'] = orig;
+    }
+  });
+
+  it('returns agent via pip detection with configSource env when env vars set', async () => {
+    const orig = process.env['ANTHROPIC_API_KEY'];
+    process.env['ANTHROPIC_API_KEY'] = 'sk-test';
+
+    mockWhich.mockResolvedValue(null);
+    setupMockExecFile((callback) => {
+      callback(null, {
+        stdout: JSON.stringify([{ name: 'sweagent', version: '0.1.0' }]),
+        stderr: '',
+      });
+    });
+
+    try {
+      const result = await sweAgentDetector.detect();
+      expect(result?.name).toBe('swe-agent');
+      expect(result?.binary).toBe('sweagent');
+      expect(result?.isConfigured).toBe(true);
+      expect(result?.configSource).toBe('env');
+    } finally {
+      if (orig === undefined) {
+        delete process.env['ANTHROPIC_API_KEY'];
+      } else {
+        process.env['ANTHROPIC_API_KEY'] = orig;
+      }
     }
   });
 });

@@ -1,5 +1,5 @@
 import type { AgentDetector, DetectedAgent } from '../types.js';
-import { which, getVersion } from '../detect/utils.js';
+import { which, getVersion, withConfigSource } from '../detect/utils.js';
 
 const detector: AgentDetector = {
   name: 'replit',
@@ -15,12 +15,10 @@ const detector: AgentDetector = {
     // Vercel's spec uses env_set REPL_ID for runtime detection
     const isConfigured = !!process.env['REPL_ID'];
 
-    return {
-      name: 'replit',
-      binary,
-      version,
-      isConfigured,
-    };
+    return withConfigSource(
+      { name: 'replit', binary, version, isConfigured },
+      isConfigured ? 'env' : undefined,
+    );
   },
 };
 

@@ -1,9 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../src/detect/utils.js', () => ({
-  which: vi.fn(),
-  getVersion: vi.fn(),
-}));
+vi.mock('../../src/detect/utils.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/detect/utils.js')>();
+  return {
+    ...actual,
+    which: vi.fn(),
+    getVersion: vi.fn(),
+  };
+});
 
 vi.mock('node:fs/promises', () => ({
   access: vi.fn(),
@@ -37,6 +41,7 @@ describe('orca detector', () => {
     expect(result?.name).toBe('orca');
     expect(result?.binary).toBe('/usr/bin/orca');
     expect(result?.isConfigured).toBe(false);
+    expect(result?.configSource).toBeUndefined();
     expect(result?.isACPAgent).toBe(true);
   });
 
@@ -49,6 +54,7 @@ describe('orca detector', () => {
     const result = await orcaDetector.detect();
     expect(result?.name).toBe('orca');
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('config-dir');
     expect(result?.metadata?.managedAgents).toEqual(['agents.json', 'config.yaml']);
   });
 

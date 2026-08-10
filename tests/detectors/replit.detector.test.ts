@@ -2,10 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { which, getVersion } from '../../src/detect/utils.js';
 import replitDetector from '../../src/detectors/replit.detector.js';
 
-vi.mock('../../src/detect/utils.js', () => ({
-  which: vi.fn(),
-  getVersion: vi.fn(),
-}));
+vi.mock('../../src/detect/utils.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/detect/utils.js')>();
+  return {
+    ...actual,
+    which: vi.fn(),
+    getVersion: vi.fn(),
+  };
+});
 
 const mockWhich = vi.mocked(which);
 const mockGetVersion = vi.mocked(getVersion);
@@ -30,6 +34,7 @@ describe('replit detector', () => {
     expect(result?.binary).toBe('/usr/bin/replit');
     expect(result?.version).toBe('0.3.1');
     expect(result?.isConfigured).toBe(false);
+    expect(result?.configSource).toBeUndefined();
   });
 
   it('returns agent with undefined version when getVersion returns null', async () => {
@@ -48,5 +53,6 @@ describe('replit detector', () => {
 
     const result = await replitDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('env');
   });
 });

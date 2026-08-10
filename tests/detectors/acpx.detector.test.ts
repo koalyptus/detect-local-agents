@@ -49,6 +49,7 @@ describe('acpx detector', () => {
     expect(result?.binary).toBe('/usr/bin/acpx');
     expect(result?.isACPAgent).toBe(true);
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('probe');
     expect(result?.metadata?.targets).toEqual(['target1', 'target2', 'target3']);
   });
 
@@ -62,6 +63,7 @@ describe('acpx detector', () => {
     expect(result?.binary).toBe('/usr/bin/acpx');
     expect(result?.isACPAgent).toBe(true);
     expect(result?.isConfigured).toBe(false);
+    expect(result?.configSource).toBeUndefined();
     expect(result?.metadata?.targets).toEqual([]);
   });
 
@@ -72,6 +74,7 @@ describe('acpx detector', () => {
     const result = await acpxDetector.detect();
     expect(result).not.toBeNull();
     expect(result?.isConfigured).toBe(false);
+    expect(result?.configSource).toBeUndefined();
     expect(result?.metadata?.targets).toEqual([]);
   });
 });

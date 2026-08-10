@@ -13,11 +13,15 @@ const { mockWhich, mockGetVersion } = vi.hoisted(() => ({
   mockGetVersion: vi.fn<(name: string) => Promise<string | undefined>>(async () => '1.0.0'),
 }));
 
-vi.mock('../../src/detect/utils.js', () => ({
-  which: mockWhich,
-  getVersion: mockGetVersion,
-  getPlatform: vi.fn(() => 'linux'),
-}));
+vi.mock('../../src/detect/utils.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/detect/utils.js')>();
+  return {
+    ...actual,
+    which: mockWhich,
+    getVersion: mockGetVersion,
+    getPlatform: vi.fn(() => 'linux'),
+  };
+});
 
 import { loadAllDetectors, isAgentDetector, configToDetector } from '../../src/detectors/index.js';
 
@@ -305,6 +309,96 @@ describe('detectors/index', () => {
       process.env.HOME = originalHome;
       if (createdTemp) {
         await fs.rm(claudeDir, { recursive: true, force: true });
+      }
+    }
+  });
+
+  it('configToDetector sets configSource to env when an env var matches', async () => {
+    const original = process.env['CONFIG_SOURCE_TEST_KEY'];
+    process.env['CONFIG_SOURCE_TEST_KEY'] = 'test-key';
+    const detector = configToDetector({
+      name: 'env-source-test',
+      binary: 'node',
+      configEnvVars: ['CONFIG_SOURCE_TEST_KEY'],
+      configDir: '~/.env-source-test',
+    });
+
+    try {
+      const result = await detector.detect();
+      expect(result!.isConfigured).toBe(true);
+      expect(result!.configSource).toBe('env');
+    } finally {
+      if (original === undefined) {
+        delete process.env['CONFIG_SOURCE_TEST_KEY'];
+      } else {
+        process.env['CONFIG_SOURCE_TEST_KEY'] = original;
+      }
+    }
+  });
+
+  it('configToDetector sets configSource to config-file when a config file exists', async () => {
+    // hasConfigFile derives paths from detectorConfigs by name, so use a real
+    // config entry ('kiro' has configDir ~/.kiro and no env vars to interfere).
+    const configDir = path.join(tempDir, '.kiro');
+    await fs.mkdir(configDir, { recursive: true });
+    await fs.writeFile(path.join(configDir, 'config.json'), '{}');
+
+    const detector = configToDetector({ name: 'kiro', binary: 'node' });
+
+    const result = await detector.detect();
+    expect(result!.isConfigured).toBe(true);
+    expect(result!.configSource).toBe('config-file');
+  });
+
+  it('configToDetector sets configSource to config-dir when only the config dir exists', async () => {
+    const configDir = path.join(tempDir, '.dir-source-test');
+    await fs.mkdir(configDir, { recursive: true });
+
+    const detector = configToDetector({
+      name: 'dir-source-test',
+      binary: 'node',
+      configDir: '~/.dir-source-test',
+    });
+
+    const result = await detector.detect();
+    expect(result!.isConfigured).toBe(true);
+    expect(result!.configSource).toBe('config-dir');
+  });
+
+  it('configToDetector leaves configSource undefined when nothing matches', async () => {
+    const detector = configToDetector({
+      name: 'none-source-test',
+      binary: 'node',
+      configDir: '~/.none-source-test',
+    });
+
+    const result = await detector.detect();
+    expect(result!.isConfigured).toBe(false);
+    expect(result!.configSource).toBeUndefined();
+  });
+
+  it('configToDetector prefers env over config dir (cascade precedence guard)', async () => {
+    // Env var set AND config dir present — the env signal must win.
+    const configDir = path.join(tempDir, '.precedence-test');
+    await fs.mkdir(configDir, { recursive: true });
+    const original = process.env['PRECEDENCE_TEST_KEY'];
+    process.env['PRECEDENCE_TEST_KEY'] = 'test-key';
+    const detector = configToDetector({
+      name: 'precedence-test',
+      binary: 'node',
+      configEnvVars: ['PRECEDENCE_TEST_KEY'],
+      configDir: '~/.precedence-test',
+    });
+
+    try {
+      const result = await detector.detect();
+      expect(result!.isConfigured).toBe(true);
+      expect(result!.configSource).toBe('env');
+    } finally {
+      if (original === undefined) {
+        delete process.env['PRECEDENCE_TEST_KEY'];
+      } else {
+        process.env['PRECEDENCE_TEST_KEY'] = original;
       }
     }
   });

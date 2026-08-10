@@ -27,6 +27,9 @@ const detector: AgentDetector = {
         binary,
         isACPAgent: true,
         isConfigured: targets.length > 0,
+        // 'probe' only when targets were found; zero targets means the probe
+        // ran but proved nothing, so no configSource (same for the catch below).
+        ...(targets.length > 0 ? { configSource: 'probe' as const } : {}),
         metadata: { targets },
       };
     } catch {

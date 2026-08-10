@@ -6,10 +6,14 @@ import * as fs from 'node:fs/promises';
 import { homedir } from 'node:os';
 import t3CodeDetector from '../../src/detectors/t3-code.detector.js';
 
-vi.mock('../../src/detect/utils.js', () => ({
-  which: vi.fn(),
-  getVersion: vi.fn(),
-}));
+vi.mock('../../src/detect/utils.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/detect/utils.js')>();
+  return {
+    ...actual,
+    which: vi.fn(),
+    getVersion: vi.fn(),
+  };
+});
 
 vi.mock('../../src/detect/platform.js', () => ({
   getPlatform: vi.fn(),
@@ -227,6 +231,7 @@ describe('t3-code detector', () => {
 
     const result = await t3CodeDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('config-dir');
   });
 
   it('sets isConfigured true when config dir exists on macOS', async () => {
@@ -272,6 +277,7 @@ describe('t3-code detector', () => {
 
     const result = await t3CodeDetector.detect();
     expect(result?.isConfigured).toBe(false);
+    expect(result?.configSource).toBeUndefined();
   });
 
   it('sets isConfigured false on win32 when APPDATA is not set', async () => {

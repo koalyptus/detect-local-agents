@@ -29,6 +29,7 @@ const detector: AgentDetector = {
       name: 'rovodev',
       binary,
       isConfigured: true,
+      configSource: 'probe',
       metadata: { acliBinary: binary },
     };
   },

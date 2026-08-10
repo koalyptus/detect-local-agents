@@ -5,10 +5,14 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import lmstudioDetector from '../../src/detectors/lmstudio.detector.js';
 
-vi.mock('../../src/detect/utils.js', () => ({
-  which: vi.fn(),
-  getVersion: vi.fn(),
-}));
+vi.mock('../../src/detect/utils.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/detect/utils.js')>();
+  return {
+    ...actual,
+    which: vi.fn(),
+    getVersion: vi.fn(),
+  };
+});
 
 vi.mock('../../src/detect/platform.js', () => ({
   getPlatform: vi.fn(),
@@ -73,6 +77,7 @@ describe('lmstudio detector', () => {
 
     const result = await lmstudioDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('config-dir');
   });
 
   it('sets isConfigured false when home dir does not exist', async () => {
@@ -82,6 +87,7 @@ describe('lmstudio detector', () => {
 
     const result = await lmstudioDetector.detect();
     expect(result?.isConfigured).toBe(false);
+    expect(result?.configSource).toBeUndefined();
   });
 
   it('returns version as undefined when getVersion returns null', async () => {

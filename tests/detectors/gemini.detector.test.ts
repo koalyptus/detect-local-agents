@@ -3,10 +3,14 @@ import { which, getVersion } from '../../src/detect/utils.js';
 import { access } from 'node:fs/promises';
 import geminiDetector from '../../src/detectors/gemini.detector.js';
 
-vi.mock('../../src/detect/utils.js', () => ({
-  which: vi.fn(),
-  getVersion: vi.fn(),
-}));
+vi.mock('../../src/detect/utils.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/detect/utils.js')>();
+  return {
+    ...actual,
+    which: vi.fn(),
+    getVersion: vi.fn(),
+  };
+});
 
 vi.mock('node:fs/promises', () => ({
   access: vi.fn(),
@@ -41,6 +45,7 @@ describe('antigravity detector', () => {
     expect(result?.name).toBe('antigravity');
     expect(result?.binary).toBe('/usr/bin/agy');
     expect(result?.version).toBe('0.55.0');
+    expect(result?.configSource).toBeUndefined();
   });
 
   it('returns agent when gemini binary found (legacy fallback)', async () => {
@@ -78,6 +83,7 @@ describe('antigravity detector', () => {
 
     const result = await geminiDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('env');
 
     if (orig === undefined) {
       delete process.env['GOOGLE_API_KEY'];
@@ -93,6 +99,7 @@ describe('antigravity detector', () => {
 
     const result = await geminiDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('env');
 
     if (orig === undefined) {
       delete process.env['ANTIGRAVITY_API_KEY'];
@@ -107,6 +114,26 @@ describe('antigravity detector', () => {
 
     const result = await geminiDetector.detect();
     expect(result?.isConfigured).toBe(true);
+    expect(result?.configSource).toBe('config-dir');
+  });
+
+  it('prefers env over config dir when both are present (precedence guard)', async () => {
+    const orig = process.env['GOOGLE_API_KEY'];
+    process.env['GOOGLE_API_KEY'] = 'test-key';
+    mockWhich.mockResolvedValue('/usr/bin/agy');
+    mockFsAccess.mockResolvedValue(undefined);
+
+    try {
+      const result = await geminiDetector.detect();
+      expect(result?.isConfigured).toBe(true);
+      expect(result?.configSource).toBe('env');
+    } finally {
+      if (orig === undefined) {
+        delete process.env['GOOGLE_API_KEY'];
+      } else {
+        process.env['GOOGLE_API_KEY'] = orig;
+      }
+    }
   });
 
   it('returns version as undefined when getVersion returns null', async () => {
