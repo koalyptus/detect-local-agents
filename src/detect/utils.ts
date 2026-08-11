@@ -104,7 +104,8 @@ async function resolveWindowsShim(binary: string): Promise<string | null> {
  * Falls back to checking the npm global bin directory when PATH fails.
  */
 export async function which(name: string): Promise<string | null> {
-  const cmd = getPlatform() === 'win32' ? 'where' : 'which';
+  const isWin = getPlatform() === 'win32';
+  const cmd = isWin ? 'where' : 'which';
   try {
     const { stdout } = await execFileAsync(cmd, [name], { timeout: COMMAND_TIMEOUT });
     // Split on CRLF or LF and take the first match. A plain split('\n') leaves
@@ -121,10 +122,10 @@ export async function which(name: string): Promise<string | null> {
   // npm global prefix fallback
   const prefix = await getNpmPrefix();
   if (prefix) {
-    const binDir = getPlatform() === 'win32' ? prefix : join(prefix, 'bin');
+    const binDir = isWin ? prefix : join(prefix, 'bin');
     // On Windows, npm installs .cmd/.exe shims (e.g. claude.cmd) rather than
     // extension-less binaries — check those when the bare name isn't present.
-    const candidates = getPlatform() === 'win32' ? [name, `${name}.cmd`, `${name}.exe`] : [name];
+    const candidates = isWin ? [name, `${name}.cmd`, `${name}.exe`] : [name];
     const npmResult = await firstExisting(candidates.map((candidate) => join(binDir, candidate)));
     if (npmResult) {
       return npmResult;
@@ -133,7 +134,7 @@ export async function which(name: string): Promise<string | null> {
 
   // Well-known install directory fallback
   const knownDirs = getKnownInstallDirs(getPlatform());
-  const knownCandidates = getPlatform() === 'win32' ? [name, `${name}.cmd`, `${name}.exe`] : [name];
+  const knownCandidates = isWin ? [name, `${name}.cmd`, `${name}.exe`] : [name];
   for (const dir of knownDirs) {
     const result = await firstExisting(knownCandidates.map((c) => join(dir, c)));
     if (result) {
