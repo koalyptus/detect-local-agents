@@ -100,8 +100,16 @@ async function resolveWindowsShim(binary: string): Promise<string | null> {
 }
 
 /**
- * Find a binary in PATH. Returns absolute path or null.
- * Falls back to checking the npm global bin directory when PATH fails.
+ * Find a binary by name. Returns absolute path or null.
+ *
+ * Lookup order:
+ *   1. System PATH (via `which`/`where`)
+ *   2. npm global prefix (e.g. /usr/local/bin or C:\node-prefix)
+ *   3. Well-known install dirs (~/.local/bin, Volta, bun, Homebrew, etc.)
+ *
+ * Steps 1 and 2 are unchanged from before. Step 3 catches binaries
+ * installed by Volta, pnpm, bun, scoop, curl scripts, and Homebrew
+ * into locations that PATH and npm prefix don't cover.
  */
 export async function which(name: string): Promise<string | null> {
   const isWin = getPlatform() === 'win32';
