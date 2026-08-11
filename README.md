@@ -44,44 +44,38 @@ Agents with non-standard detection logic get a `*.detector.ts` file in `src/dete
 
 ### Detection flow
 
-```mermaid
-flowchart TD
-    Start["detectAgents()"] --> Load["loadAllDetectors()"]
-    Load -->|"config entries<br/>(detectorConfigs)"| CB
-    Load -->|"*.detector.ts<br/>auto-discovered"| FB
+```text
+detectAgents()
+`-- loadAllDetectors()
+    |-- Config-based detectors (entries from detectorConfigs)
+    |   `-- configToDetector(config)
+    |       |-- locate: binary in PATH? (which/where)
+    |       |   `-- not found -> agent not reported
+    |       |-- version: <binary> --version, 10s timeout
+    |       |   (stdout first, stderr as fallback)
+    |       `-- configuration: first hit wins
+    |           |-- env var set        -> configSource: 'env'
+    |           |-- config.json in dir -> configSource: 'config-file'
+    |           |-- config dir exists  -> configSource: 'config-dir'
+    |           `-- no signal          -> isConfigured: false
+    |
+    `-- File-based detectors (auto-discovered *.detector.ts)
+        `-- custom detector
+            |-- locate: binary check (which/where) + custom probes
+            |   (file existence, env markers, runtime exec)
+            |-- version: --version probe, 10s timeout (stdout first, stderr
+            |   as fallback; 8 of the 15 file-based detectors run one)
+            `-- configuration: evidence of setup
+                |-- env marker set        -> configSource: 'env'
+                |-- config dir exists     -> configSource: 'config-dir'
+                |-- live command output   -> configSource: 'probe'
+                `-- no evidence           -> isConfigured: false
+                    (some detectors set isConfigured: true with no
+                    configSource, e.g. devin)
 
-    subgraph CB["Config-based detectors"]
-        direction TB
-        C1["configToDetector(config)"] --> C2{"binary in PATH?<br/>(which/where)"}
-        C2 -->|"not found"| CNull["agent not reported"]
-        C2 -->|"found"| C3["version probe: --version<br/>(10s timeout)"]
-        C3 --> C4{"configured? first hit wins"}
-        C4 -->|"env var set"| C5["configSource: 'env'"]
-        C4 -->|"config.json exists<br/>in configDir"| C6["configSource: 'config-file'"]
-        C4 -->|"configDir exists"| C7["configSource: 'config-dir'"]
-        C4 -->|"no signal"| C8["isConfigured: false"]
-        C5 --> C9["isConfigured: true + configSource"]
-        C6 --> C9
-        C7 --> C9
-    end
-
-    subgraph FB["File-based detectors"]
-        direction TB
-        F1["custom detector"] --> F2{"binary check + custom probes:<br/>files, pip, env markers, runtime exec"}
-        F2 -->|"agent absent"| FNull["agent not reported"]
-        F2 -->|"no setup evidence"| F3["isConfigured: false"]
-        F2 -->|"evidence found"| F4["isConfigured: true + configSource<br/>('env' | 'config-dir' | 'probe')"]
-    end
-
-    CNull --> R["Promise.all — errors skipped silently,<br/>nulls filtered out"]
-    C8 --> R
-    C9 --> R
-    FNull --> R
-    F3 --> R
-    F4 --> R
-
-    R --> Out["DetectedAgent[]"]
-    Out --> CLI["CLI: table + CONFIGURED column,<br/>--configured / --json flags"]
+All detectors run in parallel under Promise.all -- per-detector errors are
+swallowed and nulls filtered out -> DetectedAgent[]
+`-- CLI: table with CONFIGURED column, --configured / --json flags
 ```
 
 ## Install
@@ -328,3 +322,51 @@ export default detector;
 - mini-coding-agent ⚡
 - OpenHands SDK ⚡
 - T3 Code (`t3-code`) ⚡
+
+## Contributing
+
+Contributions are more than welcome! New agents, new detectors, and detection bug reports. Development requires Node >= 20 (`engines` in `package.json`). This section covers the practical facts: how to run the checks CI runs, the coverage gate, and what a useful bug report contains.
+
+### Before opening a pull request
+
+Run the same five checks CI runs, in the same order:
+
+```bash
+npm run format:check
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+- `build` (`tsc` emit) is a gate **distinct** from `typecheck` (`tsc --noEmit`) — passing one does not prove the other, so CI runs both.
+- Autofixers exist if a check fails: `npm run format` (prettier --write) and `npm run lint:fix` (eslint --fix).
+- CI runs this sequence on a 3 OS × Node 20/22 matrix — 6 cells in total — so a fully green local run saves a full round trip.
+
+### Test coverage
+
+Coverage is enforced at **100%** on branches, functions, lines, and statements in `vitest.config.ts`. An untested branch fails `npm test` locally, not just in CI. If a line is genuinely unreachable, explain why in the PR rather than lowering the threshold.
+
+### Adding a new agent
+
+See [Adding a New Agent](#adding-a-new-agent) for the mechanics. Two decisions matter:
+
+- **Config entry vs file-based detector** — most agents are a simple config entry in `src/config/configs.ts` (a binary plus optional env vars and/or a config dir). Reach for a `*.detector.ts` file only when the agent needs custom logic: file probes, env markers, runtime probes.
+- **What counts as "configured"?** — `isConfigured` means there is evidence of setup, not that auth is valid. If the agent reports a `configSource`, it must be one of `'env' | 'config-file' | 'config-dir' | 'probe'`.
+
+Every new agent needs: a test covering **both** the detected and not-detected paths, an entry in [Supported Agents](#supported-agents), and the platforms you actually verified on (real hardware beats assumption, especially on Windows).
+
+> **Using an AI coding agent?** Load [`skills/adding-a-new-agent/SKILL.md`](skills/adding-a-new-agent/SKILL.md) before starting. It encodes the config-vs-detector decision, the `configSource` contract, the test-mocking pattern the coverage gate requires, and the pitfalls that have bitten previous contributors. Skill-aware tools discover it automatically from the `skills/` directory; other tools just need the file in context.
+
+### Reporting a detection bug
+
+Include:
+
+- **OS** (and version)
+- **Install method** — npm / Homebrew / Volta / pnpm / bun / scoop / official installer
+- **`npx detect-local-agents --json` output**
+- **The binary's real location** — `which <binary>` on Unix, `where <binary>` on Windows
+
+### Commit messages
+
+Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `chore:`, ...). Small, focused commits are preferred over one squashed change.

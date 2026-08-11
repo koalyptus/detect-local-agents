@@ -1,5 +1,6 @@
 import { exec as execCb, execFile } from 'node:child_process';
 import { access } from 'node:fs/promises';
+import * as os from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { getPlatform } from './platform.js';
@@ -47,6 +48,42 @@ async function firstExisting(candidates: string[]): Promise<string | null> {
 }
 
 /**
+ * Return platform-specific well-known global-CLI install directories.
+ * Skips directories whose env var is unset (never joins onto undefined).
+ * On POSIX, `~` is resolved from HOME or os.homedir() as a fallback.
+ */
+function getKnownInstallDirs(platform: string): string[] {
+  const home = process.env.HOME ?? os.homedir();
+  if (platform === 'win32') {
+    const dirs: string[] = [];
+    if (process.env.APPDATA) {
+      dirs.push(join(process.env.APPDATA, 'npm'));
+    }
+    if (process.env.LOCALAPPDATA) {
+      dirs.push(
+        join(process.env.LOCALAPPDATA, 'Programs', 'nodejs'),
+        join(process.env.LOCALAPPDATA, 'Volta', 'bin'),
+        join(process.env.LOCALAPPDATA, 'pnpm'),
+      );
+    }
+    if (process.env.USERPROFILE) {
+      dirs.push(
+        join(process.env.USERPROFILE, '.bun', 'bin'),
+        join(process.env.USERPROFILE, 'scoop', 'shims'),
+      );
+    }
+    return dirs;
+  }
+  return [
+    join(home, '.local', 'bin'),
+    join(home, '.bun', 'bin'),
+    join(home, '.volta', 'bin'),
+    '/opt/homebrew/bin',
+    '/usr/local/bin',
+  ];
+}
+
+/***
  * Resolve a binary path to something CreateProcess can actually spawn.
  * On Windows, npm installs .cmd/.exe shims (e.g. claude.cmd) rather than
  * extension-less binaries, and CreateProcess cannot execute .cmd/.bat files
@@ -63,11 +100,20 @@ async function resolveWindowsShim(binary: string): Promise<string | null> {
 }
 
 /**
- * Find a binary in PATH. Returns absolute path or null.
- * Falls back to checking the npm global bin directory when PATH fails.
+ * Find a binary by name. Returns absolute path or null.
+ *
+ * Lookup order:
+ *   1. System PATH (via `which`/`where`)
+ *   2. npm global prefix (e.g. /usr/local/bin or C:\node-prefix)
+ *   3. Well-known install dirs (~/.local/bin, Volta, bun, Homebrew, etc.)
+ *
+ * Steps 1 and 2 are unchanged from before. Step 3 catches binaries
+ * installed by Volta, pnpm, bun, scoop, curl scripts, and Homebrew
+ * into locations that PATH and npm prefix don't cover.
  */
 export async function which(name: string): Promise<string | null> {
-  const cmd = getPlatform() === 'win32' ? 'where' : 'which';
+  const isWin = getPlatform() === 'win32';
+  const cmd = isWin ? 'where' : 'which';
   try {
     const { stdout } = await execFileAsync(cmd, [name], { timeout: COMMAND_TIMEOUT });
     // Split on CRLF or LF and take the first match. A plain split('\n') leaves
@@ -83,15 +129,27 @@ export async function which(name: string): Promise<string | null> {
 
   // npm global prefix fallback
   const prefix = await getNpmPrefix();
-  if (!prefix) {
-    return null;
+  if (prefix) {
+    const binDir = isWin ? prefix : join(prefix, 'bin');
+    // On Windows, npm installs .cmd/.exe shims (e.g. claude.cmd) rather than
+    // extension-less binaries — check those when the bare name isn't present.
+    const candidates = isWin ? [name, `${name}.cmd`, `${name}.exe`] : [name];
+    const npmResult = await firstExisting(candidates.map((candidate) => join(binDir, candidate)));
+    if (npmResult) {
+      return npmResult;
+    }
   }
 
-  const binDir = getPlatform() === 'win32' ? prefix : join(prefix, 'bin');
-  // On Windows, npm installs .cmd/.exe shims (e.g. claude.cmd) rather than
-  // extension-less binaries — check those when the bare name isn't present.
-  const candidates = getPlatform() === 'win32' ? [name, `${name}.cmd`, `${name}.exe`] : [name];
-  return firstExisting(candidates.map((candidate) => join(binDir, candidate)));
+  // Well-known install directory fallback
+  const knownDirs = getKnownInstallDirs(getPlatform());
+  const knownCandidates = isWin ? [name, `${name}.cmd`, `${name}.exe`] : [name];
+  for (const dir of knownDirs) {
+    const result = await firstExisting(knownCandidates.map((c) => join(dir, c)));
+    if (result) {
+      return result;
+    }
+  }
+  return null;
 }
 
 /**

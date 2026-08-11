@@ -5,6 +5,7 @@ import { getPlatform } from '../../src/detect/platform.js';
 import { exec, execFile } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
+import * as os from 'node:os';
 
 vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
@@ -19,10 +20,15 @@ vi.mock('../../src/detect/platform.js', () => ({
   getPlatform: vi.fn(),
 }));
 
+vi.mock('node:os', () => ({
+  homedir: vi.fn(),
+}));
+
 const mockExecFile = vi.mocked(execFile);
 const mockExec = vi.mocked(exec);
 const mockAccess = vi.mocked(access);
 const mockPlatform = vi.mocked(getPlatform);
+const mockHomedir = vi.mocked(os.homedir);
 const mockChildProcess = {} as ChildProcess;
 
 describe('which', () => {
@@ -51,6 +57,7 @@ describe('which', () => {
       }
       return mockChildProcess;
     });
+    mockAccess.mockRejectedValue(new Error('ENOENT'));
 
     const path = await which('this-definitely-does-not-exist-xyz123');
     expect(path).toBeNull();
@@ -63,6 +70,7 @@ describe('which', () => {
       }
       return mockChildProcess;
     });
+    mockAccess.mockRejectedValue(new Error('ENOENT'));
 
     const path = await which('empty-output');
     expect(path).toBeNull();
@@ -214,6 +222,249 @@ describe('which', () => {
 
       const path = await which('my-agent');
       expect(path).toBe(join('C:\\node-prefix', 'my-agent.exe'));
+    });
+  });
+
+  describe('well-known install directory fallback', () => {
+    const savedEnv = {} as Record<string, string | undefined>;
+
+    beforeEach(() => {
+      // Save and clean platform-specific env vars
+      for (const key of ['APPDATA', 'LOCALAPPDATA', 'USERPROFILE', 'HOME', 'npm_config_prefix']) {
+        savedEnv[key] = process.env[key];
+        delete process.env[key];
+      }
+      mockHomedir.mockReturnValue('/fallback-home');
+    });
+
+    afterEach(() => {
+      // Restore env vars
+      for (const key of Object.keys(savedEnv)) {
+        if (savedEnv[key] === undefined) {
+          delete process.env[key];
+        } else {
+          process.env[key] = savedEnv[key];
+        }
+      }
+      vi.restoreAllMocks();
+    });
+
+    it('skips known dirs when PATH succeeds (ordering guard)', async () => {
+      mockPlatform.mockReturnValue('linux');
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(null, { stdout: '/usr/bin/node\n', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+
+      const path = await which('node');
+      expect(path).toBe('/usr/bin/node');
+      expect(mockAccess).not.toHaveBeenCalled();
+    });
+
+    it('skips known dirs when npm prefix succeeds (ordering guard)', async () => {
+      mockPlatform.mockReturnValue('linux');
+      process.env.npm_config_prefix = '/test/prefix';
+      // PATH lookup fails
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(new Error('not found'), { stdout: '', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+      // npm prefix has the binary
+      mockAccess.mockResolvedValue(undefined);
+
+      const path = await which('my-agent');
+      expect(path).toBe(join('/test/prefix', 'bin', 'my-agent'));
+      // Only one access call (npm prefix check), none for known dirs
+      expect(mockAccess).toHaveBeenCalledTimes(1);
+    });
+
+    it('win32: finds binary in %APPDATA%\\npm', async () => {
+      mockPlatform.mockReturnValue('win32');
+      process.env.APPDATA = 'C:\\Users\\test\\AppData\\Roaming';
+      process.env.LOCALAPPDATA = 'C:\\Users\\test\\AppData\\Local';
+      process.env.USERPROFILE = 'C:\\Users\\test';
+      // PATH and npm prefix both fail
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(new Error('not found'), { stdout: '', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+      // npm prefix check fails (no prefix set)
+      mockAccess.mockImplementation(async (p) => {
+        if (String(p) === join('C:\\Users\\test\\AppData\\Roaming', 'npm', 'my-agent')) {
+          return undefined;
+        }
+        throw new Error('ENOENT');
+      });
+
+      const path = await which('my-agent');
+      expect(path).toBe(join('C:\\Users\\test\\AppData\\Roaming', 'npm', 'my-agent'));
+    });
+
+    it('win32: finds binary in Volta\\bin when earlier dirs miss', async () => {
+      mockPlatform.mockReturnValue('win32');
+      process.env.APPDATA = 'C:\\Users\\test\\AppData\\Roaming';
+      process.env.LOCALAPPDATA = 'C:\\Users\\test\\AppData\\Local';
+      process.env.USERPROFILE = 'C:\\Users\\test';
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(new Error('not found'), { stdout: '', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+      mockAccess.mockImplementation(async (p) => {
+        const s = String(p);
+        if (s === join('C:\\Users\\test\\AppData\\Local', 'Volta', 'bin', 'my-agent')) {
+          return undefined;
+        }
+        throw new Error('ENOENT');
+      });
+
+      const path = await which('my-agent');
+      expect(path).toBe(join('C:\\Users\\test\\AppData\\Local', 'Volta', 'bin', 'my-agent'));
+    });
+
+    it('win32: skips directory when env var is unset', async () => {
+      mockPlatform.mockReturnValue('win32');
+      // Only APPDATA set — LOCALAPPDATA and USERPROFILE unset
+      process.env.APPDATA = 'C:\\Users\\test\\AppData\\Roaming';
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(new Error('not found'), { stdout: '', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+      // npm prefix check fails
+      mockAccess.mockRejectedValue(new Error('ENOENT'));
+
+      const path = await which('my-agent');
+      expect(path).toBeNull();
+      // No access call should contain 'undefined' in the path
+      for (const call of mockAccess.mock.calls) {
+        expect(String(call[0])).not.toContain('undefined');
+      }
+    });
+
+    it('win32: finds .cmd shim in known dir when bare name missing', async () => {
+      mockPlatform.mockReturnValue('win32');
+      process.env.APPDATA = 'C:\\Users\\test\\AppData\\Roaming';
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(new Error('not found'), { stdout: '', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+      mockAccess.mockImplementation(async (p) => {
+        const s = String(p);
+        if (s === join('C:\\Users\\test\\AppData\\Roaming', 'npm', 'my-agent.cmd')) {
+          return undefined;
+        }
+        throw new Error('ENOENT');
+      });
+
+      const path = await which('my-agent');
+      expect(path).toBe(join('C:\\Users\\test\\AppData\\Roaming', 'npm', 'my-agent.cmd'));
+    });
+
+    it('win32: finds .exe shim when bare name and .cmd miss', async () => {
+      mockPlatform.mockReturnValue('win32');
+      process.env.APPDATA = 'C:\\Users\\test\\AppData\\Roaming';
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(new Error('not found'), { stdout: '', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+      mockAccess.mockImplementation(async (p) => {
+        const s = String(p);
+        if (s === join('C:\\Users\\test\\AppData\\Roaming', 'npm', 'my-agent.exe')) {
+          return undefined;
+        }
+        throw new Error('ENOENT');
+      });
+
+      const path = await which('my-agent');
+      expect(path).toBe(join('C:\\Users\\test\\AppData\\Roaming', 'npm', 'my-agent.exe'));
+    });
+
+    it('posix: finds binary in ~/.local/bin', async () => {
+      mockPlatform.mockReturnValue('linux');
+      process.env.HOME = '/home/test';
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(new Error('not found'), { stdout: '', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+      mockAccess.mockImplementation(async (p) => {
+        if (String(p) === join('/home/test', '.local', 'bin', 'my-agent')) {
+          return undefined;
+        }
+        throw new Error('ENOENT');
+      });
+
+      const path = await which('my-agent');
+      expect(path).toBe(join('/home/test', '.local', 'bin', 'my-agent'));
+    });
+
+    it('posix: finds binary in /opt/homebrew/bin when ~/.local/bin misses', async () => {
+      mockPlatform.mockReturnValue('linux');
+      process.env.HOME = '/home/test';
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(new Error('not found'), { stdout: '', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+      mockAccess.mockImplementation(async (p) => {
+        if (String(p) === join('/opt/homebrew/bin', 'my-agent')) {
+          return undefined;
+        }
+        throw new Error('ENOENT');
+      });
+
+      const path = await which('my-agent');
+      expect(path).toBe(join('/opt/homebrew/bin', 'my-agent'));
+    });
+
+    it('posix: falls back to os.homedir() when HOME is unset', async () => {
+      mockPlatform.mockReturnValue('linux');
+      mockHomedir.mockReturnValue('/fallback-home');
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(new Error('not found'), { stdout: '', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+      mockAccess.mockImplementation(async (p) => {
+        if (String(p) === join('/fallback-home', '.local', 'bin', 'my-agent')) {
+          return undefined;
+        }
+        throw new Error('ENOENT');
+      });
+
+      const path = await which('my-agent');
+      expect(path).toBe(join('/fallback-home', '.local', 'bin', 'my-agent'));
+    });
+
+    it('returns null when everything misses', async () => {
+      mockPlatform.mockReturnValue('linux');
+      process.env.HOME = '/home/test';
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(new Error('not found'), { stdout: '', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+      mockAccess.mockRejectedValue(new Error('ENOENT'));
+
+      const path = await which('missing-agent');
+      expect(path).toBeNull();
     });
   });
 });
