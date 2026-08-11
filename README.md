@@ -51,7 +51,7 @@ detectAgents()
     |   `-- configToDetector(config)
     |       |-- locate: binary in PATH? (which/where)
     |       |   `-- not found -> agent not reported
-    |       |-- version: <binary> --version, 10s timeout
+    |       |-- version: <binary> --version, 5s timeout
     |       |   (stdout first, stderr as fallback)
     |       `-- configuration: first hit wins
     |           |-- env var set        -> configSource: 'env'
@@ -63,7 +63,7 @@ detectAgents()
         `-- custom detector
             |-- locate: binary check (which/where) + custom probes
             |   (file existence, env markers, runtime exec)
-            |-- version: --version probe, 10s timeout (stdout first, stderr
+            |-- version: --version probe, 5s timeout (stdout first, stderr
             |   as fallback; 8 of the 15 file-based detectors run one)
             `-- configuration: evidence of setup
                 |-- env marker set        -> configSource: 'env'
@@ -178,7 +178,7 @@ interface DetectedAgent {
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`         | Agent identifier matching Vercel's `detect-agent` spec where applicable.                                                                                                                                                                                                                                                                                                                     |
 | `binary`       | Absolute path to the detected binary. Cross-platform: forward slashes on Unix, backslashes on Windows.                                                                                                                                                                                                                                                                                       |
-| `version`      | Output of `<binary> --version`, parsed for a semver-like string. `null` if the probe timed out (10s) or the binary doesn't support `--version`.                                                                                                                                                                                                                                              |
+| `version`      | Output of `<binary> --version`, parsed for a semver-like string. `null` if the probe timed out (5s) or the binary doesn't support `--version`.                                                                                                                                                                                                                                               |
 | `isConfigured` | `true` if there is a setup signal for the agent on this machine — checked in order: an env var is set (`ANTHROPIC_API_KEY`, etc.), a config file exists (`config.json` in the agent's config dir), or the config directory exists. It is evidence the agent was set up, not proof the credentials are valid or working. `false` means the binary is installed but no setup signal was found. |
 | `configSource` | How `isConfigured` was determined: `'env'` (an env var is set), `'config-file'` (a config file exists), `'config-dir'` (the config directory exists), or `'probe'` (a runtime probe of the binary succeeded — used by `acpx` and `rovodev`). Only present when `isConfigured` is `true`. Earlier in the list = stronger evidence.                                                            |
 | `isACPAgent`   | `true` if the agent speaks the Agent Communication Protocol and must be launched through `acpx`.                                                                                                                                                                                                                                                                                             |
