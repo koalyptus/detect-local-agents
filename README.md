@@ -329,15 +329,14 @@ Contributions are more than welcome! New agents, new detectors, and detection bu
 
 ### Before opening a pull request
 
-Run the same five checks CI runs, in the same order:
+Run the same five checks CI runs, in the same order, with one command:
 
 ```bash
-npm run format:check
-npm run lint
-npm run typecheck
-npm test
-npm run build
+npm run verify
 ```
+
+`verify` chains `format:check → lint → typecheck → test → build` (stopping at
+the first failure), so a green local run means CI's sequence will too.
 
 - `build` (`tsc` emit) is a gate **distinct** from `typecheck` (`tsc --noEmit`) — passing one does not prove the other, so CI runs both.
 - Autofixers exist if a check fails: `npm run format` (prettier --write) and `npm run lint:fix` (eslint --fix).

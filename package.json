@@ -27,6 +27,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "cli": "node dist/cli/cli.js",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
     "test": "vitest run --coverage",
     "test:watch": "vitest"
   },
