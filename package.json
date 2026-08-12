@@ -1,6 +1,6 @@
 {
   "name": "detect-local-agents",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Detect locally installed AI agents in TypeScript. Extensible architecture to easily support new agents.",
   "type": "module",
   "main": "./dist/index.js",
@@ -27,6 +27,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "cli": "node dist/cli/cli.js",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
     "test": "vitest run --coverage",
     "test:watch": "vitest"
   },

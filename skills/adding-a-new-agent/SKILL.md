@@ -39,7 +39,7 @@ Add an entry to `src/config/configs.ts` in the `detectorConfigs` array. The entr
 `configToDetector` (in `src/detectors/index.ts`) runs, per entry:
 
 1. `which(binary)` — not found → agent absent
-2. `getVersion(binary, versionArgs)` — 10s timeout, null if unavailable
+2. `getVersion(binary, versionArgs)` — 5s timeout, null if unavailable
 3. Configured check (first hit wins), each arm producing its own `configSource`:
    - Any `configEnvVars` set in `process.env`? → `configSource: 'env'`
    - `config.json` exists inside `configDir`? → `configSource: 'config-file'`

@@ -6,9 +6,18 @@ import { promisify } from 'node:util';
 import { getPlatform } from './platform.js';
 import type { ConfigSource } from '../types.js';
 
-/** Timeout for quick CLI probes (npm config, which/where). */
+/** Timeout for the npm-config prefix probe (`npm config get prefix`). */
 const NPM_TIMEOUT = 3000;
+/** Timeout for the binary lookup (`which`/`where`) only — npm config uses
+ *  NPM_TIMEOUT instead. which() must stay generous: a slow PATH that makes it
+ *  throw and fall through reports an installed agent as absent, a false
+ *  negative worse than a slow version probe. */
 const COMMAND_TIMEOUT = 10_000;
+// Version probes run for every detected agent in parallel, so a slow probe
+// holds its spawn open for the full timeout. A shorter timeout here is safe:
+// the worst case is one missing version, whereas a slow which() would report
+// an installed agent as absent.
+const VERSION_PROBE_TIMEOUT = 5_000;
 
 /** Matches a dotted version string like "1.0.76" or "1.0.76.1". */
 const VERSION_REGEX = /(\d+\.\d+(?:\.\d+)*)/;
@@ -174,8 +183,8 @@ export async function getVersion(
     // shell and an args array triggers Node 22's DEP0190 and doesn't quote
     // spaces in the path correctly.
     const { stdout, stderr } = needsShell
-      ? await execAsync(`"${resolved}" ${args.join(' ')}`, { timeout: COMMAND_TIMEOUT })
-      : await execFileAsync(resolved, args, { timeout: COMMAND_TIMEOUT });
+      ? await execAsync(`"${resolved}" ${args.join(' ')}`, { timeout: VERSION_PROBE_TIMEOUT })
+      : await execFileAsync(resolved, args, { timeout: VERSION_PROBE_TIMEOUT });
     // Match dotted segments only (no trailing dot): "1.0.76." -> "1.0.76".
     // stdout is authoritative; stderr is only a fallback for CLIs that print
     // their version banner to stderr. Concatenating both streams could pick

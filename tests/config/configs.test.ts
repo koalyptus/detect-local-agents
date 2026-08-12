@@ -33,7 +33,7 @@ describe('detectorConfigs', () => {
     expect(grokConfig?.configEnvVars).toContain('GROK_API_KEY');
   });
 
-  describe('Phase 4: new config entries', () => {
+  describe('added config entries', () => {
     const newAgents = [
       { name: 'kimi-code', binary: 'kimi' },
       { name: 'kiro', binary: 'kiro' },
@@ -74,7 +74,7 @@ describe('detectorConfigs', () => {
     expect(config?.configEnvVars).toContain('AIDER_ANTHROPIC_API_KEY');
   });
 
-  describe('Phase 6: Vercel integration', () => {
+  describe('Vercel detect-agent integration', () => {
     it('claude config has nameResolver for cowork mode', () => {
       const config = detectorConfigs.find((c) => c.name === 'claude');
       expect(config?.nameResolver).toBeDefined();

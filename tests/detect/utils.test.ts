@@ -50,6 +50,29 @@ describe('which', () => {
     expect(path).toBe('/usr/bin/node');
   });
 
+  it('keeps COMMAND_TIMEOUT (10000) for the which probe', async () => {
+    // Regression guard: which() failing on a slow PATH is a false negative
+    // (an installed agent reported as absent), so it must NOT share the
+    // shorter version-probe timeout. Pin to linux so the command is always
+    // 'which' (deterministic on the win32 CI runner, which would spawn
+    // 'where'); the timeout is platform-independent.
+    mockPlatform.mockReturnValue('linux');
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: '/usr/bin/node\n', stderr: '' });
+      }
+      return mockChildProcess;
+    });
+
+    await which('node');
+    expect(mockExecFile).toHaveBeenCalledWith(
+      'which',
+      ['node'],
+      expect.objectContaining({ timeout: 10_000 }),
+      expect.anything(),
+    );
+  });
+
   it('returns null for missing binary', async () => {
     mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
       if (typeof callback === 'function') {
@@ -531,6 +554,25 @@ describe('getVersion', () => {
     );
   });
 
+  it('uses VERSION_PROBE_TIMEOUT (5000) for the version probe', async () => {
+    // The version probe gets a shorter timeout than which() — one missing
+    // version is a softer failure than a false negative on the PATH lookup.
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: 'v1.2.3\n', stderr: '' });
+      }
+      return mockChildProcess;
+    });
+
+    await getVersion('myapp');
+    expect(mockExecFile).toHaveBeenCalledWith(
+      'myapp',
+      ['--version'],
+      expect.objectContaining({ timeout: 5_000 }),
+      expect.anything(),
+    );
+  });
+
   it('strips trailing dot from version output', async () => {
     mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
       if (typeof callback === 'function') {
@@ -637,7 +679,7 @@ describe('getVersion', () => {
       // exec() (not execFile) — single command string, no DEP0190, proper quoting
       expect(mockExec).toHaveBeenCalledWith(
         '"C:\\Program Files\\nodejs\\copilot.cmd" --version',
-        expect.objectContaining({ timeout: 10_000 }),
+        expect.objectContaining({ timeout: 5_000 }),
         expect.anything(),
       );
       expect(mockExecFile).not.toHaveBeenCalled();
