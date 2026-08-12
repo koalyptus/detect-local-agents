@@ -6,8 +6,12 @@ import { promisify } from 'node:util';
 import { getPlatform } from './platform.js';
 import type { ConfigSource } from '../types.js';
 
-/** Timeout for quick CLI probes (npm config, which/where). */
+/** Timeout for the npm-config prefix probe (`npm config get prefix`). */
 const NPM_TIMEOUT = 3000;
+/** Timeout for the binary lookup (`which`/`where`) only — npm config uses
+ *  NPM_TIMEOUT instead. which() must stay generous: a slow PATH that makes it
+ *  throw and fall through reports an installed agent as absent, a false
+ *  negative worse than a slow version probe. */
 const COMMAND_TIMEOUT = 10_000;
 // Version probes run for every detected agent in parallel, so a slow probe
 // holds its spawn open for the full timeout. A shorter timeout here is safe:
