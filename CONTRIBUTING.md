@@ -1,6 +1,6 @@
 # Contributing
 
-Contributions are more than welcome — new agents, new detectors, and detection bug
+Contributions are more than welcome! New agents, new detectors, and detection bug
 reports. Development requires Node >= 20 (`engines` in `package.json`).
 
 ## Questions and bug reports

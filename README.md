@@ -325,7 +325,7 @@ export default detector;
 
 ## Contributing
 
-Contributions are welcome — new agents, new detectors, and bug reports. Development
+Contributions are more than welcome — new agents, new detectors, and bug reports. Development
 requires Node >= 20 (`engines` in `package.json`).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to run the checks, the coverage gate, how
