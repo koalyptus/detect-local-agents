@@ -1,61 +1,56 @@
 // src/detectors/rovodev.detector.ts
-import type { AgentDetector, DetectedAgent } from '../types.js';
+import type { AgentDetector, DetectedAgent, DetectOptions } from '../types.js';
 import { which } from '../detect/utils.js';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { VERSION_PROBE_TIMEOUT } from '../detect/utils.js';
 
 const execFileAsync = promisify(execFile);
+const DEFAULT_TIMEOUT = VERSION_PROBE_TIMEOUT;
 
-let rovodevProbe: boolean | undefined;
-let rovodevTimeout: number | undefined;
+/** Create the rovodev detector with optional probe/timeout configuration. */
+export function createRovodevDetector(options?: DetectOptions): AgentDetector {
+  const probe = options?.probe ?? true;
+  const timeout = options?.timeout ?? DEFAULT_TIMEOUT;
 
-export function setRovodevDetectorOptions(probe?: boolean, timeout?: number) {
-  rovodevProbe = probe;
-  rovodevTimeout = timeout;
-}
+  return {
+    name: 'rovodev',
 
-const detector: AgentDetector = {
-  name: 'rovodev',
+    async detect(): Promise<DetectedAgent | null> {
+      const binary = await which('acli');
+      if (!binary) {
+        return null;
+      }
 
-  async detect(): Promise<DetectedAgent | null> {
-    const probe = rovodevProbe;
-    const timeout = rovodevTimeout;
-    rovodevProbe = undefined;
-    rovodevTimeout = undefined;
+      if (probe === false) {
+        return {
+          name: 'rovodev',
+          binary,
+          isConfigured: undefined,
+        };
+      }
 
-    const binary = await which('acli');
-    if (!binary) {
-      return null;
-    }
+      // Special probe: acli rovodev --help
+      try {
+        const { stdout } = await execFileAsync(binary, ['rovodev', '--help'], {
+          timeout,
+        });
+        if (!stdout.length) {
+          return null;
+        }
+      } catch {
+        return null;
+      }
 
-    if (probe === false) {
       return {
         name: 'rovodev',
         binary,
-        isConfigured: undefined,
+        isConfigured: true,
+        configSource: 'probe',
+        metadata: { acliBinary: binary },
       };
-    }
+    },
+  };
+}
 
-    // Special probe: acli rovodev --help
-    try {
-      const { stdout } = await execFileAsync(binary, ['rovodev', '--help'], {
-        timeout: timeout ?? 5000,
-      });
-      if (!stdout.length) {
-        return null;
-      }
-    } catch {
-      return null;
-    }
-
-    return {
-      name: 'rovodev',
-      binary,
-      isConfigured: true,
-      configSource: 'probe',
-      metadata: { acliBinary: binary },
-    };
-  },
-};
-
-export default detector;
+export default createRovodevDetector;
