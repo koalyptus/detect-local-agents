@@ -402,4 +402,56 @@ describe('detectors/index', () => {
       }
     }
   });
+
+  it('configToDetector with probe:false still derives isConfigured from env, skips getVersion', async () => {
+    const original = process.env['PROBE_ENV_TEST_KEY'];
+    process.env['PROBE_ENV_TEST_KEY'] = 'val';
+
+    const detector = configToDetector(
+      {
+        name: 'probe-env-test',
+        binary: 'node',
+        configEnvVars: ['PROBE_ENV_TEST_KEY'],
+        configDir: '~/.probe-env-test',
+      },
+      { probe: false },
+    );
+
+    try {
+      const result = await detector.detect();
+      expect(result).toBeDefined();
+      expect(result!.isConfigured).toBe(true);
+      expect(result!.configSource).toBe('env');
+      expect(result!.version).toBeUndefined();
+      // getVersion must not be called when probe is false
+      expect(mockGetVersion).not.toHaveBeenCalled();
+    } finally {
+      if (original === undefined) {
+        delete process.env['PROBE_ENV_TEST_KEY'];
+      } else {
+        process.env['PROBE_ENV_TEST_KEY'] = original;
+      }
+    }
+  });
+
+  it('configToDetector with probe:false still derives isConfigured from config-dir, skips getVersion', async () => {
+    const configDir = path.join(tempDir, '.probe-dir-test');
+    await fs.mkdir(configDir, { recursive: true });
+
+    const detector = configToDetector(
+      {
+        name: 'probe-dir-test',
+        binary: 'node',
+        configDir: configDir,
+      },
+      { probe: false },
+    );
+
+    const result = await detector.detect();
+    expect(result).toBeDefined();
+    expect(result!.isConfigured).toBe(true);
+    expect(result!.configSource).toBe('config-dir');
+    expect(result!.version).toBeUndefined();
+    expect(mockGetVersion).not.toHaveBeenCalled();
+  });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import acpxDetector from '../../src/detectors/acpx.detector.js';
+import acpxDetector, { setAcpxDetectorOptions } from '../../src/detectors/acpx.detector.js';
 
 // vi.mock factories are hoisted to the top of the file, so they cannot
 // reference any top-level variables. Use vi.hoisted to create shared mocks.
@@ -26,10 +26,12 @@ describe('acpx detector', () => {
     vi.clearAllMocks();
     mockWhich.mockResolvedValue('/usr/bin/acpx');
     mockExecFileAsync.mockResolvedValue({ stdout: '', stderr: '' });
+    setAcpxDetectorOptions(undefined, undefined);
   });
 
   afterEach(() => {
     vi.resetAllMocks();
+    setAcpxDetectorOptions(undefined, undefined);
   });
 
   it('returns null when acpx binary not found', async () => {
@@ -76,5 +78,18 @@ describe('acpx detector', () => {
     expect(result?.isConfigured).toBe(false);
     expect(result?.configSource).toBeUndefined();
     expect(result?.metadata?.targets).toEqual([]);
+  });
+
+  it('skips probe and returns isConfigured=undefined when probe is false', async () => {
+    mockWhich.mockResolvedValue('/usr/bin/acpx');
+    setAcpxDetectorOptions(false, undefined);
+
+    const result = await acpxDetector.detect();
+    expect(result).not.toBeNull();
+    expect(result?.name).toBe('acpx');
+    expect(result?.binary).toBe('/usr/bin/acpx');
+    expect(result?.isConfigured).toBeUndefined();
+    expect(result?.configSource).toBeUndefined();
+    expect(mockExecFileAsync).not.toHaveBeenCalled();
   });
 });

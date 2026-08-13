@@ -2,16 +2,23 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import type { AgentDetector, ConfigSource, DetectedAgent, DetectorConfig } from '../types.js';
+import type {
+  AgentDetector,
+  ConfigSource,
+  DetectedAgent,
+  DetectorConfig,
+  DetectOptions,
+} from '../types.js';
 import { which, getVersion, configSourceFromDir, withConfigSource } from '../detect/utils.js';
 import { detectorConfigs } from '../config/configs.js';
 import { hasConfigFile } from '../config/config-paths.js';
+import { setAcpxDetectorOptions } from './acpx.detector.js';
+import { setRovodevDetectorOptions } from './rovodev.detector.js';
 
-/**
- * Create a detector from a config entry.
+/** Create a detector from a config entry.
  * Exported for testing.
  */
-export function configToDetector(config: DetectorConfig): AgentDetector {
+export function configToDetector(config: DetectorConfig, options?: DetectOptions): AgentDetector {
   return {
     name: config.name,
 
@@ -26,7 +33,11 @@ export function configToDetector(config: DetectorConfig): AgentDetector {
       return null;
     }
 
-    const version = (await getVersion(binary, config.versionArgs)) ?? undefined;
+    const timeout = options?.timeout;
+    const version =
+      options?.probe === false
+        ? undefined
+        : ((await getVersion(binary, config.versionArgs, timeout)) ?? undefined);
 
     // Check if configured. The first matching signal wins; configSource records
     // which signal it was. The cascade order and short-circuiting are unchanged.
@@ -67,15 +78,13 @@ export function configToDetector(config: DetectorConfig): AgentDetector {
   }
 }
 
-/**
- * Load all detectors: config-based + auto-discovered file-based.
- */
-export async function loadAllDetectors(): Promise<AgentDetector[]> {
+/** Load all detectors: config-based + auto-discovered file-based. */
+export async function loadAllDetectors(options?: DetectOptions): Promise<AgentDetector[]> {
   const detectors: AgentDetector[] = [];
 
   // Config-based detectors
   for (const config of detectorConfigs) {
-    detectors.push(configToDetector(config));
+    detectors.push(configToDetector(config, options));
   }
 
   // File-based detectors: auto-discover *.detector.ts sibling modules
@@ -90,6 +99,13 @@ export async function loadAllDetectors(): Promise<AgentDetector[]> {
       const mod = await import(pathToFileURL(path.join(detectorsDir, file)).href);
       const detector = mod.default;
       if (detector && typeof detector.detect === 'function') {
+        // File-based detectors currently don't take options directly.
+        // acpx/rovodev use module-level setters as the least invasive path.
+        if (detector.name === 'acpx' && options) {
+          setAcpxDetectorOptions(options.probe, options.timeout);
+        } else if (detector.name === 'rovodev' && options) {
+          setRovodevDetectorOptions(options.probe, options.timeout);
+        }
         detectors.push(detector);
       }
     } catch (err) {

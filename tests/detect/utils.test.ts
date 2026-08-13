@@ -573,6 +573,23 @@ describe('getVersion', () => {
     );
   });
 
+  it('accepts an explicit timeout override', async () => {
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: 'v1.2.3\n', stderr: '' });
+      }
+      return mockChildProcess;
+    });
+
+    await getVersion('myapp', ['--version'], 100);
+    expect(mockExecFile).toHaveBeenCalledWith(
+      'myapp',
+      ['--version'],
+      expect.objectContaining({ timeout: 100 }),
+      expect.anything(),
+    );
+  });
+
   it('strips trailing dot from version output', async () => {
     mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
       if (typeof callback === 'function') {

@@ -6,17 +6,39 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
+let acpxProbe: boolean | undefined;
+let acpxTimeout: number | undefined;
+
+export function setAcpxDetectorOptions(probe?: boolean, timeout?: number) {
+  acpxProbe = probe;
+  acpxTimeout = timeout;
+}
+
 const detector: AgentDetector = {
   name: 'acpx',
 
   async detect(): Promise<DetectedAgent | null> {
+    const probe = acpxProbe;
+    const timeout = acpxTimeout;
+    acpxProbe = undefined;
+    acpxTimeout = undefined;
+
     const binary = await which('acpx');
     if (!binary) {
       return null;
     }
 
+    if (probe === false) {
+      return {
+        name: 'acpx',
+        binary,
+        isACPAgent: true,
+        isConfigured: undefined,
+      };
+    }
+
     try {
-      const { stdout } = await execFileAsync(binary, ['list'], { timeout: 5000 });
+      const { stdout } = await execFileAsync(binary, ['list'], { timeout: timeout ?? 5000 });
       const targets = stdout
         .trim()
         .split('\n')

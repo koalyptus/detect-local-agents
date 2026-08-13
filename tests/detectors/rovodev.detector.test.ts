@@ -1,3 +1,4 @@
+// tests/detectors/rovodev.detector.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChildProcess } from 'node:child_process';
 
@@ -11,12 +12,13 @@ vi.mock('node:child_process', () => ({
 
 import { which } from '../../src/detect/utils.js';
 import { execFile } from 'node:child_process';
+import rovodevDetector, {
+  setRovodevDetectorOptions,
+} from '../../src/detectors/rovodev.detector.js';
 
 const mockWhich = vi.mocked(which);
 const mockExecFile = vi.mocked(execFile);
 const mockChildProcess = {} as ChildProcess;
-
-import rovodevDetector from '../../src/detectors/rovodev.detector.js';
 
 describe('rovodev detector', () => {
   beforeEach(() => {
@@ -30,6 +32,7 @@ describe('rovodev detector', () => {
       }
       return mockChildProcess;
     });
+    setRovodevDetectorOptions(undefined, undefined);
   });
 
   it('returns null when acli not found', async () => {
@@ -71,5 +74,37 @@ describe('rovodev detector', () => {
     expect(result?.isConfigured).toBe(true);
     expect(result?.configSource).toBe('probe');
     expect(result?.metadata?.acliBinary).toBe('/usr/bin/acli');
+  });
+
+  it('skips probe and returns isConfigured=undefined when probe is false', async () => {
+    mockWhich.mockResolvedValue('/usr/bin/acli');
+    setRovodevDetectorOptions(false, undefined);
+
+    const result = await rovodevDetector.detect();
+    expect(result).not.toBeNull();
+    expect(result?.name).toBe('rovodev');
+    expect(result?.binary).toBe('/usr/bin/acli');
+    expect(result?.isConfigured).toBeUndefined();
+    expect(result?.configSource).toBeUndefined();
+    expect(mockExecFile).not.toHaveBeenCalled();
+  });
+
+  it('honours timeout override when probing', async () => {
+    setRovodevDetectorOptions(undefined, 100);
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: 'help' });
+      }
+      return mockChildProcess;
+    });
+
+    const result = await rovodevDetector.detect();
+    expect(result).not.toBeNull();
+    expect(mockExecFile).toHaveBeenCalledWith(
+      '/usr/bin/acli',
+      ['rovodev', '--help'],
+      expect.objectContaining({ timeout: 100 }),
+      expect.anything(),
+    );
   });
 });
