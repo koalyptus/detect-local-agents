@@ -3,6 +3,7 @@ import type { ChildProcess } from 'node:child_process';
 
 vi.mock('../../src/detect/utils.js', () => ({
   which: vi.fn(),
+  VERSION_PROBE_TIMEOUT: 5000,
 }));
 
 vi.mock('node:child_process', () => ({
@@ -71,5 +72,34 @@ describe('rovodev detector', () => {
     expect(result?.isConfigured).toBe(true);
     expect(result?.configSource).toBe('probe');
     expect(result?.metadata?.acliBinary).toBe('/usr/bin/acli');
+  });
+
+  it('probe:false returns present-but-not-probed (isConfigured undefined) and skips execFile', async () => {
+    mockWhich.mockResolvedValue('/usr/bin/acli');
+
+    const result = await rovodevDetector.detect({ probe: false });
+    expect(result).not.toBeNull();
+    expect(result?.name).toBe('rovodev');
+    expect(result?.binary).toBe('/usr/bin/acli');
+    expect(result?.isConfigured).toBeUndefined();
+    expect(mockExecFile).not.toHaveBeenCalled();
+  });
+
+  it('passes timeout through to the probe execFile call', async () => {
+    mockWhich.mockResolvedValue('/usr/bin/acli');
+    mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+      if (typeof callback === 'function') {
+        callback(null, { stdout: 'rovodev help output' });
+      }
+      return mockChildProcess;
+    });
+
+    await rovodevDetector.detect({ timeout: 999 });
+    expect(mockExecFile).toHaveBeenCalledWith(
+      '/usr/bin/acli',
+      ['rovodev', '--help'],
+      expect.objectContaining({ timeout: 999 }),
+      expect.any(Function),
+    );
   });
 });

@@ -27,7 +27,7 @@ export interface DetectedAgent {
 
 export interface AgentDetector {
   name: string;
-  detect(): Promise<DetectedAgent | null>;
+  detect(options?: DetectOptions): Promise<DetectedAgent | null>;
 }
 
 export interface DetectorConfig {
@@ -39,4 +39,26 @@ export interface DetectorConfig {
   isACPAgent?: boolean;
   /** Override the detected agent name based on runtime env. */
   nameResolver?: (env: Record<string, string | undefined>) => string;
+}
+
+/** Options for programmatic `detectAgents` calls. */
+export interface DetectOptions {
+  /**
+   * Only run detectors whose `name` is in this list. Matched against the
+   * static `AgentDetector.name` (not the possibly name-resolved value), so an
+   * embedder need not know resolution. Unknown names are ignored, not errors.
+   */
+  only?: string[];
+  /**
+   * When false, detectors must not execute binaries purely to establish
+   * configuration state. Presence (`which`/`access`) is always allowed.
+   * Default true.
+   */
+  probe?: boolean;
+  /**
+   * Cap for any single probe/subprocess, in milliseconds. Overrides the
+   * internal probe timeout (currently 5s). Bounds worst-case latency for an
+   * embedder. Default: no change (uses the internal constant).
+   */
+  timeout?: number;
 }

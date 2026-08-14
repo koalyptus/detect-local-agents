@@ -402,4 +402,18 @@ describe('detectors/index', () => {
       }
     }
   });
+
+  it('configToDetector.detect({probe:false}) skips version probe (version undefined)', async () => {
+    const detector = configToDetector({ name: 'probe-off', binary: 'node' });
+    const result = await detector.detect({ probe: false });
+    expect(result).toBeDefined();
+    expect(result!.version).toBeUndefined();
+    expect(mockGetVersion).not.toHaveBeenCalled();
+  });
+
+  it('configToDetector.detect({timeout}) forwards timeout to getVersion', async () => {
+    const detector = configToDetector({ name: 'probe-timeout', binary: 'node' });
+    await detector.detect({ timeout: 777 });
+    expect(mockGetVersion).toHaveBeenCalledWith('/usr/local/bin/node', undefined, 777);
+  });
 });
