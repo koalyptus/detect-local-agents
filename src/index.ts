@@ -8,7 +8,7 @@ export { detectorConfigs } from './config/configs.js';
 /**
  * Detect all locally installed AI agents.
  *
- * @param options Optional controls for programmatic/embedded callers:
+ * @param options DetectOptions for programmatic/embedded callers:
  *   - `only?: string[]` — restrict detection to the named detectors (matched
  *     against each `AgentDetector.name`). Unknown names are ignored, not errors.
  *   - `probe?: boolean` — when `false`, skip active binary probes but still run

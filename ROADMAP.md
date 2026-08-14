@@ -75,11 +75,13 @@
 
 ## Phase 7: Programmatic Detection Controls (g9)
 
-> Embedders/CLIs can scope and bound detection without changing default behaviour.
+> Builds on Phase 1 (`detectAgents()` entry point + detector engine) and the
+> Phase 5 probe-timeout hardening (#14): expose those controls to programmatic
+> callers without changing default behaviour.
 
-- [x] `DetectOptions` (`only` / `probe` / `timeout`) added to `detectAgents` and `AgentDetector.detect(options?)`
-- [x] `probe: false` skips active binary probes, keeps presence checks (`isConfigured: undefined`)
-- [x] `timeout` forwarded to `getVersion` and each detector's probe subprocess
-- [x] `only` filters detectors by static name; unknown names ignored
-- [x] 100% coverage on new branches; no module-level setters (threaded via `options`)
+- [x] `DetectOptions` (`only` / `probe` / `timeout`) added to `detectAgents(options?)` and `AgentDetector.detect(options?)`
+- [x] Extends the Phase 5 probe-timeout work: `timeout` is now caller-overridable per `getVersion` and each detector's probe (default `VERSION_PROBE_TIMEOUT`)
+- [x] `probe: false` skips active binary probes, keeps presence checks (`isConfigured: undefined`) — refines the detection contract from Phase 1
+- [x] `only` filters detectors by static name (unknown names ignored); no new global state (replaces the rejected setter approach)
+- [x] 100% coverage on new branches; README + SKILL + ROADMAP synced
 - [x] PR #16

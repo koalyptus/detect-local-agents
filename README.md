@@ -191,10 +191,28 @@ Everything below is exported from the package root (`import { ... } from 'detect
 ### `detectAgents()`
 
 ```typescript
-async function detectAgents(): Promise<DetectedAgent[]>;
+async function detectAgents(options?: DetectOptions): Promise<DetectedAgent[]>;
 ```
 
 Detects all locally installed AI agents. Runs every registered detector (config-based and file-based) in parallel and returns the agents that were found. Detectors that error or time out (10s per detector) are skipped silently. Returns an empty array when nothing is installed.
+
+`options` is optional and backward-compatible — omitting it preserves the default behaviour:
+
+| Field     | Type       | Default                 | Effect                                                                   |
+| --------- | ---------- | ----------------------- | ------------------------------------------------------------------------ |
+| `only`    | `string[]` | `[]` (run all)          | Restrict to detectors whose `name` is listed. Unknown names are ignored. |
+| `probe`   | `boolean`  | `true`                  | When `false`, skip active binary probes; presence checks still run.      |
+| `timeout` | `number`   | `VERSION_PROBE_TIMEOUT` | Per-probe subprocess cap in ms, applied to `getVersion` and probes.      |
+
+### `DetectOptions`
+
+```typescript
+interface DetectOptions {
+  only?: string[]; // restrict to named detectors
+  probe?: boolean; // skip active probes when false
+  timeout?: number; // per-probe subprocess cap in ms
+}
+```
 
 ### `DetectedAgent`
 
@@ -205,7 +223,7 @@ See [DetectedAgent](#detectedagent) above.
 ```typescript
 interface AgentDetector {
   name: string;
-  detect(): Promise<DetectedAgent | null>;
+  detect(options?: DetectOptions): Promise<DetectedAgent | null>;
 }
 ```
 

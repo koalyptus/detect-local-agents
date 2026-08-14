@@ -43,22 +43,10 @@ export interface DetectorConfig {
 
 /** Options for programmatic `detectAgents` calls. */
 export interface DetectOptions {
-  /**
-   * Only run detectors whose `name` is in this list. Matched against the
-   * static `AgentDetector.name` (not the possibly name-resolved value), so an
-   * embedder need not know resolution. Unknown names are ignored, not errors.
-   */
+  /** Only run detectors whose `name` is in this list. Unknown names are ignored. */
   only?: string[];
-  /**
-   * When false, detectors must not execute binaries purely to establish
-   * configuration state. Presence (`which`/`access`) is always allowed.
-   * Default true.
-   */
+  /** When `false`, skip active binary probes; presence checks (`which`/`access`) still run. Default `true`. */
   probe?: boolean;
-  /**
-   * Cap for any single probe/subprocess, in milliseconds. Overrides the
-   * internal probe timeout (currently 5s). Bounds worst-case latency for an
-   * embedder. Default: no change (uses the internal constant).
-   */
+  /** Per-probe subprocess cap in ms. Overrides the internal probe timeout (default 5000). */
   timeout?: number;
 }
