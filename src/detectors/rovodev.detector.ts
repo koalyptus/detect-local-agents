@@ -1,8 +1,9 @@
 // src/detectors/rovodev.detector.ts
 import type { AgentDetector, DetectedAgent, DetectOptions } from '../types.js';
-import { which, VERSION_PROBE_TIMEOUT } from '../detect/utils.js';
+import { which } from '../detect/utils.js';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { VERSION_PROBE_TIMEOUT } from '../detect/utils.js';
 
 const execFileAsync = promisify(execFile);
 const DEFAULT_TIMEOUT = VERSION_PROBE_TIMEOUT;

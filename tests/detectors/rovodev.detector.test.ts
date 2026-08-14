@@ -4,7 +4,6 @@ import type { ChildProcess } from 'node:child_process';
 
 vi.mock('../../src/detect/utils.js', () => ({
   which: vi.fn(),
-  VERSION_PROBE_TIMEOUT: 5_000,
 }));
 
 vi.mock('node:child_process', () => ({
@@ -13,15 +12,15 @@ vi.mock('node:child_process', () => ({
 
 import { which } from '../../src/detect/utils.js';
 import { execFile } from 'node:child_process';
-import { createRovodevDetector } from '../../src/detectors/rovodev.detector.js';
+import rovodevDetector, {
+  setRovodevDetectorOptions,
+} from '../../src/detectors/rovodev.detector.js';
 
 const mockWhich = vi.mocked(which);
 const mockExecFile = vi.mocked(execFile);
 const mockChildProcess = {} as ChildProcess;
 
 describe('rovodev detector', () => {
-  let detector: ReturnType<typeof createRovodevDetector>;
-
   beforeEach(() => {
     vi.clearAllMocks();
     // Default: acli exists, probe returns empty stdout (=> not detected).
@@ -33,13 +32,13 @@ describe('rovodev detector', () => {
       }
       return mockChildProcess;
     });
-    detector = createRovodevDetector();
+    setRovodevDetectorOptions(undefined, undefined);
   });
 
   it('returns null when acli not found', async () => {
     mockWhich.mockResolvedValue(null);
 
-    const result = await detector.detect();
+    const result = await rovodevDetector.detect();
     expect(result).toBeNull();
   });
 
@@ -51,12 +50,12 @@ describe('rovodev detector', () => {
       return mockChildProcess;
     });
 
-    const result = await detector.detect();
+    const result = await rovodevDetector.detect();
     expect(result).toBeNull();
   });
 
   it('returns null when probe returns empty stdout', async () => {
-    const result = await detector.detect();
+    const result = await rovodevDetector.detect();
     expect(result).toBeNull();
   });
 
@@ -68,7 +67,7 @@ describe('rovodev detector', () => {
       return mockChildProcess;
     });
 
-    const result = await detector.detect();
+    const result = await rovodevDetector.detect();
     expect(result).not.toBeNull();
     expect(result?.name).toBe('rovodev');
     expect(result?.binary).toBe('/usr/bin/acli');
@@ -79,9 +78,9 @@ describe('rovodev detector', () => {
 
   it('skips probe and returns isConfigured=undefined when probe is false', async () => {
     mockWhich.mockResolvedValue('/usr/bin/acli');
-    detector = createRovodevDetector({ probe: false });
+    setRovodevDetectorOptions(false, undefined);
 
-    const result = await detector.detect();
+    const result = await rovodevDetector.detect();
     expect(result).not.toBeNull();
     expect(result?.name).toBe('rovodev');
     expect(result?.binary).toBe('/usr/bin/acli');
@@ -91,7 +90,7 @@ describe('rovodev detector', () => {
   });
 
   it('honours timeout override when probing', async () => {
-    detector = createRovodevDetector({ timeout: 100 });
+    setRovodevDetectorOptions(undefined, 100);
     mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
       if (typeof callback === 'function') {
         callback(null, { stdout: 'help' });
@@ -99,7 +98,7 @@ describe('rovodev detector', () => {
       return mockChildProcess;
     });
 
-    const result = await detector.detect();
+    const result = await rovodevDetector.detect();
     expect(result).not.toBeNull();
     expect(mockExecFile).toHaveBeenCalledWith(
       '/usr/bin/acli',
