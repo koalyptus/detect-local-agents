@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { fileURLToPath } from 'node:url';
 
 // Mock detect.js so which() returns a fake binary path for known binaries.
 // getVersion is a vi.fn so individual tests can override its return value.
@@ -123,29 +122,6 @@ describe('detectors/index', () => {
     const result = await detector.detect();
     expect(result).toBeDefined();
     expect(result!.isConfigured).toBe(false);
-  });
-
-  it('loadAllDetectors warns and skips broken detector files', async () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    const brokenFile = path.join(
-      path.dirname(fileURLToPath(import.meta.url)),
-      '..',
-      '..',
-      'src',
-      'detectors',
-      'broken.detector.ts',
-    );
-    // Create a file with a syntax error that will throw on import
-    await fs.writeFile(brokenFile, 'export default { broken: ; };\\n');
-
-    try {
-      const _detectors = await loadAllDetectors();
-      expect(spy).toHaveBeenCalled();
-    } finally {
-      await fs.rm(brokenFile, { force: true });
-      spy.mockRestore();
-    }
   });
 
   it('configToDetector handles configDir with ~ prefix', async () => {

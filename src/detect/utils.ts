@@ -17,7 +17,7 @@ const COMMAND_TIMEOUT = 10_000;
 // holds its spawn open for the full timeout. A shorter timeout here is safe:
 // the worst case is one missing version, whereas a slow which() would report
 // an installed agent as absent.
-const VERSION_PROBE_TIMEOUT = 5_000;
+export const VERSION_PROBE_TIMEOUT = 5_000;
 
 /** Matches a dotted version string like "1.0.76" or "1.0.76.1". */
 const VERSION_REGEX = /(\d+\.\d+(?:\.\d+)*)/;

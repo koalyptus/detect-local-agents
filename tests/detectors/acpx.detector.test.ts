@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import acpxDetector, { setAcpxDetectorOptions } from '../../src/detectors/acpx.detector.js';
+import { createAcpxDetector } from '../../src/detectors/acpx.detector.js';
 
 // vi.mock factories are hoisted to the top of the file, so they cannot
 // reference any top-level variables. Use vi.hoisted to create shared mocks.
@@ -22,22 +22,23 @@ vi.mock('node:util', () => ({
 }));
 
 describe('acpx detector', () => {
+  let detector: ReturnType<typeof createAcpxDetector>;
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockWhich.mockResolvedValue('/usr/bin/acpx');
     mockExecFileAsync.mockResolvedValue({ stdout: '', stderr: '' });
-    setAcpxDetectorOptions(undefined, undefined);
+    detector = createAcpxDetector();
   });
 
   afterEach(() => {
     vi.resetAllMocks();
-    setAcpxDetectorOptions(undefined, undefined);
   });
 
   it('returns null when acpx binary not found', async () => {
     mockWhich.mockResolvedValue(null);
 
-    const result = await acpxDetector.detect();
+    const result = await detector.detect();
     expect(result).toBeNull();
   });
 
@@ -45,7 +46,7 @@ describe('acpx detector', () => {
     mockWhich.mockResolvedValue('/usr/bin/acpx');
     mockExecFileAsync.mockResolvedValue({ stdout: 'target1\ntarget2\ntarget3\n', stderr: '' });
 
-    const result = await acpxDetector.detect();
+    const result = await detector.detect();
     expect(result).not.toBeNull();
     expect(result?.name).toBe('acpx');
     expect(result?.binary).toBe('/usr/bin/acpx');
@@ -59,7 +60,7 @@ describe('acpx detector', () => {
     mockWhich.mockResolvedValue('/usr/bin/acpx');
     mockExecFileAsync.mockRejectedValue(new Error('Command failed'));
 
-    const result = await acpxDetector.detect();
+    const result = await detector.detect();
     expect(result).not.toBeNull();
     expect(result?.name).toBe('acpx');
     expect(result?.binary).toBe('/usr/bin/acpx');
@@ -73,7 +74,7 @@ describe('acpx detector', () => {
     mockWhich.mockResolvedValue('/usr/bin/acpx');
     mockExecFileAsync.mockResolvedValue({ stdout: '', stderr: '' });
 
-    const result = await acpxDetector.detect();
+    const result = await detector.detect();
     expect(result).not.toBeNull();
     expect(result?.isConfigured).toBe(false);
     expect(result?.configSource).toBeUndefined();
@@ -82,9 +83,9 @@ describe('acpx detector', () => {
 
   it('skips probe and returns isConfigured=undefined when probe is false', async () => {
     mockWhich.mockResolvedValue('/usr/bin/acpx');
-    setAcpxDetectorOptions(false, undefined);
+    detector = createAcpxDetector({ probe: false });
 
-    const result = await acpxDetector.detect();
+    const result = await detector.detect();
     expect(result).not.toBeNull();
     expect(result?.name).toBe('acpx');
     expect(result?.binary).toBe('/usr/bin/acpx');

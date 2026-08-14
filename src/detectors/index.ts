@@ -1,7 +1,5 @@
-import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 import type {
   AgentDetector,
   ConfigSource,
@@ -12,8 +10,22 @@ import type {
 import { which, getVersion, configSourceFromDir, withConfigSource } from '../detect/utils.js';
 import { detectorConfigs } from '../config/configs.js';
 import { hasConfigFile } from '../config/config-paths.js';
-import { setAcpxDetectorOptions } from './acpx.detector.js';
-import { setRovodevDetectorOptions } from './rovodev.detector.js';
+import { createAcpxDetector } from './acpx.detector.js';
+import { createRovodevDetector } from './rovodev.detector.js';
+// Explicit imports for all file-based detectors (auto-discovery via dynamic import is unreliable in test environments)
+import augmentCliDetector from './augment-cli.detector.js';
+import cursorDetector from './cursor.detector.js';
+import devinDetector from './devin.detector.js';
+import geminiDetector from './gemini.detector.js';
+import junieDetector from './junie.detector.js';
+import lmstudioDetector from './lmstudio.detector.js';
+import miniCodingAgentDetector from './mini-coding-agent.detector.js';
+import openhandsSdkDetector from './openhands-sdk.detector.js';
+import orcaDetector from './orca.detector.js';
+import replitDetector from './replit.detector.js';
+import sweAgentDetector from './swe-agent.detector.js';
+import t3CodeDetector from './t3-code.detector.js';
+import windsurfDetector from './windsurf.detector.js';
 
 /** Create a detector from a config entry.
  * Exported for testing.
@@ -78,7 +90,7 @@ export function configToDetector(config: DetectorConfig, options?: DetectOptions
   }
 }
 
-/** Load all detectors: config-based + auto-discovered file-based. */
+/** Load all detectors: config-based + explicitly imported file-based. */
 export async function loadAllDetectors(options?: DetectOptions): Promise<AgentDetector[]> {
   const detectors: AgentDetector[] = [];
 
@@ -87,31 +99,32 @@ export async function loadAllDetectors(options?: DetectOptions): Promise<AgentDe
     detectors.push(configToDetector(config, options));
   }
 
-  // File-based detectors: auto-discover *.detector.ts sibling modules
-  const __filename = fileURLToPath(import.meta.url);
-  const detectorsDir = path.dirname(__filename);
-  const files = await fs.readdir(detectorsDir);
-  for (const file of files) {
-    if (!/\.detector\.[jt]s$/.test(file) || file.startsWith('index.')) {
-      continue;
-    }
-    try {
-      const mod = await import(pathToFileURL(path.join(detectorsDir, file)).href);
-      const detector = mod.default;
-      if (detector && typeof detector.detect === 'function') {
-        // File-based detectors currently don't take options directly.
-        // acpx/rovodev use module-level setters as the least invasive path.
-        if (detector.name === 'acpx' && options) {
-          setAcpxDetectorOptions(options.probe, options.timeout);
-        } else if (detector.name === 'rovodev' && options) {
-          setRovodevDetectorOptions(options.probe, options.timeout);
-        }
-        detectors.push(detector);
-      }
-    } catch (err) {
-      console.warn(`Skipping detector ${file}: ${(err as Error).message}`);
-    }
+  // File-based detectors with options support
+  if (options) {
+    detectors.push(createAcpxDetector(options));
+    detectors.push(createRovodevDetector(options));
+  } else {
+    // Default options (probe: true, default timeout)
+    detectors.push(createAcpxDetector());
+    detectors.push(createRovodevDetector());
   }
+
+  // File-based detectors without options support (static objects)
+  detectors.push(
+    augmentCliDetector,
+    cursorDetector,
+    devinDetector,
+    geminiDetector,
+    junieDetector,
+    lmstudioDetector,
+    miniCodingAgentDetector,
+    openhandsSdkDetector,
+    orcaDetector,
+    replitDetector,
+    sweAgentDetector,
+    t3CodeDetector,
+    windsurfDetector,
+  );
 
   return detectors;
 }

@@ -6,6 +6,7 @@ import { detectAgents } from '../src/index.js';
 vi.mock('../src/detect/utils.js', () => ({
   which: vi.fn(),
   getVersion: vi.fn(),
+  VERSION_PROBE_TIMEOUT: 5_000,
 }));
 
 // Mock the detectors/index to control which configs are used
