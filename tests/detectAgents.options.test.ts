@@ -1,4 +1,3 @@
-// tests/detectAgents.options.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the detector loader so we exercise detectAgents' option handling

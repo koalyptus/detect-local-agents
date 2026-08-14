@@ -72,3 +72,14 @@
 - [ ] Audit docs, generate API reference
 - [ ] Real-world testing on Windows/macOS/Linux
 - [ ] npm publish
+
+## Phase 7: Programmatic Detection Controls (g9)
+
+> Embedders/CLIs can scope and bound detection without changing default behaviour.
+
+- [x] `DetectOptions` (`only` / `probe` / `timeout`) added to `detectAgents` and `AgentDetector.detect(options?)`
+- [x] `probe: false` skips active binary probes, keeps presence checks (`isConfigured: undefined`)
+- [x] `timeout` forwarded to `getVersion` and each detector's probe subprocess
+- [x] `only` filters detectors by static name; unknown names ignored
+- [x] 100% coverage on new branches; no module-level setters (threaded via `options`)
+- [x] PR #16

@@ -111,13 +111,13 @@ Use the `withConfigSource` helper to attach a `configSource` — don't hand-roll
 
 ```typescript
 // src/detectors/myagent.detector.ts
-import type { AgentDetector, DetectedAgent } from '../types.js';
+import type { AgentDetector, DetectedAgent, DetectOptions } from '../types.js';
 import { which, getVersion, withConfigSource } from '../detect/utils.js';
 
 const detector: AgentDetector = {
   name: 'myagent',
 
-  async detect(): Promise<DetectedAgent | null> {
+  async detect(options?: DetectOptions): Promise<DetectedAgent | null> {
     const binary = await which('myagent');
     if (!binary) return null;
 
@@ -137,6 +137,11 @@ const detector: AgentDetector = {
 export default detector;
 ```
 
+`detect(options?)` accepts an optional `DetectOptions` (`only` / `probe` / `timeout`,
+see `src/types.ts`). The parameter is optional, so existing callers and the CLI — which
+call `detect()` with no arguments — are unaffected. Do **not** use module-level setter
+functions to pass options into a detector; thread them through `options` instead.
+
 ### Common patterns
 
 | Pattern                | Example                                                             | `configSource`    |
@@ -151,7 +156,7 @@ export default detector;
 ### Available helpers from `src/detect/utils.js`
 
 - `which(cmd)` — find binary in PATH, returns absolute path or null
-- `getVersion(binary, args?)` — run `<binary> --version`, returns version string or null. stdout is authoritative; stderr is tried only when stdout has no dotted-version match (many CLIs print their version banner to stderr). When neither matches, returns raw trimmed stdout.
+- `getVersion(binary, args?, timeout?)` — run `<binary> --version`, returns version string or null. stdout is authoritative; stderr is tried only when stdout has no dotted-version match (many CLIs print their version banner to stderr). When neither matches, returns raw trimmed stdout. `timeout` (ms) overrides the default `VERSION_PROBE_TIMEOUT`.
 - `withConfigSource(agent, source)` — attach `configSource` to the result when a source is known (adds the field only when truthy)
 - `configSourceFromDir(dir)` — returns `'config-dir'` when the dir exists, else `undefined`
 - `getPlatform()` — `process.platform` (mockable in tests), from `src/detect/platform.ts`

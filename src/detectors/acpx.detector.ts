@@ -1,4 +1,3 @@
-// src/detectors/acpx.detector.ts
 import type { AgentDetector, DetectedAgent, DetectOptions } from '../types.js';
 import { which, VERSION_PROBE_TIMEOUT } from '../detect/utils.js';
 import { execFile } from 'node:child_process';
