@@ -1,6 +1,6 @@
 {
   "name": "detect-local-agents",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Detect locally installed AI agents in TypeScript. Extensible architecture to easily support new agents.",
   "type": "module",
   "main": "./dist/index.js",
