@@ -188,7 +188,7 @@ interface DetectedAgent {
 
 Everything below is exported from the package root (`import { ... } from 'detect-local-agents'`).
 
-### `detectAgents()`
+### `detectAgents(options?: DetectOptions)`
 
 ```typescript
 async function detectAgents(options?: DetectOptions): Promise<DetectedAgent[]>;
