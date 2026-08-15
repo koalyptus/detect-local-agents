@@ -75,13 +75,37 @@
 
 ## Phase 7: Programmatic Detection Controls (g9)
 
-> Builds on Phase 1 (`detectAgents()` entry point + detector engine) and the
-> Phase 5 probe-timeout hardening (#14): expose those controls to programmatic
-> callers without changing default behaviour.
+> Builds on the earlier additive G-series changes (G1 / G3 / G4 / G5) and exposes
+> their controls to programmatic callers without changing default behaviour.
 
-- [x] `DetectOptions` (`only` / `probe` / `timeout`) added to `detectAgents(options?)` and `AgentDetector.detect(options?)`
-- [x] Extends the Phase 5 probe-timeout work: `timeout` is now caller-overridable per `getVersion` and each detector's probe (default `VERSION_PROBE_TIMEOUT`)
-- [x] `probe: false` skips active binary probes, keeps presence checks (`isConfigured: undefined`) — refines the detection contract from Phase 1
-- [x] `only` filters detectors by static name (unknown names ignored); no new global state (replaces the rejected setter approach)
-- [x] 100% coverage on new branches; README + SKILL + ROADMAP synced
+The roadmap's Phases 1–6 each shipped as a focused, backward-compatible change internally
+tracked as a "G" item. The sub-phases completed so far, in order:
+
+- **G3** (v0.2.3) — `getVersion()` reads the CLI version from **stderr** as a fallback
+  (many CLIs print their version banner to stderr). stdout stays authoritative.
+- **G1** (v0.3.0) — `DetectedAgent.configSource` added (`'env' | 'config-file' | 'config-dir' | 'probe'`)
+  with the one-directional invariant (`configSource` set ⇒ `isConfigured: true`). Devin is the
+  deliberate `configSource: undefined` reference case.
+- **G4** (v0.4.0) — `which()` searches well-known global install directories (npm prefix + bin dir)
+  after the PATH/`where` miss, so agents installed outside PATH are still found. Included a docs refresh.
+- **G5** (v0.5.0) — version-probe timeout tightened 10s → 5s via a new `VERSION_PROBE_TIMEOUT`
+  constant; `which()` keeps its 10s `COMMAND_TIMEOUT`. (#14, merged to main.)
+- **G9** (this PR #16) — consumer-facing `DetectOptions` on `detectAgents(options?)` and
+  `AgentDetector.detect(options?)`.
+
+g9 specifically:
+
+- [x] `DetectOptions` (`only` / `probe` / `timeout`) added to `detectAgents(options?)` and `AgentDetector.detect(options?)` — strictly additive; omitting `options` preserves the G1-era default behaviour.
+- [x] Extends the **G5** probe-timeout work: `timeout` is now caller-overridable per `getVersion` and each detector's probe (default `VERSION_PROBE_TIMEOUT`).
+- [x] `probe: false` skips active binary probes (the `acpx`/`rovodev` subprocesses **G1** labelled `'probe'`), keeps presence checks; those detectors report `isConfigured: undefined` — consistent with the **G1** invariant (devin-style omission).
+- [x] `only` filters detectors by static `AgentDetector.name` (unknown names ignored); no new global state (replaces the rejected setter approach).
+- [x] 100% coverage on new branches; README + SKILL + ROADMAP synced.
 - [x] PR #16
+
+> Remaining G-series (not in this PR): **G2** (`probeError` field), **G7** (memoization, de-prioritised), **G8** (`detectHostAgent()`). **G6** (in-process `which` replacement) was rejected by decision. `fallbackPaths` rides on this API as a follow-up.
+
+## Phase 8: Polish & Ship
+
+- [ ] Audit docs, generate API reference
+- [ ] Real-world testing on Windows/macOS/Linux
+- [ ] npm publish
