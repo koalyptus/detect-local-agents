@@ -188,10 +188,10 @@ interface DetectedAgent {
 
 Everything below is exported from the package root (`import { ... } from 'detect-local-agents'`).
 
-### `detectAgents()`
+### `detectAgents(options?: DetectOptions)`
 
 ```typescript
-async function detectAgents(): Promise<DetectedAgent[]>;
+async function detectAgents(options?: DetectOptions): Promise<DetectedAgent[]>;
 ```
 
 Detects all locally installed AI agents. Runs every registered detector (config-based and file-based) in parallel and returns the agents that were found. Detectors that error or time out (10s per detector) are skipped silently. Returns an empty array when nothing is installed.
