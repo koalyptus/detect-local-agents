@@ -36,19 +36,19 @@ describe('config-paths', () => {
 
   describe('getConfigPaths', () => {
     it('returns paths for claude', () => {
-      const paths = getConfigPaths('claude');
+      const paths = getConfigPaths('claude_code');
       expect(paths.length).toBeGreaterThan(0);
       expect(paths.some((p) => p.includes('.claude/config.json'))).toBe(true);
     });
 
     it('returns paths for codex', () => {
-      const paths = getConfigPaths('codex');
+      const paths = getConfigPaths('codex_cli');
       expect(paths.length).toBeGreaterThan(0);
       expect(paths.some((p) => p.includes('.codex/config.json'))).toBe(true);
     });
 
     it('returns paths for opencode', () => {
-      const paths = getConfigPaths('opencode');
+      const paths = getConfigPaths('open_code');
       expect(paths.length).toBeGreaterThan(0);
       expect(paths.some((p) => p.includes('opencode/config.json'))).toBe(true);
     });
@@ -65,7 +65,7 @@ describe('config-paths', () => {
     });
 
     it('returns paths for claude', () => {
-      const paths = getConfigPaths('claude');
+      const paths = getConfigPaths('claude_code');
       expect(paths.length).toBeGreaterThan(0);
       expect(paths.some((p) => p.includes('.claude/config.json'))).toBe(true);
     });
@@ -83,12 +83,12 @@ describe('config-paths', () => {
       await fs.mkdir(claudeDir, { recursive: true });
       await fs.writeFile(path.join(claudeDir, 'config.json'), '{}');
 
-      const result = await hasConfigFile('claude');
+      const result = await hasConfigFile('claude_code');
       expect(result).toBe(true);
     });
 
     it('returns false when claude config.json is missing', async () => {
-      const result = await hasConfigFile('claude');
+      const result = await hasConfigFile('claude_code');
       expect(result).toBe(false);
     });
 
@@ -97,7 +97,7 @@ describe('config-paths', () => {
       await fs.mkdir(codexDir, { recursive: true });
       await fs.writeFile(path.join(codexDir, 'config.json'), '{}');
 
-      const result = await hasConfigFile('codex');
+      const result = await hasConfigFile('codex_cli');
       expect(result).toBe(true);
     });
 
@@ -121,7 +121,7 @@ describe('config-paths', () => {
       // HOME is tempDir (from beforeEach), no file at HOME/.claude
       // APPDATA is deleted, fallback = HOME/AppData/Roaming (no file)
       // USERPROFILE is userProfileDir, file IS at userProfileDir/.claude
-      const result = await hasConfigFile('claude');
+      const result = await hasConfigFile('claude_code');
       expect(result).toBe(true);
 
       await fs.rm(userProfileDir, { recursive: true, force: true });
@@ -137,7 +137,7 @@ describe('config-paths', () => {
 
       // HOME is tempDir, file IS at HOME/AppData/Roaming/.claude (the fallback)
       // APPDATA is not set, so fallback triggers
-      const result = await hasConfigFile('claude');
+      const result = await hasConfigFile('claude_code');
       expect(result).toBe(true);
     });
 
@@ -158,7 +158,7 @@ describe('config-paths', () => {
       try {
         // ~ branch resolves to os.homedir()/.claude (no file — unless user has one)
         // APPDATA fallback resolves to os.homedir()/AppData/Roaming/.claude (file IS there)
-        const result = await hasConfigFile('claude');
+        const result = await hasConfigFile('claude_code');
         expect(result).toBe(true);
       } finally {
         // Clean up the created file at the real home
@@ -182,7 +182,7 @@ describe('config-paths', () => {
       await fs.writeFile(path.join(claudeDir, 'config.json'), '{}');
 
       // HOME is tempDir, ~ resolves to tempDir/.claude — file found
-      const result = await hasConfigFile('claude');
+      const result = await hasConfigFile('claude_code');
       expect(result).toBe(true);
     });
   });
@@ -194,12 +194,12 @@ describe('config-paths', () => {
       const configPath = path.join(claudeDir, 'config.json');
       await fs.writeFile(configPath, '{}');
 
-      const result = await findAgentConfigPath('claude');
+      const result = await findAgentConfigPath('claude_code');
       expect(result).toBe(path.join(tempDir, '.claude', 'config.json'));
     });
 
     it('returns null when config file is missing', async () => {
-      const result = await findAgentConfigPath('claude');
+      const result = await findAgentConfigPath('claude_code');
       expect(result).toBeNull();
     });
 
@@ -215,7 +215,7 @@ describe('config-paths', () => {
       await fs.mkdir(claudeDir, { recursive: true });
       await fs.writeFile(path.join(claudeDir, 'config.json'), '{"theme":"dark"}');
 
-      const result = await readAgentConfig('claude');
+      const result = await readAgentConfig('claude_code');
       expect(result).toEqual({ theme: 'dark' });
     });
 
@@ -224,12 +224,12 @@ describe('config-paths', () => {
       await fs.mkdir(claudeDir, { recursive: true });
       await fs.writeFile(path.join(claudeDir, 'config.json'), '{not valid json');
 
-      const result = await readAgentConfig('claude');
+      const result = await readAgentConfig('claude_code');
       expect(result).toBeNull();
     });
 
     it('returns null when config file is missing', async () => {
-      const result = await readAgentConfig('claude');
+      const result = await readAgentConfig('claude_code');
       expect(result).toBeNull();
     });
   });
