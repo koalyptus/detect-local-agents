@@ -15,7 +15,7 @@ const detector: AgentDetector = {
       return null;
     }
 
-    const name = agyBinary ? 'antigravity' : 'gemini';
+    const name = agyBinary ? 'antigravity' : 'gemini_cli';
     const version = (await getVersion(binary)) ?? undefined;
 
     // Check configured status: env vars or config directory
