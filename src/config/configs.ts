@@ -6,20 +6,20 @@ import type { DetectorConfig } from '../types.js';
  */
 export const detectorConfigs: DetectorConfig[] = [
   {
-    name: 'claude',
+    name: 'claude_code',
     binary: 'claude',
     configEnvVars: ['ANTHROPIC_API_KEY', 'CLAUDE_API_KEY'],
     configDir: '~/.claude',
-    nameResolver: (env) => (env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude'),
+    nameResolver: (env) => (env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude_code'),
   },
   {
-    name: 'codex',
+    name: 'codex_cli',
     binary: 'codex',
     configEnvVars: ['OPENAI_API_KEY'],
     configDir: '~/.codex',
   },
   {
-    name: 'opencode',
+    name: 'open_code',
     binary: 'opencode',
     configDir: '~/.config/opencode',
   },
@@ -81,7 +81,7 @@ export const detectorConfigs: DetectorConfig[] = [
     binary: 'stardrop',
   },
   {
-    name: 'kimi-code',
+    name: 'kimi',
     binary: 'kimi',
     configDir: '~/.kimi-code',
     configEnvVars: ['KIMI_API_KEY'],
