@@ -66,3 +66,16 @@ verified on (real hardware beats assumption, especially on Windows).
 
 Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `chore:`, ...). Small, focused
 commits are preferred over one squashed change.
+
+## TypeScript
+
+The codebase is fully TypeScript (source under `src/`, compiled by `tsc`). When adding or
+modifying detection logic:
+
+- Keep `AgentDetector.detect()` backward-compatible: its `options?` argument is optional, so
+  existing callers (and the CLI) that call `detect()` with no arguments are unaffected.
+- To add programmatic controls, extend `DetectOptions` in `src/types.ts` and thread the value
+  through `detect(options)` — do **not** introduce module-level setter functions or other global
+  mutable state to pass options into detectors.
+- Coverage is enforced at 100% (branches/functions/lines/statements). New branches need tests
+  in `tests/`; use the existing `vi.mock` + `vi.hoisted` pattern so no real binaries spawn.

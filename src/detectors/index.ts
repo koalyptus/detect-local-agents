@@ -2,7 +2,13 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import type { AgentDetector, ConfigSource, DetectedAgent, DetectorConfig } from '../types.js';
+import type {
+  AgentDetector,
+  ConfigSource,
+  DetectedAgent,
+  DetectorConfig,
+  DetectOptions,
+} from '../types.js';
 import { which, getVersion, configSourceFromDir, withConfigSource } from '../detect/utils.js';
 import { detectorConfigs } from '../config/configs.js';
 import { hasConfigFile } from '../config/config-paths.js';
@@ -15,18 +21,21 @@ export function configToDetector(config: DetectorConfig): AgentDetector {
   return {
     name: config.name,
 
-    async detect(): Promise<DetectedAgent | null> {
-      return detectImpl();
+    async detect(options?: DetectOptions): Promise<DetectedAgent | null> {
+      return detectImpl(options);
     },
   };
 
-  async function detectImpl(): Promise<DetectedAgent | null> {
+  async function detectImpl(options?: DetectOptions): Promise<DetectedAgent | null> {
     const binary = await which(config.binary);
     if (!binary) {
       return null;
     }
 
-    const version = (await getVersion(binary, config.versionArgs)) ?? undefined;
+    const version =
+      options?.probe === false
+        ? undefined
+        : ((await getVersion(binary, config.versionArgs, options?.timeout)) ?? undefined);
 
     // Check if configured. The first matching signal wins; configSource records
     // which signal it was. The cascade order and short-circuiting are unchanged.

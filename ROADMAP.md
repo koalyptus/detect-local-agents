@@ -67,7 +67,42 @@
 - [x] Tests for all new detectors and sync script
 - [x] PR
 
-### Phase 6c: Polish & Ship
+## Phase 7: Programmatic Detection Controls (g9)
+
+> Expose detection controls to programmatic callers without changing default behaviour.
+
+### Phase 7a: stderr version fallback
+
+- [x] `getVersion()` reads the CLI version from **stderr** as a fallback (many CLIs print their version banner to stderr); stdout stays authoritative
+- [x] Shipped as v0.2.3
+
+### Phase 7b: configSource + invariant
+
+- [x] Add `DetectedAgent.configSource` (`'env' | 'config-file' | 'config-dir' | 'probe'`)
+- [x] Enforce the one-directional invariant (`configSource` set ⇒ `isConfigured: true`); `devin` is the deliberate `configSource: undefined` case
+- [x] Shipped as v0.3.0
+
+### Phase 7c: which() install-dir sweep
+
+- [x] `which()` searches well-known global install directories (npm prefix + bin dir) after the PATH/`where` miss
+- [x] Docs refresh
+- [x] Shipped as v0.4.0
+
+### Phase 7d: tighter version-probe timeout
+
+- [x] Add `VERSION_PROBE_TIMEOUT` (5s) and use it for the version probe; `which()` keeps its 10s `COMMAND_TIMEOUT`
+- [x] Shipped as v0.5.0 (#14)
+
+### Phase 7e: consumer-facing DetectOptions (this PR #16)
+
+- [x] `DetectOptions` (`only` / `probe` / `timeout`) added to `detectAgents(options?)` and `AgentDetector.detect(options?)` — strictly additive; omitting `options` preserves the default behaviour
+- [x] `timeout` is caller-overridable per `getVersion` and each detector's probe (default `VERSION_PROBE_TIMEOUT`)
+- [x] `probe: false` skips active binary probes, keeps presence checks; `acpx`/`rovodev` report `isConfigured: undefined` (consistent with the 7b invariant)
+- [x] `only` filters detectors by static `AgentDetector.name` (unknown names ignored); no new global state
+- [x] 100% coverage on new branches; README + SKILL + ROADMAP synced
+- [x] PR #16
+
+## Phase 8: Polish & Ship
 
 - [ ] Audit docs, generate API reference
 - [ ] Real-world testing on Windows/macOS/Linux

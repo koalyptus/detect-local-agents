@@ -27,7 +27,7 @@ export interface DetectedAgent {
 
 export interface AgentDetector {
   name: string;
-  detect(): Promise<DetectedAgent | null>;
+  detect(options?: DetectOptions): Promise<DetectedAgent | null>;
 }
 
 export interface DetectorConfig {
@@ -39,4 +39,14 @@ export interface DetectorConfig {
   isACPAgent?: boolean;
   /** Override the detected agent name based on runtime env. */
   nameResolver?: (env: Record<string, string | undefined>) => string;
+}
+
+/** Options for programmatic `detectAgents` calls. */
+export interface DetectOptions {
+  /** Only run detectors whose `name` is in this list. Unknown names are ignored. */
+  only?: string[];
+  /** When `false`, skip active binary probes; presence checks (`which`/`access`) still run. Default `true`. */
+  probe?: boolean;
+  /** Per-probe subprocess cap in ms. Overrides the internal probe timeout (default 5000). */
+  timeout?: number;
 }

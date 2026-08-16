@@ -1,6 +1,5 @@
-// src/detectors/acpx.detector.ts
-import type { AgentDetector, DetectedAgent } from '../types.js';
-import { which } from '../detect/utils.js';
+import type { AgentDetector, DetectedAgent, DetectOptions } from '../types.js';
+import { which, VERSION_PROBE_TIMEOUT } from '../detect/utils.js';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
@@ -9,14 +8,27 @@ const execFileAsync = promisify(execFile);
 const detector: AgentDetector = {
   name: 'acpx',
 
-  async detect(): Promise<DetectedAgent | null> {
+  async detect(options?: DetectOptions): Promise<DetectedAgent | null> {
     const binary = await which('acpx');
     if (!binary) {
       return null;
     }
 
+    // probe:false — don't execute the binary to establish configuration state.
+    // Presence (`which`) already ran; return "present, but we didn't probe".
+    if (options?.probe === false) {
+      return {
+        name: 'acpx',
+        binary,
+        isACPAgent: true,
+        isConfigured: undefined,
+      };
+    }
+
     try {
-      const { stdout } = await execFileAsync(binary, ['list'], { timeout: 5000 });
+      const { stdout } = await execFileAsync(binary, ['list'], {
+        timeout: options?.timeout ?? VERSION_PROBE_TIMEOUT,
+      });
       const targets = stdout
         .trim()
         .split('\n')
