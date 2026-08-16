@@ -102,7 +102,7 @@ describe('config detectors', () => {
     mockWhich.mockResolvedValue(null);
 
     const detectors = await loadAllDetectors();
-    const claudeDetector = detectors.find((d) => d.name === 'claude');
+    const claudeDetector = detectors.find((d) => d.name === 'claude_code');
 
     const result = await claudeDetector?.detect();
     expect(result).toBeNull();
@@ -118,11 +118,11 @@ describe('config detectors', () => {
     mockGetVersion.mockResolvedValue('1.0.0');
 
     const detectors = await loadAllDetectors();
-    const claudeDetector = detectors.find((d) => d.name === 'claude');
+    const claudeDetector = detectors.find((d) => d.name === 'claude_code');
 
     const result = await claudeDetector?.detect();
     expect(result).not.toBeNull();
-    expect(result?.name).toBe('claude');
+    expect(result?.name).toBe('claude_code');
     expect(result?.binary).toBe('/usr/bin/claude');
     expect(result?.version).toBe('1.0.0');
   });
@@ -139,7 +139,7 @@ describe('config detectors', () => {
     process.env.ANTHROPIC_API_KEY = 'test-key';
 
     const detectors = await loadAllDetectors();
-    const claudeDetector = detectors.find((d) => d.name === 'claude');
+    const claudeDetector = detectors.find((d) => d.name === 'claude_code');
 
     const result = await claudeDetector?.detect();
     expect(result?.isConfigured).toBe(true);
@@ -263,12 +263,12 @@ describe('config file detection integration', () => {
     mockGetVersion.mockResolvedValue('1.0.0');
 
     const detectors = await loadAllDetectors();
-    const claudeDetector = detectors.find((d) => d.name === 'claude');
+    const claudeDetector = detectors.find((d) => d.name === 'claude_code');
 
     const result = await claudeDetector?.detect();
 
     expect(result).not.toBeNull();
-    expect(result?.name).toBe('claude');
+    expect(result?.name).toBe('claude_code');
     expect(result?.isConfigured).toBe(true);
     expect(result?.binary).toBe('/fake/claude');
 

@@ -92,8 +92,8 @@ describe('detectors/index', () => {
   it('loadAllDetectors includes config-based detectors', async () => {
     const detectors = await loadAllDetectors();
     const names = detectors.map((d) => d.name);
-    expect(names).toContain('claude');
-    expect(names).toContain('codex');
+    expect(names).toContain('claude_code');
+    expect(names).toContain('codex_cli');
   });
 
   it('configDir fallback finds existing directory', async () => {
@@ -102,7 +102,7 @@ describe('detectors/index', () => {
     await fs.mkdir(claudeDir, { recursive: true });
 
     const detectors = await loadAllDetectors();
-    const claude = detectors.find((d) => d.name === 'claude');
+    const claude = detectors.find((d) => d.name === 'claude_code');
     expect(claude).toBeDefined();
 
     const result = await claude!.detect();
@@ -164,7 +164,7 @@ describe('detectors/index', () => {
   it('configToDetector handles configDir without ~ prefix', async () => {
     // Test the non-~ branch of configDir handling (line 42)
     const detectors = await loadAllDetectors();
-    const opencode = detectors.find((d) => d.name === 'opencode');
+    const opencode = detectors.find((d) => d.name === 'open_code');
     expect(opencode).toBeDefined();
     // opencode uses '~/.config/opencode' which starts with ~, so it goes through
     // the ~ branch. The non-~ branch would be for configs without ~ prefix.
@@ -189,14 +189,14 @@ describe('detectors/index', () => {
 
   it('configToDetector uses nameResolver when provided', async () => {
     const detector = configToDetector({
-      name: 'claude',
+      name: 'claude_code',
       binary: 'node', // always available
-      nameResolver: (env) => (env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude'),
+      nameResolver: (env) => (env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude_code'),
     });
 
-    // Without env var: returns 'claude'
+    // Without env var: returns 'claude_code'
     const result1 = await detector.detect();
-    expect(result1?.name).toBe('claude');
+    expect(result1?.name).toBe('claude_code');
 
     // With env var: returns 'cowork'
     process.env['CLAUDE_CODE_IS_COWORK'] = 'true';
@@ -208,7 +208,7 @@ describe('detectors/index', () => {
   it('detect returns version from getVersion', async () => {
     // default: getVersion returns '1.0.0'
     const detectors = await loadAllDetectors();
-    const claude = detectors.find((d) => d.name === 'claude');
+    const claude = detectors.find((d) => d.name === 'claude_code');
     expect(claude).toBeDefined();
 
     const result = await claude!.detect();
@@ -222,7 +222,7 @@ describe('detectors/index', () => {
     mockGetVersion.mockResolvedValue(undefined);
 
     const detectors = await loadAllDetectors();
-    const claude = detectors.find((d) => d.name === 'claude');
+    const claude = detectors.find((d) => d.name === 'claude_code');
     expect(claude).toBeDefined();
 
     const result = await claude!.detect();
@@ -299,7 +299,7 @@ describe('detectors/index', () => {
 
     try {
       const detectors = await loadAllDetectors();
-      const claude = detectors.find((d) => d.name === 'claude');
+      const claude = detectors.find((d) => d.name === 'claude_code');
       expect(claude).toBeDefined();
 
       const result = await claude!.detect();

@@ -66,9 +66,9 @@ describe('detectAgents', () => {
   it('each agent has required fields', async () => {
     // Create a mock detector
     const mockDetector: AgentDetector = {
-      name: 'claude',
+      name: 'claude_code',
       detect: async () => ({
-        name: 'claude',
+        name: 'claude_code',
         binary: '/usr/bin/claude',
         version: '1.0.0',
         isConfigured: false,
@@ -80,23 +80,23 @@ describe('detectAgents', () => {
     const agents = await detectAgents();
 
     expect(agents.length).toBe(1);
-    expect(agents[0].name).toBe('claude');
+    expect(agents[0].name).toBe('claude_code');
     expect(agents[0].binary).toBe('/usr/bin/claude');
   });
 
   it('detects multiple agents', async () => {
     const mockDetectors: AgentDetector[] = [
       {
-        name: 'claude',
+        name: 'claude_code',
         detect: async () => ({
-          name: 'claude',
+          name: 'claude_code',
           binary: '/usr/bin/claude',
         }),
       },
       {
-        name: 'codex',
+        name: 'codex_cli',
         detect: async () => ({
-          name: 'codex',
+          name: 'codex_cli',
           binary: '/usr/bin/codex',
         }),
       },
@@ -107,12 +107,12 @@ describe('detectAgents', () => {
     const agents = await detectAgents();
 
     expect(agents.length).toBe(2);
-    expect(agents.map((a) => a.name)).toEqual(['claude', 'codex']);
+    expect(agents.map((a) => a.name)).toEqual(['claude_code', 'codex_cli']);
   });
 
   it('skips agents not found', async () => {
     const mockDetector: AgentDetector = {
-      name: 'claude',
+      name: 'claude_code',
       detect: async () => null,
     };
 
@@ -127,9 +127,9 @@ describe('detectAgents', () => {
     process.env.ANTHROPIC_API_KEY = 'test-key';
 
     const mockDetector: AgentDetector = {
-      name: 'claude',
+      name: 'claude_code',
       detect: async () => ({
-        name: 'claude',
+        name: 'claude_code',
         binary: '/usr/bin/claude',
         isConfigured: !!process.env.ANTHROPIC_API_KEY,
       }),
@@ -147,9 +147,9 @@ describe('detectAgents', () => {
     // Ensure env vars are cleared (done in beforeEach)
 
     const mockDetector: AgentDetector = {
-      name: 'claude',
+      name: 'claude_code',
       detect: async () => ({
-        name: 'claude',
+        name: 'claude_code',
         binary: '/usr/bin/claude',
         isConfigured: !!process.env.ANTHROPIC_API_KEY,
       }),
