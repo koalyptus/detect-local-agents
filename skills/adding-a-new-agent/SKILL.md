@@ -59,11 +59,11 @@ When one binary serves two identities depending on environment, add a `nameResol
 
 ```typescript
 {
-  name: 'claude',
+  name: 'claude_code',
   binary: 'claude',
   configEnvVars: ['ANTHROPIC_API_KEY', 'CLAUDE_API_KEY'],
   configDir: '~/.claude',
-  nameResolver: (env) => env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude',
+  nameResolver: (env) => env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude_code',
 },
 ```
 

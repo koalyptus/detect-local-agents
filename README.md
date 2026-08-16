@@ -9,7 +9,7 @@ This package detects **what's installed**, not **how to invoke**. Use it for:
 - **Setup wizards** — "We detected Claude Code. Want to use Anthropic API?"
 - **Pre-fill config** — Check if API keys are already set from detected agents
 - **Provider recommendation** — "You have Codex → recommend OpenAI"
-- **UI awareness** — "Detected agents: claude, codex, goose"
+- **UI awareness** — "Detected agents: claude_code, codex_cli, goose"
 
 The package answers: **"Which providers does this user already have configured?"**
 
@@ -147,7 +147,7 @@ npx detect-local-agents --json
 npx detect-local-agents --configured
 
 # Single-agent details (prints null if not found, exit 0)
-npx detect-local-agents info claude
+npx detect-local-agents info claude_code
 
 # Help
 npx detect-local-agents --help
@@ -162,7 +162,7 @@ Exit codes:
 
 ```typescript
 interface DetectedAgent {
-  name: string; // 'claude', 'codex', 'ollama', etc.
+  name: string; // 'claude_code', 'codex_cli', 'ollama', etc.
   binary: string; // absolute path to the binary
   version?: string; // version string from --version (null if probe timed out)
   isConfigured?: boolean; // true if any setup signal exists (see below)
@@ -297,9 +297,9 @@ export default detector;
 
 ### Config-based
 
-- Claude Code (`claude`) — also reports as "cowork" when `CLAUDE_CODE_IS_COWORK` is set
-- Codex (`codex`)
-- OpenCode (`opencode`)
+- Claude Code (`claude_code`) — also reports as "cowork" when `CLAUDE_CODE_IS_COWORK` is set
+- Codex (`codex_cli`)
+- OpenCode (`open_code`)
 - Goose (`goose`)
 - Hermes (`hermes`)
 - GitHub Copilot (`github-copilot`)
