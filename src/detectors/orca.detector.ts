@@ -33,6 +33,7 @@ const detector: AgentDetector = {
 
     return withConfigSource(
       {
+        id: 'orca',
         name: 'orca',
         binary,
         isConfigured,

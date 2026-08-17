@@ -16,7 +16,7 @@ const detector: AgentDetector = {
     const isConfigured = !!(process.env['JUNIE_DATA'] ?? process.env['JUNIE_SHIM_PATH']);
 
     return withConfigSource(
-      { name: 'junie', binary, version, isConfigured },
+      { id: 'junie', name: 'junie', binary, version, isConfigured },
       isConfigured ? 'env' : undefined,
     );
   },

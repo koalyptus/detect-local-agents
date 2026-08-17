@@ -17,9 +17,11 @@ import { hasConfigFile } from '../config/config-paths.js';
  * Create a detector from a config entry.
  * Exported for testing.
  */
-export function configToDetector(config: DetectorConfig): AgentDetector {
+export function configToDetector(config: DetectorConfig & { id?: string }): AgentDetector {
+  const stableId = config.id ?? config.name;
+
   return {
-    name: config.name,
+    name: stableId,
 
     async detect(options?: DetectOptions): Promise<DetectedAgent | null> {
       return detectImpl(options);
@@ -65,6 +67,7 @@ export function configToDetector(config: DetectorConfig): AgentDetector {
 
     return withConfigSource(
       {
+        id: stableId,
         name: config.nameResolver ? config.nameResolver(process.env) : config.name,
         binary,
         version,

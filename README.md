@@ -23,16 +23,17 @@ Most agents are detected via a simple entry in `src/config/configs.ts`:
 
 ```typescript
 {
-  name: 'ollama',
-  binary: 'ollama',        // binary to find in PATH via `which`/`where`
-  configDir: '~/.ollama',  // optional: directory whose presence = configured
+  name: 'myagent',
+  id: 'myagent',           // stable identifier (falls back to name if omitted)
+  binary: 'myagent',        // binary to find in PATH via `which`/`where`
+  configDir: '~/.myagent',  // optional: directory whose presence = configured
 }
 ```
 
 The detection pipeline for each config entry:
 
 1. **Binary check** — run `which` (Unix) or `where` (Windows) to find the binary in PATH. If not found → agent is absent.
-2. **Version probe** — run `<binary> --version` (configurable via `versionArgs`). Timeout: 10 seconds.
+2. **Version probe** — run `<binary> --version` (configurable via `versionArgs`). Timeout: 5 seconds.
 3. **Configured check** — three checks in order; first hit wins:
    - **Env vars** — are any `configEnvVars` set? (e.g. `ANTHROPIC_API_KEY`)
    - **Config file** — does `config.json` exist in the agent's config dir?
@@ -46,32 +47,32 @@ Agents with non-standard detection logic get a `*.detector.ts` file in `src/dete
 
 ```text
 detectAgents()
-`-- loadAllDetectors()
-    |-- Config-based detectors (entries from detectorConfigs)
-    |   `-- configToDetector(config)
-    |       |-- locate: binary in PATH? (which/where)
-    |       |   `-- not found -> agent not reported
-    |       |-- version: <binary> --version, 5s timeout
-    |       |   (stdout first, stderr as fallback)
-    |       `-- configuration: first hit wins
-    |           |-- env var set        -> configSource: 'env'
-    |           |-- config.json in dir -> configSource: 'config-file'
-    |           |-- config dir exists  -> configSource: 'config-dir'
-    |           `-- no signal          -> isConfigured: false
-    |
-    `-- File-based detectors (auto-discovered *.detector.ts)
-        `-- custom detector
-            |-- locate: binary check (which/where) + custom probes
-            |   (file existence, env markers, runtime exec)
-            |-- version: --version probe, 5s timeout (stdout first, stderr
-            |   as fallback; 8 of the 15 file-based detectors run one)
-            `-- configuration: evidence of setup
-                |-- env marker set        -> configSource: 'env'
-                |-- config dir exists     -> configSource: 'config-dir'
-                |-- live command output   -> configSource: 'probe'
-                `-- no evidence           -> isConfigured: false
-                    (some detectors set isConfigured: true with no
-                    configSource, e.g. devin)
+|-- loadAllDetectors()
+|   |-- Config-based detectors (entries from detectorConfigs)
+|   |   `-- configToDetector(config)
+|   |       |-- locate: binary in PATH? (which/where)
+|   |       |   `-- not found -> agent not reported
+|   |       |-- version: <binary> --version, 5s timeout
+|   |       |   (stdout first, stderr as fallback)
+|   |       `-- configuration: first hit wins
+|   |           |-- env var set        -> configSource: 'env'
+|   |           |-- config.json in dir -> configSource: 'config-file'
+|   |           |-- config dir exists  -> configSource: 'config-dir'
+|   |           `-- no signal          -> isConfigured: false
+|   |
+|   `-- File-based detectors (auto-discovered *.detector.ts)
+|       `-- custom detector
+|           |-- locate: binary check (which/where) + custom probes
+|           |   (file existence, env markers, runtime exec)
+|           |-- version: --version probe, 5s timeout (stdout first, stderr
+|           |   as fallback; 8 of the 15 file-based detectors run one)
+|           `-- configuration: evidence of setup
+|               |-- env marker set        -> configSource: 'env'
+|               |-- config dir exists     -> configSource: 'config-dir'
+|               |-- live command output   -> configSource: 'probe'
+|               `-- no evidence           -> isConfigured: false
+|                   (some detectors set isConfigured: true with no
+|                   configSource, e.g. devin)
 
 All detectors run in parallel under Promise.all -- per-detector errors are
 swallowed and nulls filtered out -> DetectedAgent[]
@@ -117,7 +118,7 @@ const agents = await detectAgents();
 if (agents.length > 0) {
   console.log('Detected agents:');
   for (const agent of agents) {
-    console.log(`  ${agent.name} ${agent.version ?? ''} @ ${agent.binary}`);
+    console.log(`  ${agent.id} (${agent.name}) v${agent.version ?? ''} @ ${agent.binary}`);
   }
 }
 
@@ -162,27 +163,29 @@ Exit codes:
 
 ```typescript
 interface DetectedAgent {
-  name: string; // 'claude_code', 'codex_cli', 'ollama', etc.
+  id: string; // stable Vercel-aligned key: 'claude_code', 'codex_cli', etc.
+  name: string; // legacy display name: 'claude', 'codex', etc. (nameResolver may override)
   binary: string; // absolute path to the binary
-  version?: string; // version string from --version (null if probe timed out)
-  isConfigured?: boolean; // true if any setup signal exists (see below)
-  configSource?: 'env' | 'config-file' | 'config-dir' | 'probe'; // how isConfigured was determined (see below)
-  isACPAgent?: boolean; // needs acpx to run
-  metadata?: Record<string, unknown>; // extra info from file-based detectors
+  version?: string; // version string from --version
+  isConfigured?: boolean;
+  configSource?: 'env' | 'config-file' | 'config-dir' | 'probe';
+  isACPAgent?: boolean;
+  metadata?: Record<string, unknown>;
 }
 ```
 
 ### Field details
 
-| Field          | Description                                                                                                                                                                                                                                                                                                                                                                                  |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`         | Agent identifier matching Vercel's `detect-agent` spec where applicable.                                                                                                                                                                                                                                                                                                                     |
-| `binary`       | Absolute path to the detected binary. Cross-platform: forward slashes on Unix, backslashes on Windows.                                                                                                                                                                                                                                                                                       |
-| `version`      | Output of `<binary> --version`, parsed for a semver-like string. `null` if the probe timed out (5s) or the binary doesn't support `--version`.                                                                                                                                                                                                                                               |
-| `isConfigured` | `true` if there is a setup signal for the agent on this machine — checked in order: an env var is set (`ANTHROPIC_API_KEY`, etc.), a config file exists (`config.json` in the agent's config dir), or the config directory exists. It is evidence the agent was set up, not proof the credentials are valid or working. `false` means the binary is installed but no setup signal was found. |
-| `configSource` | How `isConfigured` was determined: `'env'` (an env var is set), `'config-file'` (a config file exists), `'config-dir'` (the config directory exists), or `'probe'` (a runtime probe of the binary succeeded — used by `acpx` and `rovodev`). Only present when `isConfigured` is `true`. Earlier in the list = stronger evidence.                                                            |
-| `isACPAgent`   | `true` if the agent speaks the Agent Communication Protocol and must be launched through `acpx`.                                                                                                                                                                                                                                                                                             |
-| `metadata`     | Arbitrary data from file-based detectors (e.g. pip package versions, ACP target lists). Not set by config-based detectors.                                                                                                                                                                                                                                                                   |
+| Field          | Description                                                                 |
+| -------------- | --------------------------------------------------------------------------- |
+| `id`           | Stable Vercel-aligned key. Use for programmatic identification.             |
+| `name`         | Legacy display name. May be overridden by `nameResolver` at detection time. |
+| `binary`       | Absolute path to the detected binary.                                       |
+| `version`      | Output of `<binary> --version`, parsed for a semver-like string.            |
+| `isConfigured` | `true` if there is a setup signal for the agent on this machine.            |
+| `configSource` | How `isConfigured` was determined.                                          |
+| `isACPAgent`   | `true` if the agent must be launched through acpx.                          |
+| `metadata`     | Extra info from file-based detectors.                                       |
 
 ## API Reference
 
@@ -194,35 +197,31 @@ Everything below is exported from the package root (`import { ... } from 'detect
 async function detectAgents(options?: DetectOptions): Promise<DetectedAgent[]>;
 ```
 
-Detects all locally installed AI agents. Runs every registered detector (config-based and file-based) in parallel and returns the agents that were found. Detectors that error or time out (10s per detector) are skipped silently. Returns an empty array when nothing is installed.
+Detects all locally installed AI agents. Runs every registered detector (config-based and file-based) in parallel and returns the agents that were found. Timout: 10s per detector. Returns an empty array when nothing is installed.
 
-`options` is optional and backward-compatible — omitting it preserves the default behaviour:
+`options` is optional and backward-compatible:
 
-| Field     | Type       | Default                 | Effect                                                                   |
-| --------- | ---------- | ----------------------- | ------------------------------------------------------------------------ |
-| `only`    | `string[]` | `[]` (run all)          | Restrict to detectors whose `name` is listed. Unknown names are ignored. |
-| `probe`   | `boolean`  | `true`                  | When `false`, skip active binary probes; presence checks still run.      |
-| `timeout` | `number`   | `VERSION_PROBE_TIMEOUT` | Per-probe subprocess cap in ms, applied to `getVersion` and probes.      |
+| Field     | Type       | Default                 | Effect                                                               |
+| --------- | ---------- | ----------------------- | -------------------------------------------------------------------- |
+| `only`    | `string[]` | `[]`                    | Restrict to detectors whose `id` is listed. Unknown ids are ignored. |
+| `probe`   | `boolean`  | `true`                  | When `false`, skip active binary probes; presence checks still run.  |
+| `timeout` | `number`   | `VERSION_PROBE_TIMEOUT` | Per-probe subprocess cap in ms.                                      |
 
 ### `DetectOptions`
 
 ```typescript
 interface DetectOptions {
-  only?: string[]; // restrict to named detectors
+  only?: string[]; // restrict to named detector ids
   probe?: boolean; // skip active probes when false
   timeout?: number; // per-probe subprocess cap in ms
 }
 ```
 
-### `DetectedAgent`
-
-See [DetectedAgent](#detectedagent) above.
-
 ### `AgentDetector`
 
 ```typescript
 interface AgentDetector {
-  name: string;
+  name: string; // stable id (Vercel-aligned)
   detect(options?: DetectOptions): Promise<DetectedAgent | null>;
 }
 ```
@@ -233,14 +232,14 @@ A custom detector: returns a `DetectedAgent` when the agent is present, `null` o
 
 ```typescript
 interface DetectorConfig {
-  name: string;
+  name: string; // legacy display name
+  id?: string; // optional Vercel-aligned id (falls back to name)
   binary: string; // command name to look up in PATH
   versionArgs?: string[]; // args for --version, default ['--version']
   configEnvVars?: string[]; // env vars that indicate the agent is configured
   configDir?: string; // ~/.agent style dir; presence marks it configured
   isACPAgent?: boolean; // true if the agent is ACP-only and needs acpx
-  nameResolver?: (env: Record<string, string | undefined>) => string;
-  // override the detected name based on runtime env
+  nameResolver?: (env) => string; // override the detected agent name based on runtime env
 }
 ```
 
@@ -268,7 +267,8 @@ Type guard for runtime-validating that an object implements the `AgentDetector` 
 
 ```typescript
 {
-  name: 'myagent',
+  name: 'myagent',        // legacy display name
+  id: 'myagent_id',       // Vercel-aligned id (optional, falls back to name)
   binary: 'myagent',
   configEnvVars: ['MYAGENT_API_KEY'],
 }
@@ -282,11 +282,12 @@ import type { AgentDetector, DetectedAgent } from '../types.js';
 import { which } from '../detect/utils.js';
 
 const detector: AgentDetector = {
-  name: 'myagent',
+  name: 'myagent_id',
+
   async detect(): Promise<DetectedAgent | null> {
     const binary = await which('myagent');
     if (!binary) return null;
-    return { name: 'myagent', binary };
+    return { id: 'myagent_id', name: 'myagent', binary };
   },
 };
 
@@ -343,8 +344,7 @@ export default detector;
 
 ## Contributing
 
-Contributions are more than welcome — new agents, new detectors, and bug reports. Development
-requires Node >= 20 (`engines` in `package.json`).
+Contributions are more than welcome — new agents, new detectors, and bug reports. Development requires Node >= 20 (`engines` in `package-json`).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to run the checks, the coverage gate, how
 to add an agent, and how to report a detection bug.

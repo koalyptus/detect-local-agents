@@ -14,7 +14,7 @@ const detector: AgentDetector = {
     if (binary) {
       const version = (await getVersion(binary)) ?? undefined;
       return withConfigSource(
-        { name: 'swe-agent', binary, version, isConfigured },
+        { id: 'swe-agent', name: 'swe-agent', binary, version, isConfigured },
         isConfigured ? 'env' : undefined,
       );
     }
@@ -26,7 +26,13 @@ const detector: AgentDetector = {
     }
 
     return withConfigSource(
-      { name: 'swe-agent', binary: 'sweagent', version: pkg.version, isConfigured },
+      {
+        id: 'swe-agent',
+        name: 'swe-agent',
+        binary: 'sweagent',
+        version: pkg.version,
+        isConfigured,
+      },
       isConfigured ? 'env' : undefined,
     );
   },

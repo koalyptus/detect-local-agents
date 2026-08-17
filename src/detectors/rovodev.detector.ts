@@ -18,6 +18,7 @@ const detector: AgentDetector = {
     // Presence (`which`) already ran; return "present, but we didn't probe".
     if (options?.probe === false) {
       return {
+        id: 'rovodev',
         name: 'rovodev',
         binary,
         isConfigured: undefined,
@@ -37,6 +38,7 @@ const detector: AgentDetector = {
     }
 
     return {
+      id: 'rovodev',
       name: 'rovodev',
       binary,
       isConfigured: true,

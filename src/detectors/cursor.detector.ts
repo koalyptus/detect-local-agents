@@ -17,6 +17,7 @@ const detector: AgentDetector = {
       !!process.env['CURSOR_AGENT'] || process.env['CURSOR_EXTENSION_HOST_ROLE'] === 'agent-exec';
 
     return {
+      id: 'cursor',
       name: isCursorCli ? 'cursor-cli' : 'cursor',
       binary,
       version,

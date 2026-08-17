@@ -123,7 +123,10 @@ const detector: AgentDetector = {
       : undefined;
     const isConfigured = configSource !== undefined;
 
-    return withConfigSource({ name: 't3-code', binary, version, isConfigured }, configSource);
+    return withConfigSource(
+      { id: 't3-code', name: 't3-code', binary, version, isConfigured },
+      configSource,
+    );
   },
 };
 

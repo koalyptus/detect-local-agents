@@ -25,7 +25,8 @@ Add an entry to `src/config/configs.ts` in the `detectorConfigs` array. The entr
 
 ```typescript
 {
-  name: 'myagent',          // unique id, kebab-case
+  name: 'myagent',          // legacy display name
+  id: 'myagent_id',         // Vercel-aligned id (optional, falls back to name)
   binary: 'myagent',        // command to find via which/where
   configEnvVars: ['MYAGENT_API_KEY'],  // optional: env vars = configured
   configDir: '~/.myagent',  // optional: dir presence = configured
@@ -33,6 +34,12 @@ Add an entry to `src/config/configs.ts` in the `detectorConfigs` array. The entr
   isACPAgent: false,        // optional: needs acpx to run
 }
 ```
+
+### Key Fields
+
+- `name` — legacy display name (shown in CLI output, `result.name` from `detect()`)
+- `id` — stable Vercel-aligned key (used for matching, shown in `result.id`)
+- `binary` — the command/binary to look up via `which()`
 
 ### Detection pipeline
 
@@ -59,15 +66,17 @@ When one binary serves two identities depending on environment, add a `nameResol
 
 ```typescript
 {
-  name: 'claude_code',
+  name: 'claude',           // legacy display name
+  id: 'claude_code',        // Vercel-aligned id
   binary: 'claude',
   configEnvVars: ['ANTHROPIC_API_KEY', 'CLAUDE_API_KEY'],
   configDir: '~/.claude',
-  nameResolver: (env) => env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude_code',
+  nameResolver: (env) => env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude',
 },
 ```
 
 The `name` field is the default; `nameResolver` overrides it at detection time.
+The `id` field remains unchanged and is always returned in `DetectedAgent`.
 
 ## The `configSource` Contract
 
@@ -115,7 +124,7 @@ import type { AgentDetector, DetectedAgent, DetectOptions } from '../types.js';
 import { which, getVersion, withConfigSource } from '../detect/utils.js';
 
 const detector: AgentDetector = {
-  name: 'myagent',
+  name: 'myagent_id',
 
   async detect(options?: DetectOptions): Promise<DetectedAgent | null> {
     const binary = await which('myagent');
@@ -124,6 +133,7 @@ const detector: AgentDetector = {
     const isConfigured = /* your check */;
     return withConfigSource(
       {
+        id: 'myagent_id',
         name: 'myagent',
         binary,
         version: (await getVersion(binary)) ?? undefined,
@@ -156,8 +166,8 @@ functions to pass options into a detector; thread them through `options` instead
 ### Available helpers from `src/detect/utils.js`
 
 - `which(cmd)` — find binary in PATH, returns absolute path or null
-- `getVersion(binary, args?, timeout?)` — run `<binary> --version`, returns version string or null. stdout is authoritative; stderr is tried only when stdout has no dotted-version match (many CLIs print their version banner to stderr). When neither matches, returns raw trimmed stdout. `timeout` (ms) overrides the default `VERSION_PROBE_TIMEOUT`.
-- `withConfigSource(agent, source)` — attach `configSource` to the result when a source is known (adds the field only when truthy)
+- `getVersion(binary, args?, timeout?)` — run `<binary> --version`, returns version string or null.
+- `withConfigSource(agent, source)` — attach `configSource` to the result when a source is known
 - `configSourceFromDir(dir)` — returns `'config-dir'` when the dir exists, else `undefined`
 - `getPlatform()` — `process.platform` (mockable in tests), from `src/detect/platform.ts`
 
@@ -166,13 +176,9 @@ functions to pass options into a detector; thread them through `options` instead
 Copy the mock header from an existing detector test whose shape matches
 yours — there's no need to write one from scratch:
 
-- `tests/detectors/rovodev.detector.test.ts` — static `vi.mock` factory
-  stubbing only the helpers the detector imports
-- `tests/detectors/acpx.detector.test.ts` — static factory plus `vi.hoisted`
-  shared mocks
-- `tests/detectors/invariant.test.ts` — no `utils.js` mock at all: it stubs
-  the OS seams (`node:child_process`, `node:fs/promises`, `platform.js`) so
-  every helper runs real
+- `tests/detectors/rovodev.detector.test.ts` — static `vi.mock` factory stubbing only the helpers the detector imports
+- `tests/detectors/acpx.detector.test.ts` — static factory plus `vi.hoisted` shared mocks
+- `tests/detectors/invariant.test.ts` — no `utils.js` mock at all: it stubs the OS seams (`node:child_process`, `node:fs/promises`, `platform.js`) so every helper runs real
 
 Whatever you copy, the factory must provide every helper the detector
 imports — a blank replacement mock leaves them `undefined` and the detector
@@ -183,9 +189,7 @@ stand-in; avoid the dynamic `importOriginal` spread.
 ## After Adding
 
 1. Add a test in `tests/detectors/<name>.detector.test.ts` covering both the
-   detected and not-detected paths. Assert **both** fields: when `isConfigured`
-   is truthy, `configSource` maps to the expected value; when falsy, it is
-   `undefined`.
+   detected and not-detected paths. Assert **both** `id` and `name` fields.
 2. Keep `tests/detectors/invariant.test.ts` green.
 3. Run the full CI sequence, in order:
 

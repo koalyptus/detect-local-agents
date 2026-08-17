@@ -64,6 +64,7 @@ const detector: AgentDetector = {
 
     return withConfigSource(
       {
+        id: 'windsurf',
         name: 'windsurf',
         binary,
         isConfigured,

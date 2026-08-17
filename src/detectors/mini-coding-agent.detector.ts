@@ -11,6 +11,7 @@ const detector: AgentDetector = {
     }
 
     return {
+      id: 'mini-coding-agent',
       name: 'mini-coding-agent',
       binary: 'mini-coding-agent',
       version: pkg.version,

@@ -1,0 +1,10 @@
+feat: add id field to DetectedAgent for Vercel-aligned agent ids
+
+- Add id field to DetectedAgent interface (stable Vercel-aligned key)
+- Keep legacy name field unchanged for display name
+- Add optional id field to DetectorConfig (falls back to name)
+- Update all config entries with Vercel-aligned ids
+- Update all 14 file-based detectors
+- Update CLI info command to match by id
+- Update config-paths to work with both id and name
+- Update all tests and documentation

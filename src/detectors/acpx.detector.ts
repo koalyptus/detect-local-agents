@@ -18,6 +18,7 @@ const detector: AgentDetector = {
     // Presence (`which`) already ran; return "present, but we didn't probe".
     if (options?.probe === false) {
       return {
+        id: 'acpx',
         name: 'acpx',
         binary,
         isACPAgent: true,
@@ -35,6 +36,7 @@ const detector: AgentDetector = {
         .filter((t) => t.trim().length > 0);
 
       return {
+        id: 'acpx',
         name: 'acpx',
         binary,
         isACPAgent: true,
@@ -47,6 +49,7 @@ const detector: AgentDetector = {
     } catch {
       // list command failed - return agent with empty targets
       return {
+        id: 'acpx',
         name: 'acpx',
         binary,
         isACPAgent: true,

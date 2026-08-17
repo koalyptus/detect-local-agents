@@ -76,20 +76,26 @@ describe('detectorConfigs', () => {
 
   describe('Vercel detect-agent integration', () => {
     it('claude config has nameResolver for cowork mode', () => {
-      const config = detectorConfigs.find((c) => c.name === 'claude_code');
+      const config = detectorConfigs.find((c) => c.id === 'claude_code');
       expect(config?.nameResolver).toBeDefined();
+      expect(config?.name).toBe('claude');
     });
 
     it('claude nameResolver returns cowork when CLAUDE_CODE_IS_COWORK is set', () => {
-      const config = detectorConfigs.find((c) => c.name === 'claude_code');
+      const config = detectorConfigs.find((c) => c.id === 'claude_code');
       const name = config?.nameResolver?.({ CLAUDE_CODE_IS_COWORK: 'true' });
       expect(name).toBe('cowork');
     });
 
     it('claude nameResolver returns claude when CLAUDE_CODE_IS_COWORK is not set', () => {
-      const config = detectorConfigs.find((c) => c.name === 'claude_code');
+      const config = detectorConfigs.find((c) => c.id === 'claude_code');
       const name = config?.nameResolver?.({});
-      expect(name).toBe('claude_code');
+      expect(name).toBe('claude');
+    });
+
+    it('claude has claude_code id', () => {
+      const config = detectorConfigs.find((c) => c.name === 'claude');
+      expect(config?.id).toBe('claude_code');
     });
 
     it('github-copilot replaces copilot', () => {

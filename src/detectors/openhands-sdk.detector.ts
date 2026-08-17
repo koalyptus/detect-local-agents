@@ -11,6 +11,7 @@ const detector: AgentDetector = {
     }
 
     return {
+      id: 'openhands-sdk',
       name: 'openhands-sdk',
       binary: 'openhands-sdk',
       version: pkg.version,

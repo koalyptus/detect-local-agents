@@ -52,6 +52,7 @@ describe('cursor detector', () => {
 
     const result = await cursorDetector.detect();
     expect(result).not.toBeNull();
+    expect(result?.id).toBe('cursor');
     expect(result?.name).toBe('cursor');
     expect(result?.binary).toBe('/usr/bin/cursor-agent');
     expect(result?.isACPAgent).toBe(true);
@@ -122,7 +123,8 @@ describe('config detectors', () => {
 
     const result = await claudeDetector?.detect();
     expect(result).not.toBeNull();
-    expect(result?.name).toBe('claude_code');
+    expect(result?.id).toBe('claude_code');
+    expect(result?.name).toBe('claude');
     expect(result?.binary).toBe('/usr/bin/claude');
     expect(result?.version).toBe('1.0.0');
   });
@@ -184,6 +186,7 @@ describe('orca detector', () => {
     const { default: orca } = await import('../../src/detectors/orca.detector.js');
     const result = await orca.detect();
     expect(result).not.toBeNull();
+    expect(result?.id).toBe('orca');
     expect(result?.name).toBe('orca');
     expect(result?.binary).toBe('/usr/bin/orca');
     expect(result?.isACPAgent).toBe(true);
@@ -214,6 +217,7 @@ describe('windsurf detector', () => {
     const { default: windsurf } = await import('../../src/detectors/windsurf.detector.js');
     const result = await windsurf.detect();
     expect(result).not.toBeNull();
+    expect(result?.id).toBe('windsurf');
     expect(result?.name).toBe('windsurf');
     expect(result?.isACPAgent).toBe(true);
   });
@@ -268,7 +272,8 @@ describe('config file detection integration', () => {
     const result = await claudeDetector?.detect();
 
     expect(result).not.toBeNull();
-    expect(result?.name).toBe('claude_code');
+    expect(result?.id).toBe('claude_code');
+    expect(result?.name).toBe('claude');
     expect(result?.isConfigured).toBe(true);
     expect(result?.binary).toBe('/fake/claude');
 

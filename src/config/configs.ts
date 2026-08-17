@@ -3,23 +3,30 @@ import type { DetectorConfig } from '../types.js';
 /**
  * Built-in detector configs.
  * Adding a new simple agent = one entry here.
+ *
+ * `name` = legacy human-friendly name (claude, codex, opencode)
+ * `id`   = stable Vercel-aligned key (claude_code, codex_cli, open_code)
+ *        Falls back to `name` when omitted.
  */
-export const detectorConfigs: DetectorConfig[] = [
+export const detectorConfigs: (DetectorConfig & { id?: string })[] = [
   {
-    name: 'claude_code',
+    name: 'claude',
+    id: 'claude_code',
     binary: 'claude',
     configEnvVars: ['ANTHROPIC_API_KEY', 'CLAUDE_API_KEY'],
     configDir: '~/.claude',
-    nameResolver: (env) => (env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude_code'),
+    nameResolver: (env) => (env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude'),
   },
   {
-    name: 'codex_cli',
+    name: 'codex',
+    id: 'codex_cli',
     binary: 'codex',
     configEnvVars: ['OPENAI_API_KEY'],
     configDir: '~/.codex',
   },
   {
-    name: 'open_code',
+    name: 'opencode',
+    id: 'open_code',
     binary: 'opencode',
     configDir: '~/.config/opencode',
   },

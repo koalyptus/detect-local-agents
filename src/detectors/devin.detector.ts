@@ -14,6 +14,7 @@ const detector: AgentDetector = {
     }
 
     return {
+      id: 'devin',
       name: 'devin',
       binary: DETEVIN_MARKER,
       isConfigured: true,

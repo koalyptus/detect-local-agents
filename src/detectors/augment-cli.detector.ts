@@ -16,7 +16,7 @@ const detector: AgentDetector = {
     const isConfigured = !!process.env['AUGMENT_AGENT'];
 
     return withConfigSource(
-      { name: 'augment-cli', binary, version, isConfigured },
+      { id: 'augment-cli', name: 'augment-cli', binary, version, isConfigured },
       isConfigured ? 'env' : undefined,
     );
   },

@@ -16,7 +16,7 @@ const detector: AgentDetector = {
     const isConfigured = !!process.env['REPL_ID'];
 
     return withConfigSource(
-      { name: 'replit', binary, version, isConfigured },
+      { id: 'replit', name: 'replit', binary, version, isConfigured },
       isConfigured ? 'env' : undefined,
     );
   },

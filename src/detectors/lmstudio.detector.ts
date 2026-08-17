@@ -54,7 +54,10 @@ const detector: AgentDetector = {
       : undefined;
     const isConfigured = configSource !== undefined;
 
-    return withConfigSource({ name: 'lmstudio', binary, version, isConfigured }, configSource);
+    return withConfigSource(
+      { id: 'lmstudio', name: 'lmstudio', binary, version, isConfigured },
+      configSource,
+    );
   },
 };
 
