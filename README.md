@@ -23,8 +23,8 @@ Most agents are detected via a simple entry in `src/config/configs.ts`:
 
 ```typescript
 {
-  name: 'myagent',
-  id: 'myagent',           // stable identifier (falls back to name if omitted)
+  id: 'myagent',           // stable Vercel-aligned id (required; equals name when no Vercel id)
+  name: 'myagent',         // legacy display name
   binary: 'myagent',        // binary to find in PATH via `which`/`where`
   configDir: '~/.myagent',  // optional: directory whose presence = configured
 }
@@ -221,7 +221,8 @@ interface DetectOptions {
 
 ```typescript
 interface AgentDetector {
-  name: string; // stable id (Vercel-aligned)
+  /** Stable Vercel-aligned id (e.g. 'claude_code'). Must match the produced DetectedAgent.id. */
+  id: string;
   detect(options?: DetectOptions): Promise<DetectedAgent | null>;
 }
 ```
@@ -233,7 +234,7 @@ A custom detector: returns a `DetectedAgent` when the agent is present, `null` o
 ```typescript
 interface DetectorConfig {
   name: string; // legacy display name
-  id?: string; // optional Vercel-aligned id (falls back to name)
+  id: string; // stable Vercel-aligned id (e.g. 'claude_code')
   binary: string; // command name to look up in PATH
   versionArgs?: string[]; // args for --version, default ['--version']
   configEnvVars?: string[]; // env vars that indicate the agent is configured
@@ -267,8 +268,8 @@ Type guard for runtime-validating that an object implements the `AgentDetector` 
 
 ```typescript
 {
+  id: 'myagent_id',       // Vercel-aligned id (required)
   name: 'myagent',        // legacy display name
-  id: 'myagent_id',       // Vercel-aligned id (optional, falls back to name)
   binary: 'myagent',
   configEnvVars: ['MYAGENT_API_KEY'],
 }
@@ -282,7 +283,7 @@ import type { AgentDetector, DetectedAgent } from '../types.js';
 import { which } from '../detect/utils.js';
 
 const detector: AgentDetector = {
-  name: 'myagent_id',
+  id: 'myagent_id',
 
   async detect(): Promise<DetectedAgent | null> {
     const binary = await which('myagent');

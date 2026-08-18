@@ -3,7 +3,7 @@ import { findPipPackage } from '../detect/pip.js';
 import { which, getVersion, withConfigSource } from '../detect/utils.js';
 
 const detector: AgentDetector = {
-  name: 'swe-agent',
+  id: 'swe-agent',
 
   async detect(): Promise<DetectedAgent | null> {
     // Same env expression at both return sites (binary branch and pip fallback)

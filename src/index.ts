@@ -10,7 +10,7 @@ export { detectorConfigs } from './config/configs.js';
  *
  * @param options DetectOptions for programmatic/embedded callers:
  *   - `only?: string[]` — restrict detection to the named detector ids (matched
- *     against each `AgentDetector.name`). Unknown ids are ignored, not errors.
+ *     against each `AgentDetector.id`). Unknown ids are ignored, not errors.
  *   - `probe?: boolean` — when `false`, skip active binary probes but still run
  *     presence checks (`which`/`access`). Defaults to `true`.
  *   - `timeout?: number` — per-probe subprocess cap in milliseconds, applied to
@@ -21,7 +21,7 @@ export { detectorConfigs } from './config/configs.js';
 export async function detectAgents(options?: DetectOptions): Promise<DetectedAgent[]> {
   const detectors = await loadAllDetectors();
   const only = new Set(options?.only ?? []);
-  const filtered = only.size === 0 ? detectors : detectors.filter((d) => only.has(d.name));
+  const filtered = only.size === 0 ? detectors : detectors.filter((d) => only.has(d.id));
 
   const results = await Promise.all(
     filtered.map((detector) => detector.detect(options).catch(() => null)),

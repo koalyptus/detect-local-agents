@@ -25,8 +25,8 @@ Add an entry to `src/config/configs.ts` in the `detectorConfigs` array. The entr
 
 ```typescript
 {
+  id: 'myagent_id',         // Vercel-aligned id (required)
   name: 'myagent',          // legacy display name
-  id: 'myagent_id',         // Vercel-aligned id (optional, falls back to name)
   binary: 'myagent',        // command to find via which/where
   configEnvVars: ['MYAGENT_API_KEY'],  // optional: env vars = configured
   configDir: '~/.myagent',  // optional: dir presence = configured
@@ -124,7 +124,7 @@ import type { AgentDetector, DetectedAgent, DetectOptions } from '../types.js';
 import { which, getVersion, withConfigSource } from '../detect/utils.js';
 
 const detector: AgentDetector = {
-  name: 'myagent_id',
+  id: 'myagent_id',
 
   async detect(options?: DetectOptions): Promise<DetectedAgent | null> {
     const binary = await which('myagent');

@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 
 const detector: AgentDetector = {
-  name: 'acpx',
+  id: 'acpx',
 
   async detect(options?: DetectOptions): Promise<DetectedAgent | null> {
     const binary = await which('acpx');

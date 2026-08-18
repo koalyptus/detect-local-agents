@@ -2,7 +2,7 @@ import type { AgentDetector, DetectedAgent } from '../types.js';
 import { which, getVersion } from '../detect/utils.js';
 
 const detector: AgentDetector = {
-  name: 'cursor',
+  id: 'cursor',
 
   async detect(): Promise<DetectedAgent | null> {
     const binary = await which('cursor-agent');

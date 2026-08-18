@@ -36,7 +36,7 @@ function getLmStudioHome(): string | null {
 }
 
 const detector: AgentDetector = {
-  name: 'lmstudio',
+  id: 'lmstudio',
 
   async detect(): Promise<DetectedAgent | null> {
     const binary = await which('lms');

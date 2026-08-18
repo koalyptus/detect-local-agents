@@ -11,10 +11,14 @@ vi.mock('../src/detectors/index.js', () => ({
 }));
 
 import { detectAgents } from '../src/index.js';
+import type { DetectedAgent } from '../src/types.js';
 
 const makeDetector = (name: string) => {
-  const detect = vi.fn(async () => ({ name, binary: `/usr/bin/${name}` }));
-  return { name, detect };
+  const detect = vi.fn(
+    async () =>
+      ({ id: name, name, binary: `/usr/bin/${name}` }) as DetectedAgent,
+  );
+  return { id: name, name, detect };
 };
 
 describe('detectAgents(options)', () => {

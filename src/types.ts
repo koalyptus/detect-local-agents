@@ -27,13 +27,16 @@ export interface DetectedAgent {
 }
 
 export interface AgentDetector {
-  name: string; // stable id (Vercel-aligned)
+  /** Stable Vercel-aligned id (e.g. 'claude_code'). Must match the produced DetectedAgent.id. */
+  id: string;
   detect(options?: DetectOptions): Promise<DetectedAgent | null>;
 }
 
 export interface DetectorConfig {
-  name: string; // legacy display name
-  id?: string; // optional Vercel-aligned id (falls back to name)
+  /** Legacy display name (e.g. 'claude'). Shown in DetedAgent.name; may be overridden by nameResolver. */
+  name: string;
+  /** Stable Vercel-aligned id (e.g. 'claude_code'). Required. */
+  id: string;
   binary: string; // command name to look up in PATH
   versionArgs?: string[]; // args for --version, default ['--version']
   configEnvVars?: string[]; // env vars that indicate the agent is configured

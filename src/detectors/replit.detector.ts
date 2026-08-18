@@ -2,7 +2,7 @@ import type { AgentDetector, DetectedAgent } from '../types.js';
 import { which, getVersion, withConfigSource } from '../detect/utils.js';
 
 const detector: AgentDetector = {
-  name: 'replit',
+  id: 'replit',
 
   async detect(): Promise<DetectedAgent | null> {
     const binary = await which('replit');

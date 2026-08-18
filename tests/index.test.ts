@@ -19,7 +19,7 @@ vi.mock('../src/detectors/index.js', async (importOriginal) => {
 
 import { which, getVersion } from '../src/detect/utils.js';
 import { loadAllDetectors } from '../src/detectors/index.js';
-import type { AgentDetector } from '../src/types.js';
+import type { AgentDetector, DetectedAgent } from '../src/types.js';
 
 const mockWhich = vi.mocked(which);
 const mockGetVersion = vi.mocked(getVersion);
@@ -64,11 +64,11 @@ describe('detectAgents', () => {
   });
 
   it('each agent has required fields', async () => {
-    // Create a mock detector
     const mockDetector: AgentDetector = {
-      name: 'claude_code',
-      detect: async () => ({
-        name: 'claude_code',
+      id: 'claude_code',
+      detect: async (): Promise<DetectedAgent> => ({
+        id: 'claude_code',
+        name: 'claude',
         binary: '/usr/bin/claude',
         version: '1.0.0',
         isConfigured: false,
@@ -80,23 +80,26 @@ describe('detectAgents', () => {
     const agents = await detectAgents();
 
     expect(agents.length).toBe(1);
-    expect(agents[0].name).toBe('claude_code');
+    expect(agents[0].id).toBe('claude_code');
+    expect(agents[0].name).toBe('claude');
     expect(agents[0].binary).toBe('/usr/bin/claude');
   });
 
   it('detects multiple agents', async () => {
     const mockDetectors: AgentDetector[] = [
       {
-        name: 'claude_code',
-        detect: async () => ({
-          name: 'claude_code',
+        id: 'claude_code',
+        detect: async (): Promise<DetectedAgent> => ({
+          id: 'claude_code',
+          name: 'claude',
           binary: '/usr/bin/claude',
         }),
       },
       {
-        name: 'codex_cli',
-        detect: async () => ({
-          name: 'codex_cli',
+        id: 'codex_cli',
+        detect: async (): Promise<DetectedAgent> => ({
+          id: 'codex_cli',
+          name: 'codex',
           binary: '/usr/bin/codex',
         }),
       },
@@ -107,12 +110,12 @@ describe('detectAgents', () => {
     const agents = await detectAgents();
 
     expect(agents.length).toBe(2);
-    expect(agents.map((a) => a.name)).toEqual(['claude_code', 'codex_cli']);
+    expect(agents.map((a) => a.id)).toEqual(['claude_code', 'codex_cli']);
   });
 
   it('skips agents not found', async () => {
     const mockDetector: AgentDetector = {
-      name: 'claude_code',
+      id: 'claude_code',
       detect: async () => null,
     };
 
@@ -127,9 +130,10 @@ describe('detectAgents', () => {
     process.env.ANTHROPIC_API_KEY = 'test-key';
 
     const mockDetector: AgentDetector = {
-      name: 'claude_code',
-      detect: async () => ({
-        name: 'claude_code',
+      id: 'claude_code',
+      detect: async (): Promise<DetectedAgent> => ({
+        id: 'claude_code',
+        name: 'claude',
         binary: '/usr/bin/claude',
         isConfigured: !!process.env.ANTHROPIC_API_KEY,
       }),
@@ -144,12 +148,11 @@ describe('detectAgents', () => {
   });
 
   it('isConfigured false when no env vars', async () => {
-    // Ensure env vars are cleared (done in beforeEach)
-
     const mockDetector: AgentDetector = {
-      name: 'claude_code',
-      detect: async () => ({
-        name: 'claude_code',
+      id: 'claude_code',
+      detect: async (): Promise<DetectedAgent> => ({
+        id: 'claude_code',
+        name: 'claude',
         binary: '/usr/bin/claude',
         isConfigured: !!process.env.ANTHROPIC_API_KEY,
       }),
@@ -165,15 +168,16 @@ describe('detectAgents', () => {
 
   it('handles detector errors gracefully', async () => {
     const mockDetector: AgentDetector = {
-      name: 'failing-agent',
+      id: 'failing-agent',
       detect: async () => {
         throw new Error('Detection failed');
       },
     };
 
     const workingDetector: AgentDetector = {
-      name: 'working-agent',
-      detect: async () => ({
+      id: 'working-agent',
+      detect: async (): Promise<DetectedAgent> => ({
+        id: 'working-agent',
         name: 'working-agent',
         binary: '/usr/bin/working',
       }),

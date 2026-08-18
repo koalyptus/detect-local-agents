@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { homedir } from 'node:os';
 
 const detector: AgentDetector = {
-  name: 'antigravity',
+  id: 'antigravity',
 
   async detect(): Promise<DetectedAgent | null> {
     // Check both binary names: agy (current codename) and gemini (legacy name)

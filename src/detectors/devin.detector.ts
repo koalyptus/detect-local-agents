@@ -4,7 +4,7 @@ import { access } from 'node:fs/promises';
 const DETEVIN_MARKER = '/opt/.devin';
 
 const detector: AgentDetector = {
-  name: 'devin',
+  id: 'devin',
 
   async detect(): Promise<DetectedAgent | null> {
     try {

@@ -62,15 +62,15 @@ describe('detectors/index', () => {
     }
   });
 
-  it('loadAllDetectors returns objects with name property', async () => {
+  it('loadAllDetectors returns objects with id property', async () => {
     const detectors = await loadAllDetectors();
     for (const detector of detectors) {
-      expect(typeof detector.name).toBe('string');
+      expect(typeof detector.id).toBe('string');
     }
   });
 
   it('isAgentDetector type guard works for valid detectors', () => {
-    const detector = { name: 'test', detect: async () => null };
+    const detector = { id: 'test', detect: async () => null };
     expect(isAgentDetector(detector)).toBe(true);
   });
 
@@ -82,18 +82,18 @@ describe('detectors/index', () => {
   });
 
   it('isAgentDetector returns false for objects without detect', () => {
-    expect(isAgentDetector({ name: 'test' })).toBe(false);
+    expect(isAgentDetector({ id: 'test' })).toBe(false);
   });
 
-  it('isAgentDetector returns false for objects without name', () => {
+  it('isAgentDetector returns false for objects without id', () => {
     expect(isAgentDetector({ detect: async () => null })).toBe(false);
   });
 
   it('loadAllDetectors includes config-based detectors', async () => {
     const detectors = await loadAllDetectors();
-    const names = detectors.map((d) => d.name);
-    expect(names).toContain('claude_code');
-    expect(names).toContain('codex_cli');
+    const ids = detectors.map((d) => d.id);
+    expect(ids).toContain('claude_code');
+    expect(ids).toContain('codex_cli');
   });
 
   it('configDir fallback finds existing directory', async () => {
@@ -102,7 +102,7 @@ describe('detectors/index', () => {
     await fs.mkdir(claudeDir, { recursive: true });
 
     const detectors = await loadAllDetectors();
-    const claude = detectors.find((d) => d.name === 'claude_code');
+    const claude = detectors.find((d) => d.id === 'claude_code');
     expect(claude).toBeDefined();
 
     const result = await claude!.detect();
@@ -115,6 +115,7 @@ describe('detectors/index', () => {
     // Use configToDetector directly with a non-existent dir to avoid
     // depending on what's actually installed on the test machine.
     const detector = configToDetector({
+      id: 'test-missing-dir',
       name: 'test-missing-dir',
       binary: 'node',
       configDir: '~/.nonexistent-config-dir',
@@ -137,7 +138,7 @@ describe('detectors/index', () => {
       'broken.detector.ts',
     );
     // Create a file with a syntax error that will throw on import
-    await fs.writeFile(brokenFile, 'export default { broken: ; };\\n');
+    await fs.writeFile(brokenFile, 'export default { broken: ; };\n');
 
     try {
       const _detectors = await loadAllDetectors();
@@ -151,6 +152,7 @@ describe('detectors/index', () => {
   it('configToDetector handles configDir with ~ prefix', async () => {
     // Test the ~ branch of configDir handling with a path that won't exist
     const detector = configToDetector({
+      id: 'test-tilde-dir',
       name: 'test-tilde-dir',
       binary: 'node',
       configDir: '~/.nonexistent-config-dir',
@@ -164,7 +166,7 @@ describe('detectors/index', () => {
   it('configToDetector handles configDir without ~ prefix', async () => {
     // Test the non-~ branch of configDir handling (line 42)
     const detectors = await loadAllDetectors();
-    const opencode = detectors.find((d) => d.name === 'open_code');
+    const opencode = detectors.find((d) => d.id === 'open_code');
     expect(opencode).toBeDefined();
     // opencode uses '~/.config/opencode' which starts with ~, so it goes through
     // the ~ branch. The non-~ branch would be for configs without ~ prefix.
@@ -177,6 +179,7 @@ describe('detectors/index', () => {
     // Create a detector with a non-~ configDir to exercise line 42
     // and a path that will throw on fs.access to exercise catch block (line 48)
     const detector = configToDetector({
+      id: 'test-detector',
       name: 'test-detector',
       binary: 'node', // always available
       configDir: '/nonexistent/path',
@@ -189,6 +192,7 @@ describe('detectors/index', () => {
 
   it('configToDetector uses nameResolver when provided', async () => {
     const detector = configToDetector({
+      id: 'claude_code',
       name: 'claude_code',
       binary: 'node', // always available
       nameResolver: (env) => (env['CLAUDE_CODE_IS_COWORK'] ? 'cowork' : 'claude_code'),
@@ -208,7 +212,7 @@ describe('detectors/index', () => {
   it('detect returns version from getVersion', async () => {
     // default: getVersion returns '1.0.0'
     const detectors = await loadAllDetectors();
-    const claude = detectors.find((d) => d.name === 'claude_code');
+    const claude = detectors.find((d) => d.id === 'claude_code');
     expect(claude).toBeDefined();
 
     const result = await claude!.detect();
@@ -222,7 +226,7 @@ describe('detectors/index', () => {
     mockGetVersion.mockResolvedValue(undefined);
 
     const detectors = await loadAllDetectors();
-    const claude = detectors.find((d) => d.name === 'claude_code');
+    const claude = detectors.find((d) => d.id === 'claude_code');
     expect(claude).toBeDefined();
 
     const result = await claude!.detect();
@@ -233,7 +237,11 @@ describe('detectors/index', () => {
   it('detect() resolves normally when work finishes before the timeout', async () => {
     vi.useFakeTimers();
     try {
-      const detector = configToDetector({ name: 'fast-test', binary: 'node' });
+      const detector = configToDetector({
+        id: 'fast-test',
+        name: 'fast-test',
+        binary: 'node',
+      });
       const result = await detector.detect();
       expect(result).toBeDefined();
       expect(result!.name).toBe('fast-test');
@@ -256,6 +264,7 @@ describe('detectors/index', () => {
     delete process.env.HOME;
     try {
       const detector = configToDetector({
+        id: 'home-fallback-test',
         name: 'home-fallback-test',
         binary: 'node',
         // configDir with ~ prefix — the ~ branch on line 42 resolves via
@@ -299,7 +308,7 @@ describe('detectors/index', () => {
 
     try {
       const detectors = await loadAllDetectors();
-      const claude = detectors.find((d) => d.name === 'claude_code');
+      const claude = detectors.find((d) => d.id === 'claude_code');
       expect(claude).toBeDefined();
 
       const result = await claude!.detect();
@@ -317,6 +326,7 @@ describe('detectors/index', () => {
     const original = process.env['CONFIG_SOURCE_TEST_KEY'];
     process.env['CONFIG_SOURCE_TEST_KEY'] = 'test-key';
     const detector = configToDetector({
+      id: 'env-source-test',
       name: 'env-source-test',
       binary: 'node',
       configEnvVars: ['CONFIG_SOURCE_TEST_KEY'],
@@ -343,7 +353,11 @@ describe('detectors/index', () => {
     await fs.mkdir(configDir, { recursive: true });
     await fs.writeFile(path.join(configDir, 'config.json'), '{}');
 
-    const detector = configToDetector({ name: 'kiro', binary: 'node' });
+    const detector = configToDetector({
+      id: 'kiro',
+      name: 'kiro',
+      binary: 'node',
+    });
 
     const result = await detector.detect();
     expect(result!.isConfigured).toBe(true);
@@ -355,6 +369,7 @@ describe('detectors/index', () => {
     await fs.mkdir(configDir, { recursive: true });
 
     const detector = configToDetector({
+      id: 'dir-source-test',
       name: 'dir-source-test',
       binary: 'node',
       configDir: '~/.dir-source-test',
@@ -367,6 +382,7 @@ describe('detectors/index', () => {
 
   it('configToDetector leaves configSource undefined when nothing matches', async () => {
     const detector = configToDetector({
+      id: 'none-source-test',
       name: 'none-source-test',
       binary: 'node',
       configDir: '~/.none-source-test',
@@ -384,6 +400,7 @@ describe('detectors/index', () => {
     const original = process.env['PRECEDENCE_TEST_KEY'];
     process.env['PRECEDENCE_TEST_KEY'] = 'test-key';
     const detector = configToDetector({
+      id: 'precedence-test',
       name: 'precedence-test',
       binary: 'node',
       configEnvVars: ['PRECEDENCE_TEST_KEY'],
@@ -404,7 +421,11 @@ describe('detectors/index', () => {
   });
 
   it('configToDetector.detect({probe:false}) skips version probe (version undefined)', async () => {
-    const detector = configToDetector({ name: 'probe-off', binary: 'node' });
+    const detector = configToDetector({
+      id: 'probe-off',
+      name: 'probe-off',
+      binary: 'node',
+    });
     const result = await detector.detect({ probe: false });
     expect(result).toBeDefined();
     expect(result!.version).toBeUndefined();
@@ -412,7 +433,11 @@ describe('detectors/index', () => {
   });
 
   it('configToDetector.detect({timeout}) forwards timeout to getVersion', async () => {
-    const detector = configToDetector({ name: 'probe-timeout', binary: 'node' });
+    const detector = configToDetector({
+      id: 'probe-timeout',
+      name: 'probe-timeout',
+      binary: 'node',
+    });
     await detector.detect({ timeout: 777 });
     expect(mockGetVersion).toHaveBeenCalledWith('/usr/local/bin/node', undefined, 777);
   });

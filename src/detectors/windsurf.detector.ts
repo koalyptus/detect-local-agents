@@ -6,7 +6,7 @@ import * as os from 'node:os';
 import { getPlatform } from '../detect/platform.js';
 
 const detector: AgentDetector = {
-  name: 'windsurf',
+  id: 'windsurf',
 
   async detect(): Promise<DetectedAgent | null> {
     // Windsurf is an IDE — check for its CLI/backend binary

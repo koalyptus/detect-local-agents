@@ -22,7 +22,13 @@ describe('cli - detect command', () => {
 
   it('prints table of detected agents by default', async () => {
     mockDetectAgents.mockResolvedValue([
-      { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
+      {
+        id: 'claude_code',
+        name: 'claude',
+        binary: '/usr/bin/claude',
+        version: '1.0.0',
+        isConfigured: true,
+      },
     ]);
 
     await runCli(['node', 'detect-local-agents']);
@@ -35,7 +41,13 @@ describe('cli - detect command', () => {
 
   it('prints JSON when --json flag is set', async () => {
     mockDetectAgents.mockResolvedValue([
-      { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
+      {
+        id: 'claude_code',
+        name: 'claude',
+        binary: '/usr/bin/claude',
+        version: '1.0.0',
+        isConfigured: true,
+      },
     ]);
 
     await runCli(['node', 'detect-local-agents', '--json']);
@@ -48,8 +60,8 @@ describe('cli - detect command', () => {
 
   it('filters to configured-only with --configured', async () => {
     mockDetectAgents.mockResolvedValue([
-      { name: 'claude', binary: '/usr/bin/claude', isConfigured: true },
-      { name: 'codex', binary: '/usr/bin/codex', isConfigured: false },
+      { id: 'claude_code', name: 'claude', binary: '/usr/bin/claude', isConfigured: true },
+      { id: 'codex_cli', name: 'codex', binary: '/usr/bin/codex', isConfigured: false },
     ]);
 
     await runCli(['node', 'detect-local-agents', '--configured']);
@@ -105,7 +117,13 @@ describe('cli - info command', () => {
 
   it('prints single agent as JSON with --json flag', async () => {
     mockDetectAgents.mockResolvedValue([
-      { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
+      {
+        id: 'claude_code',
+        name: 'claude',
+        binary: '/usr/bin/claude',
+        version: '1.0.0',
+        isConfigured: true,
+      },
     ]);
 
     await runCli(['node', 'detect-local-agents', 'info', 'claude', '--json']);
@@ -117,7 +135,7 @@ describe('cli - info command', () => {
 
   it('prints null JSON when agent not found with --json', async () => {
     mockDetectAgents.mockResolvedValue([
-      { name: 'claude', binary: '/usr/bin/claude', isConfigured: true },
+      { id: 'claude_code', name: 'claude', binary: '/usr/bin/claude', isConfigured: true },
     ]);
 
     await runCli(['node', 'detect-local-agents', 'info', 'nonexistent', '--json']);
@@ -131,7 +149,7 @@ describe('cli - info command', () => {
 
   it('prints user-friendly message when agent not found without --json', async () => {
     mockDetectAgents.mockResolvedValue([
-      { name: 'claude', binary: '/usr/bin/claude', isConfigured: true },
+      { id: 'claude_code', name: 'claude', binary: '/usr/bin/claude', isConfigured: true },
     ]);
 
     await runCli(['node', 'detect-local-agents', 'info', 'nonexistent']);
@@ -145,7 +163,13 @@ describe('cli - info command', () => {
 
   it('prints table for single agent without --json', async () => {
     mockDetectAgents.mockResolvedValue([
-      { name: 'claude', binary: '/usr/bin/claude', version: '1.0.0', isConfigured: true },
+      {
+        id: 'claude_code',
+        name: 'claude',
+        binary: '/usr/bin/claude',
+        version: '1.0.0',
+        isConfigured: true,
+      },
     ]);
 
     await runCli(['node', 'detect-local-agents', 'info', 'claude']);
