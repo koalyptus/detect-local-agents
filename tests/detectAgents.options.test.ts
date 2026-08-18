@@ -15,8 +15,7 @@ import type { DetectedAgent } from '../src/types.js';
 
 const makeDetector = (name: string) => {
   const detect = vi.fn(
-    async () =>
-      ({ id: name, name, binary: `/usr/bin/${name}` }) as DetectedAgent,
+    async () => ({ id: name, name, binary: `/usr/bin/${name}` }) as DetectedAgent,
   );
   return { id: name, name, detect };
 };
