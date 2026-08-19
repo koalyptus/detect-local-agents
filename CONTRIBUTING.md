@@ -67,24 +67,6 @@ verified on (real hardware beats assumption, especially on Windows).
 Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `chore:`, ...). Small, focused
 commits are preferred over one squashed change.
 
-## Version bumps
-
-When bumping `version` in `package.json`, **always sync `package-lock.json`** too. A manual
-edit to `package.json` does **not** update the lockfile — its root `version` and
-`packages[""].version` stay stale and CI/`npm ci` consumers get an inconsistent tree. Use:
-
-```bash
-npm version <patch|minor|major>   # bumps both, commits, tags
-# or, if you edited package.json by hand:
-npm install --package-lock-only    # resyncs the lockfile only, no install
-```
-
-Verify both files agree before pushing:
-
-```bash
-grep '"version"' package.json package-lock.json
-```
-
 ## TypeScript
 
 The codebase is fully TypeScript (source under `src/`, compiled by `tsc`). When adding or
