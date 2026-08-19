@@ -37,8 +37,8 @@ Add an entry to `src/config/configs.ts` in the `detectorConfigs` array. The entr
 
 ### Key Fields
 
-- `name` — legacy display name (shown in CLI output, `result.name` from `detect()`)
 - `id` — stable Vercel-aligned key (used for matching, shown in `result.id`)
+- `name` — legacy display name (shown in CLI output, `result.name` from `detect()`)
 - `binary` — the command/binary to look up via `which()`
 
 ### Detection pipeline
