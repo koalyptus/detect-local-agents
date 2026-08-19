@@ -2,7 +2,7 @@ import type { AgentDetector, DetectedAgent } from '../types.js';
 import { which, getVersion, withConfigSource } from '../detect/utils.js';
 
 const detector: AgentDetector = {
-  name: 'augment-cli',
+  id: 'augment-cli',
 
   async detect(): Promise<DetectedAgent | null> {
     const binary = await which('auggie');
@@ -16,7 +16,7 @@ const detector: AgentDetector = {
     const isConfigured = !!process.env['AUGMENT_AGENT'];
 
     return withConfigSource(
-      { name: 'augment-cli', binary, version, isConfigured },
+      { id: 'augment-cli', name: 'augment-cli', binary, version, isConfigured },
       isConfigured ? 'env' : undefined,
     );
   },

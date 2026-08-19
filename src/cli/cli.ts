@@ -69,7 +69,7 @@ export async function runCli(argv: string[]): Promise<CliResult> {
           .positional('name', {
             type: 'string',
             demandOption: true,
-            describe: 'Agent name (e.g. claude)',
+            describe: 'Agent id (e.g. claude_code)',
           })
           .option('json', {
             type: 'boolean',
@@ -78,7 +78,8 @@ export async function runCli(argv: string[]): Promise<CliResult> {
           }),
       async (args) => {
         const agents = await detectAgents();
-        const agent = agents.find((a) => a.name === args.name);
+        // Match by id first (preferred), then by name for backward compatibility
+        const agent = agents.find((a) => a.id === args.name || a.name === args.name);
         if (args.json) {
           writeStdout(agent ? JSON.stringify(agent, null, 2) : 'null');
         } else {

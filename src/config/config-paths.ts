@@ -29,12 +29,24 @@ export function resolveConfigPath(candidatePath: string): string {
 }
 
 /**
+ * Look up a detector config by id or name.
+ * Prefers exact id match, then falls back to name match.
+ */
+function findConfig(agentIdOrName: string) {
+  return (
+    detectorConfigs.find((c) => c.id === agentIdOrName) ||
+    detectorConfigs.find((c) => c.name === agentIdOrName)
+  );
+}
+
+/**
  * Get standard config file paths for an agent.
  * Derives from detectorConfigs (single source of truth).
  * Uses POSIX paths for consistency across platforms.
+ * @param agentIdOrName - The agent id (preferred) or legacy name
  */
-export function getConfigPaths(agentName: string): string[] {
-  const config = detectorConfigs.find((c) => c.name === agentName);
+export function getConfigPaths(agentIdOrName: string): string[] {
+  const config = findConfig(agentIdOrName);
   if (!config || !config.configDir) {
     return [];
   }
@@ -64,20 +76,21 @@ export function getConfigPaths(agentName: string): string[] {
 /**
  * Check if a config file exists for the given agent.
  * Derives paths from detectorConfigs (single source of truth).
- * @param agentName - The agent name (key in detectorConfigs)
+ * @param agentIdOrName - The agent id (preferred) or legacy name
  * @returns true if any config file exists for the agent
  */
-export async function hasConfigFile(agentName: string): Promise<boolean> {
-  return (await findAgentConfigPath(agentName)) !== null;
+export async function hasConfigFile(agentIdOrName: string): Promise<boolean> {
+  return (await findAgentConfigPath(agentIdOrName)) !== null;
 }
 
 /**
  * Find the first existing config file path for an agent.
  * Returns the path or null if none found.
  * Shares resolution logic with hasConfigFile.
+ * @param agentIdOrName - The agent id (preferred) or legacy name
  */
-export async function findAgentConfigPath(agentName: string): Promise<string | null> {
-  const paths = getConfigPaths(agentName);
+export async function findAgentConfigPath(agentIdOrName: string): Promise<string | null> {
+  const paths = getConfigPaths(agentIdOrName);
   if (paths.length === 0) {
     return null;
   }
@@ -100,9 +113,12 @@ export async function findAgentConfigPath(agentName: string): Promise<string | n
  * Safely read and parse an agent's config file.
  * Returns the parsed JSON object, or null if the file doesn't exist
  * or contains malformed JSON.
+ * @param agentIdOrName - The agent id (preferred) or legacy name
  */
-export async function readAgentConfig(agentName: string): Promise<Record<string, unknown> | null> {
-  const configPath = await findAgentConfigPath(agentName);
+export async function readAgentConfig(
+  agentIdOrName: string,
+): Promise<Record<string, unknown> | null> {
+  const configPath = await findAgentConfigPath(agentIdOrName);
   if (!configPath) {
     return null;
   }

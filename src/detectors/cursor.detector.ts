@@ -2,7 +2,7 @@ import type { AgentDetector, DetectedAgent } from '../types.js';
 import { which, getVersion } from '../detect/utils.js';
 
 const detector: AgentDetector = {
-  name: 'cursor',
+  id: 'cursor',
 
   async detect(): Promise<DetectedAgent | null> {
     const binary = await which('cursor-agent');
@@ -17,6 +17,7 @@ const detector: AgentDetector = {
       !!process.env['CURSOR_AGENT'] || process.env['CURSOR_EXTENSION_HOST_ROLE'] === 'agent-exec';
 
     return {
+      id: 'cursor',
       name: isCursorCli ? 'cursor-cli' : 'cursor',
       binary,
       version,

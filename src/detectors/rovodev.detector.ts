@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 
 const detector: AgentDetector = {
-  name: 'rovodev',
+  id: 'rovodev',
 
   async detect(options?: DetectOptions): Promise<DetectedAgent | null> {
     const binary = await which('acli');
@@ -18,6 +18,7 @@ const detector: AgentDetector = {
     // Presence (`which`) already ran; return "present, but we didn't probe".
     if (options?.probe === false) {
       return {
+        id: 'rovodev',
         name: 'rovodev',
         binary,
         isConfigured: undefined,
@@ -37,6 +38,7 @@ const detector: AgentDetector = {
     }
 
     return {
+      id: 'rovodev',
       name: 'rovodev',
       binary,
       isConfigured: true,

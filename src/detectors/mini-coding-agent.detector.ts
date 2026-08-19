@@ -2,7 +2,7 @@ import type { AgentDetector, DetectedAgent } from '../types.js';
 import { findPipPackage } from '../detect/pip.js';
 
 const detector: AgentDetector = {
-  name: 'mini-coding-agent',
+  id: 'mini-coding-agent',
 
   async detect(): Promise<DetectedAgent | null> {
     const pkg = await findPipPackage('mini-coding-agent');
@@ -11,6 +11,7 @@ const detector: AgentDetector = {
     }
 
     return {
+      id: 'mini-coding-agent',
       name: 'mini-coding-agent',
       binary: 'mini-coding-agent',
       version: pkg.version,

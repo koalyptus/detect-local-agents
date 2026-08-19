@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 
 const detector: AgentDetector = {
-  name: 'orca',
+  id: 'orca',
 
   async detect(): Promise<DetectedAgent | null> {
     const binary = await which('orca');
@@ -33,6 +33,7 @@ const detector: AgentDetector = {
 
     return withConfigSource(
       {
+        id: 'orca',
         name: 'orca',
         binary,
         isConfigured,

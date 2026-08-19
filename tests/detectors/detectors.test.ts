@@ -52,6 +52,7 @@ describe('cursor detector', () => {
 
     const result = await cursorDetector.detect();
     expect(result).not.toBeNull();
+    expect(result?.id).toBe('cursor');
     expect(result?.name).toBe('cursor');
     expect(result?.binary).toBe('/usr/bin/cursor-agent');
     expect(result?.isACPAgent).toBe(true);
@@ -78,13 +79,13 @@ describe('cursor detector', () => {
 
 describe('isAgentDetector', () => {
   it('validates correct shape', () => {
-    const valid = { name: 'test', detect: async () => null };
+    const valid = { id: 'test', detect: async () => null };
     expect(isAgentDetector(valid)).toBe(true);
   });
 
   it('rejects invalid shapes', () => {
     expect(isAgentDetector(null)).toBe(false);
-    expect(isAgentDetector({ name: 'test' })).toBe(false);
+    expect(isAgentDetector({ id: 'test' })).toBe(false);
     expect(isAgentDetector({ detect: async () => null })).toBe(false);
     expect(isAgentDetector('string')).toBe(false);
     expect(isAgentDetector(123)).toBe(false);
@@ -102,7 +103,7 @@ describe('config detectors', () => {
     mockWhich.mockResolvedValue(null);
 
     const detectors = await loadAllDetectors();
-    const claudeDetector = detectors.find((d) => d.name === 'claude');
+    const claudeDetector = detectors.find((d) => d.id === 'claude_code');
 
     const result = await claudeDetector?.detect();
     expect(result).toBeNull();
@@ -118,10 +119,11 @@ describe('config detectors', () => {
     mockGetVersion.mockResolvedValue('1.0.0');
 
     const detectors = await loadAllDetectors();
-    const claudeDetector = detectors.find((d) => d.name === 'claude');
+    const claudeDetector = detectors.find((d) => d.id === 'claude_code');
 
     const result = await claudeDetector?.detect();
     expect(result).not.toBeNull();
+    expect(result?.id).toBe('claude_code');
     expect(result?.name).toBe('claude');
     expect(result?.binary).toBe('/usr/bin/claude');
     expect(result?.version).toBe('1.0.0');
@@ -139,7 +141,7 @@ describe('config detectors', () => {
     process.env.ANTHROPIC_API_KEY = 'test-key';
 
     const detectors = await loadAllDetectors();
-    const claudeDetector = detectors.find((d) => d.name === 'claude');
+    const claudeDetector = detectors.find((d) => d.id === 'claude_code');
 
     const result = await claudeDetector?.detect();
     expect(result?.isConfigured).toBe(true);
@@ -157,7 +159,7 @@ describe('config detectors', () => {
     mockGetVersion.mockResolvedValue('1.0.0');
 
     const detectors = await loadAllDetectors();
-    const hermesDetector = detectors.find((d) => d.name === 'hermes');
+    const hermesDetector = detectors.find((d) => d.id === 'hermes');
 
     const result = await hermesDetector?.detect();
     // isConfigured depends on whether ~/.hermes exists
@@ -184,6 +186,7 @@ describe('orca detector', () => {
     const { default: orca } = await import('../../src/detectors/orca.detector.js');
     const result = await orca.detect();
     expect(result).not.toBeNull();
+    expect(result?.id).toBe('orca');
     expect(result?.name).toBe('orca');
     expect(result?.binary).toBe('/usr/bin/orca');
     expect(result?.isACPAgent).toBe(true);
@@ -214,6 +217,7 @@ describe('windsurf detector', () => {
     const { default: windsurf } = await import('../../src/detectors/windsurf.detector.js');
     const result = await windsurf.detect();
     expect(result).not.toBeNull();
+    expect(result?.id).toBe('windsurf');
     expect(result?.name).toBe('windsurf');
     expect(result?.isACPAgent).toBe(true);
   });
@@ -263,11 +267,12 @@ describe('config file detection integration', () => {
     mockGetVersion.mockResolvedValue('1.0.0');
 
     const detectors = await loadAllDetectors();
-    const claudeDetector = detectors.find((d) => d.name === 'claude');
+    const claudeDetector = detectors.find((d) => d.id === 'claude_code');
 
     const result = await claudeDetector?.detect();
 
     expect(result).not.toBeNull();
+    expect(result?.id).toBe('claude_code');
     expect(result?.name).toBe('claude');
     expect(result?.isConfigured).toBe(true);
     expect(result?.binary).toBe('/fake/claude');

@@ -77,7 +77,7 @@ function getConfigDir(platform: string): string | null {
 }
 
 const detector: AgentDetector = {
-  name: 't3-code',
+  id: 't3-code',
 
   async detect(): Promise<DetectedAgent | null> {
     // 1. Try PATH — desktop app CLI alias first, then npm CLI name
@@ -123,7 +123,10 @@ const detector: AgentDetector = {
       : undefined;
     const isConfigured = configSource !== undefined;
 
-    return withConfigSource({ name: 't3-code', binary, version, isConfigured }, configSource);
+    return withConfigSource(
+      { id: 't3-code', name: 't3-code', binary, version, isConfigured },
+      configSource,
+    );
   },
 };
 

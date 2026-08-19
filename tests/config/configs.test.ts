@@ -35,7 +35,7 @@ describe('detectorConfigs', () => {
 
   describe('added config entries', () => {
     const newAgents = [
-      { name: 'kimi-code', binary: 'kimi' },
+      { name: 'kimi', binary: 'kimi' },
       { name: 'kiro', binary: 'kiro' },
       { name: 'mimocode', binary: 'mimocode' },
       { name: 'openhands', binary: 'openhands' },
@@ -57,7 +57,7 @@ describe('detectorConfigs', () => {
   });
 
   it('kimi-code has configDir and KIMI_API_KEY', () => {
-    const config = detectorConfigs.find((c) => c.name === 'kimi-code');
+    const config = detectorConfigs.find((c) => c.name === 'kimi');
     expect(config?.configDir).toBe('~/.kimi-code');
     expect(config?.configEnvVars).toContain('KIMI_API_KEY');
   });
@@ -76,20 +76,26 @@ describe('detectorConfigs', () => {
 
   describe('Vercel detect-agent integration', () => {
     it('claude config has nameResolver for cowork mode', () => {
-      const config = detectorConfigs.find((c) => c.name === 'claude');
+      const config = detectorConfigs.find((c) => c.id === 'claude_code');
       expect(config?.nameResolver).toBeDefined();
+      expect(config?.name).toBe('claude');
     });
 
     it('claude nameResolver returns cowork when CLAUDE_CODE_IS_COWORK is set', () => {
-      const config = detectorConfigs.find((c) => c.name === 'claude');
+      const config = detectorConfigs.find((c) => c.id === 'claude_code');
       const name = config?.nameResolver?.({ CLAUDE_CODE_IS_COWORK: 'true' });
       expect(name).toBe('cowork');
     });
 
     it('claude nameResolver returns claude when CLAUDE_CODE_IS_COWORK is not set', () => {
-      const config = detectorConfigs.find((c) => c.name === 'claude');
+      const config = detectorConfigs.find((c) => c.id === 'claude_code');
       const name = config?.nameResolver?.({});
       expect(name).toBe('claude');
+    });
+
+    it('claude has claude_code id', () => {
+      const config = detectorConfigs.find((c) => c.name === 'claude');
+      expect(config?.id).toBe('claude_code');
     });
 
     it('github-copilot replaces copilot', () => {

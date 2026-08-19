@@ -36,7 +36,7 @@ function getLmStudioHome(): string | null {
 }
 
 const detector: AgentDetector = {
-  name: 'lmstudio',
+  id: 'lmstudio',
 
   async detect(): Promise<DetectedAgent | null> {
     const binary = await which('lms');
@@ -54,7 +54,10 @@ const detector: AgentDetector = {
       : undefined;
     const isConfigured = configSource !== undefined;
 
-    return withConfigSource({ name: 'lmstudio', binary, version, isConfigured }, configSource);
+    return withConfigSource(
+      { id: 'lmstudio', name: 'lmstudio', binary, version, isConfigured },
+      configSource,
+    );
   },
 };
 

@@ -14,7 +14,14 @@
 export type ConfigSource = 'env' | 'config-file' | 'config-dir' | 'probe';
 
 export interface DetectedAgent {
-  name: string;
+  id: string; // stable Vercel-aligned key: 'claude_code', 'codex_cli', etc.
+  name: string; // legacy display name: 'claude', 'codex', etc. (nameResolver may override)
+  /**
+   * Absolute path to the resolved binary (from `which`/`where`).
+   * On Windows this includes the extension (e.g. `C:\...\claude.cmd` or `claude.exe`);
+   * on POSIX it is extensionless (e.g. `/usr/local/bin/claude`). This is the real
+   * on-disk path, not the bare command name from `DetectorConfig.binary`.
+   */
   binary: string;
 
   version?: string;
@@ -26,24 +33,28 @@ export interface DetectedAgent {
 }
 
 export interface AgentDetector {
-  name: string;
+  /** Stable Vercel-aligned id (e.g. 'claude_code'). Must match the produced DetectedAgent.id. */
+  id: string;
   detect(options?: DetectOptions): Promise<DetectedAgent | null>;
 }
 
 export interface DetectorConfig {
+  /** Stable Vercel-aligned id (e.g. 'claude_code'). Required. */
+  id: string;
+  /** Legacy display name (e.g. 'claude'). Shown in DetedAgent.name; may be overridden by nameResolver. */
   name: string;
-  binary: string;
-  versionArgs?: string[];
-  configEnvVars?: string[];
-  configDir?: string;
-  isACPAgent?: boolean;
+  binary: string; // bare command name to look up in PATH (e.g. 'claude'); the resolved absolute path is reported in DetectedAgent.binary
+  versionArgs?: string[]; // args for --version, default ['--version']
+  configEnvVars?: string[]; // env vars that indicate the agent is configured
+  configDir?: string; // ~/.agent style dir; presence marks it configured
+  isACPAgent?: boolean; // true if the agent is ACP-only and needs acpx
   /** Override the detected agent name based on runtime env. */
   nameResolver?: (env: Record<string, string | undefined>) => string;
 }
 
 /** Options for programmatic `detectAgents` calls. */
 export interface DetectOptions {
-  /** Only run detectors whose `name` is in this list. Unknown names are ignored. */
+  /** Only run detectors whose `id` is in this list. Unknown ids are ignored. */
   only?: string[];
   /** When `false`, skip active binary probes; presence checks (`which`/`access`) still run. Default `true`. */
   probe?: boolean;

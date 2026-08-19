@@ -19,7 +19,7 @@ import { hasConfigFile } from '../config/config-paths.js';
  */
 export function configToDetector(config: DetectorConfig): AgentDetector {
   return {
-    name: config.name,
+    id: config.id,
 
     async detect(options?: DetectOptions): Promise<DetectedAgent | null> {
       return detectImpl(options);
@@ -65,6 +65,7 @@ export function configToDetector(config: DetectorConfig): AgentDetector {
 
     return withConfigSource(
       {
+        id: config.id,
         name: config.nameResolver ? config.nameResolver(process.env) : config.name,
         binary,
         version,
@@ -114,7 +115,7 @@ export function isAgentDetector(obj: unknown): obj is AgentDetector {
   return (
     typeof obj === 'object' &&
     obj !== null &&
-    typeof (obj as AgentDetector).name === 'string' &&
+    typeof (obj as AgentDetector).id === 'string' &&
     typeof (obj as AgentDetector).detect === 'function'
   );
 }
