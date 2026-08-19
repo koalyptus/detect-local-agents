@@ -233,8 +233,8 @@ A custom detector: returns a `DetectedAgent` when the agent is present, `null` o
 
 ```typescript
 interface DetectorConfig {
-  name: string; // legacy display name
   id: string; // stable Vercel-aligned id (e.g. 'claude_code')
+  name: string; // legacy display name
   binary: string; // command name to look up in PATH
   versionArgs?: string[]; // args for --version, default ['--version']
   configEnvVars?: string[]; // env vars that indicate the agent is configured

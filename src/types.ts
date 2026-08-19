@@ -33,10 +33,10 @@ export interface AgentDetector {
 }
 
 export interface DetectorConfig {
-  /** Legacy display name (e.g. 'claude'). Shown in DetedAgent.name; may be overridden by nameResolver. */
-  name: string;
   /** Stable Vercel-aligned id (e.g. 'claude_code'). Required. */
   id: string;
+  /** Legacy display name (e.g. 'claude'). Shown in DetedAgent.name; may be overridden by nameResolver. */
+  name: string;
   binary: string; // command name to look up in PATH
   versionArgs?: string[]; // args for --version, default ['--version']
   configEnvVars?: string[]; // env vars that indicate the agent is configured

@@ -66,8 +66,8 @@ When one binary serves two identities depending on environment, add a `nameResol
 
 ```typescript
 {
-  name: 'claude',           // legacy display name
   id: 'claude_code',        // Vercel-aligned id
+  name: 'claude',           // legacy display name
   binary: 'claude',
   configEnvVars: ['ANTHROPIC_API_KEY', 'CLAUDE_API_KEY'],
   configDir: '~/.claude',
