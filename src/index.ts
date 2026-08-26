@@ -1,9 +1,45 @@
-import type { DetectOptions, DetectedAgent } from './types.js';
+import type { DetectOptions, DetectedAgent, SupportedAgent } from './types.js';
 import { loadAllDetectors } from './detectors/index.js';
 
-export type { DetectedAgent, AgentDetector, DetectorConfig, DetectOptions } from './types.js';
+export type {
+  DetectedAgent,
+  AgentDetector,
+  DetectorConfig,
+  DetectOptions,
+  SupportedAgent,
+} from './types.js';
 export { isAgentDetector } from './detectors/index.js';
 export { detectorConfigs } from './config/configs.js';
+
+/**
+ * Enumerate all agent ids this package can detect, without probing the local
+ * machine. Includes both config-based detectors and file-based detector
+ * modules. Backed by `loadAllDetectors()` — adding a new detector
+ * automatically appears here, no second registry to keep in sync.
+ *
+ * For the runtime display name (which can differ from the static id, e.g.
+ * `claude_code` ↔ `cowork` via `nameResolver`), call `detectAgents()` and
+ * read `.name` on each result.
+ *
+ * Cost: same as `detectAgents()`'s first call — all detector modules are
+ * dynamically imported. No binary probes or filesystem scans run.
+ *
+ * @returns Deduped, order-stable list (config-based detectors first, then
+ *          file-based in directory-read order). Duplicate ids are removed
+ *          defensively even though current detectors don't collide.
+ */
+export async function listSupportedAgents(): Promise<SupportedAgent[]> {
+  const detectors = await loadAllDetectors();
+  const seen = new Set<string>();
+  const result: SupportedAgent[] = [];
+  for (const d of detectors) {
+    if (!seen.has(d.id)) {
+      seen.add(d.id);
+      result.push({ id: d.id });
+    }
+  }
+  return result;
+}
 
 /**
  * Detect all locally installed AI agents.

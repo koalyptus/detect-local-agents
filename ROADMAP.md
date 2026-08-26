@@ -67,9 +67,10 @@
 - [x] Tests for all new detectors and sync script
 - [x] PR
 
-## Phase 7: Programmatic Detection Controls (g9)
+## Phase 7: Programmatic Detection Controls
 
-> Expose detection controls to programmatic callers without changing default behaviour.
+> Expose detection controls and the supported-agent list to programmatic callers
+> without changing default behaviour. Sub-phases 7a–7f.
 
 ### Phase 7a: stderr version fallback
 
@@ -93,7 +94,7 @@
 - [x] Add `VERSION_PROBE_TIMEOUT` (5s) and use it for the version probe; `which()` keeps its 10s `COMMAND_TIMEOUT`
 - [x] Shipped as v0.5.0 (#14)
 
-### Phase 7e: consumer-facing DetectOptions (this PR #16)
+### Phase 7e: consumer-facing DetectOptions
 
 - [x] `DetectOptions` (`only` / `probe` / `timeout`) added to `detectAgents(options?)` and `AgentDetector.detect(options?)` — strictly additive; omitting `options` preserves the default behaviour
 - [x] `timeout` is caller-overridable per `getVersion` and each detector's probe (default `VERSION_PROBE_TIMEOUT`)
@@ -101,6 +102,14 @@
 - [x] `only` filters detectors by static `AgentDetector.name` (unknown names ignored); no new global state
 - [x] 100% coverage on new branches; README + SKILL + ROADMAP synced
 - [x] PR #16
+
+### Phase 7f: list-supported API + CLI flag
+
+- [x] `SupportedAgent` interface (`{ id: string }`) and `listSupportedAgents(): Promise<SupportedAgent[]>` exported from `src/index.ts`; backed by `loadAllDetectors()` so new detectors show up automatically (no second registry)
+- [x] Returns static ids only — deduped and order-stable; no probes, no `detect()` calls. Runtime display names stay a `detectAgents()` concern (`nameResolver` is not run here)
+- [x] CLI `--list-supported` flag on the default command, honouring `--json`; bypasses detection entirely
+- [x] `detectorConfigs` stays exported and unchanged — the new API is strictly additive
+- [x] 100% coverage on new branches; README + ROADMAP synced
 
 ## Phase 8: Polish & Ship
 

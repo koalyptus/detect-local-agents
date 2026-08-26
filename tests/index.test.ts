@@ -1,6 +1,6 @@
 // tests/index.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { detectAgents } from '../src/index.js';
+import { detectAgents, listSupportedAgents } from '../src/index.js';
 
 // Mock the detect module
 vi.mock('../src/detect/utils.js', () => ({
@@ -190,5 +190,108 @@ describe('detectAgents', () => {
     // Should only include working agent
     expect(agents.length).toBe(1);
     expect(agents[0].name).toBe('working-agent');
+  });
+});
+
+describe('listSupportedAgents', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLoadAllDetectors.mockResolvedValue([]);
+  });
+
+  it('returns an array', async () => {
+    const supported = await listSupportedAgents();
+    expect(Array.isArray(supported)).toBe(true);
+  });
+
+  it('each entry has a non-empty id string', async () => {
+    const mockDetectors: AgentDetector[] = [
+      { id: 'claude_code', detect: async () => null },
+      { id: 'codex_cli', detect: async () => null },
+    ];
+    mockLoadAllDetectors.mockResolvedValue(mockDetectors);
+
+    const supported = await listSupportedAgents();
+
+    expect(supported.length).toBe(2);
+    for (const s of supported) {
+      expect(typeof s.id).toBe('string');
+      expect(s.id.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('ids are unique (set-equality)', async () => {
+    const mockDetectors: AgentDetector[] = [
+      { id: 'claude_code', detect: async () => null },
+      { id: 'codex_cli', detect: async () => null },
+      { id: 'claude_code', detect: async () => null }, // duplicate
+    ];
+    mockLoadAllDetectors.mockResolvedValue(mockDetectors);
+
+    const supported = await listSupportedAgents();
+    const ids = supported.map((s) => s.id);
+    const uniqueIds = [...new Set(ids)];
+
+    expect(ids).toEqual(uniqueIds);
+  });
+
+  it('does NOT call detect() on any detector', async () => {
+    const detectSpy = vi.fn(async () => null);
+    const mockDetectors: AgentDetector[] = [
+      { id: 'claude_code', detect: detectSpy },
+      { id: 'codex_cli', detect: detectSpy },
+    ];
+    mockLoadAllDetectors.mockResolvedValue(mockDetectors);
+
+    await listSupportedAgents();
+
+    expect(detectSpy).not.toHaveBeenCalled();
+  });
+
+  it('derived from loadAllDetectors()', async () => {
+    const mockDetectors: AgentDetector[] = [
+      { id: 'claude_code', detect: async () => null },
+      { id: 'acpx', detect: async () => null },
+      { id: 'rovodev', detect: async () => null },
+    ];
+    mockLoadAllDetectors.mockResolvedValue(mockDetectors);
+
+    const supported = await listSupportedAgents();
+
+    const expectedIds = ['claude_code', 'acpx', 'rovodev'];
+    expect(supported.map((s) => s.id)).toEqual(expectedIds);
+  });
+
+  it('dedupe: removes duplicate ids', async () => {
+    const mockDetectors: AgentDetector[] = [
+      { id: 'claude_code', detect: async () => null },
+      { id: 'codex_cli', detect: async () => null },
+      { id: 'claude_code', detect: async () => null },
+      { id: 'codex_cli', detect: async () => null },
+    ];
+    mockLoadAllDetectors.mockResolvedValue(mockDetectors);
+
+    const supported = await listSupportedAgents();
+
+    expect(supported).toHaveLength(2);
+    expect(supported.map((s) => s.id)).toEqual(['claude_code', 'codex_cli']);
+  });
+
+  it('includes both config-based and file-based ids', async () => {
+    const mockDetectors: AgentDetector[] = [
+      // config-based style id
+      { id: 'claude_code', detect: async () => null },
+      // file-based style id
+      { id: 'acpx', detect: async () => null },
+      { id: 'rovodev', detect: async () => null },
+    ];
+    mockLoadAllDetectors.mockResolvedValue(mockDetectors);
+
+    const supported = await listSupportedAgents();
+    const ids = supported.map((s) => s.id);
+
+    expect(ids).toContain('claude_code');
+    expect(ids).toContain('acpx');
+    expect(ids).toContain('rovodev');
   });
 });

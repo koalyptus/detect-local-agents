@@ -181,6 +181,85 @@ describe('cli - info command', () => {
   });
 });
 
+describe('cli - --list-supported flag', () => {
+  let mockDetectAgents: ReturnType<typeof vi.spyOn>;
+  let mockListSupportedAgents: ReturnType<typeof vi.spyOn>;
+  let stdoutSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    mockDetectAgents = vi.spyOn(indexModule, 'detectAgents');
+    mockListSupportedAgents = vi.spyOn(indexModule, 'listSupportedAgents');
+    stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('prints supported agent ids as a table', async () => {
+    mockListSupportedAgents.mockResolvedValue([{ id: 'claude_code' }, { id: 'codex_cli' }]);
+
+    const result = await runCli(['node', 'detect-local-agents', '--list-supported']);
+
+    expect(result.exitCode).toBe(0);
+    expect(mockListSupportedAgents).toHaveBeenCalledOnce();
+    const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
+    expect(out).toContain('ID');
+    expect(out).toContain('claude_code');
+    expect(out).toContain('codex_cli');
+  });
+
+  it('prints supported agent ids as JSON with --json', async () => {
+    mockListSupportedAgents.mockResolvedValue([{ id: 'claude_code' }, { id: 'acpx' }]);
+
+    await runCli(['node', 'detect-local-agents', '--list-supported', '--json']);
+
+    const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
+    const parsed = JSON.parse(out);
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0].id).toBe('claude_code');
+    expect(parsed[1].id).toBe('acpx');
+  });
+
+  it('does NOT call detectAgents (no detection performed)', async () => {
+    mockListSupportedAgents.mockResolvedValue([{ id: 'claude_code' }]);
+
+    await runCli(['node', 'detect-local-agents', '--list-supported']);
+
+    expect(mockDetectAgents).not.toHaveBeenCalled();
+  });
+
+  it('does NOT call detectAgents even when --configured is also set', async () => {
+    mockListSupportedAgents.mockResolvedValue([{ id: 'claude_code' }]);
+
+    await runCli(['node', 'detect-local-agents', '--list-supported', '--configured']);
+
+    expect(mockDetectAgents).not.toHaveBeenCalled();
+    expect(mockListSupportedAgents).toHaveBeenCalledOnce();
+  });
+
+  it('prints "No supported agents." for an empty list', async () => {
+    mockListSupportedAgents.mockResolvedValue([]);
+
+    await runCli(['node', 'detect-local-agents', '--list-supported']);
+
+    const out = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
+    expect(out).toBe('No supported agents.\n');
+  });
+
+  it('runs normal detection when the flag is absent', async () => {
+    mockDetectAgents.mockResolvedValue([
+      { id: 'claude_code', name: 'claude', binary: '/usr/bin/claude', isConfigured: true },
+    ]);
+
+    await runCli(['node', 'detect-local-agents']);
+
+    expect(mockDetectAgents).toHaveBeenCalledOnce();
+    expect(mockListSupportedAgents).not.toHaveBeenCalled();
+  });
+});
+
 describe('cli - auto-run guard', () => {
   beforeEach(() => {
     // autoRun() below runs the real CLI, which writes its output to stdout.
