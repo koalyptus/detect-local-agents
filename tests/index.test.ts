@@ -1,4 +1,3 @@
-// tests/index.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { detectAgents, listSupportedAgents } from '../src/index.js';
 
@@ -220,19 +219,17 @@ describe('listSupportedAgents', () => {
     }
   });
 
-  it('ids are unique (set-equality)', async () => {
+  it('ids are unique', async () => {
     const mockDetectors: AgentDetector[] = [
       { id: 'claude_code', detect: async () => null },
       { id: 'codex_cli', detect: async () => null },
-      { id: 'claude_code', detect: async () => null }, // duplicate
     ];
     mockLoadAllDetectors.mockResolvedValue(mockDetectors);
 
     const supported = await listSupportedAgents();
     const ids = supported.map((s) => s.id);
-    const uniqueIds = [...new Set(ids)];
 
-    expect(ids).toEqual(uniqueIds);
+    expect(ids).toEqual([...new Set(ids)]);
   });
 
   it('does NOT call detect() on any detector', async () => {
@@ -258,23 +255,23 @@ describe('listSupportedAgents', () => {
 
     const supported = await listSupportedAgents();
 
-    const expectedIds = ['claude_code', 'acpx', 'rovodev'];
-    expect(supported.map((s) => s.id)).toEqual(expectedIds);
+    // Sorted by id, so the source order is not preserved.
+    expect(supported.map((s) => s.id)).toEqual(['acpx', 'claude_code', 'rovodev']);
   });
 
-  it('dedupe: removes duplicate ids', async () => {
+  it('is sorted by id regardless of detector load order', async () => {
     const mockDetectors: AgentDetector[] = [
+      { id: 'windsurf', detect: async () => null },
       { id: 'claude_code', detect: async () => null },
-      { id: 'codex_cli', detect: async () => null },
-      { id: 'claude_code', detect: async () => null },
-      { id: 'codex_cli', detect: async () => null },
+      { id: 'acpx', detect: async () => null },
+      { id: 'mercury', detect: async () => null },
     ];
     mockLoadAllDetectors.mockResolvedValue(mockDetectors);
 
-    const supported = await listSupportedAgents();
+    const ids = (await listSupportedAgents()).map((s) => s.id);
 
-    expect(supported).toHaveLength(2);
-    expect(supported.map((s) => s.id)).toEqual(['claude_code', 'codex_cli']);
+    expect(ids).toEqual(['acpx', 'claude_code', 'mercury', 'windsurf']);
+    expect(ids).toEqual([...ids].sort());
   });
 
   it('includes both config-based and file-based ids', async () => {

@@ -20,7 +20,7 @@ function filterAgents(agents: DetectedAgent[], opts: { configuredOnly: boolean }
   return opts.configuredOnly ? agents.filter((agent) => agent.isConfigured) : agents;
 }
 
-async function sharedHandler(args: { json?: boolean; configured?: boolean }): Promise<void> {
+async function detectHandler(args: { json?: boolean; configured?: boolean }): Promise<void> {
   const agents = await detectAgents();
   const filtered = filterAgents(agents, { configuredOnly: Boolean(args.configured) });
   const format: OutputFormat = args.json ? 'json' : 'table';
@@ -68,7 +68,7 @@ export async function runCli(argv: string[]): Promise<CliResult> {
             default: false,
             description: 'Print supported agent ids and exit (no detection performed)',
           }),
-      (args) => (args.listSupported ? listSupportedHandler(args) : sharedHandler(args)),
+      (args) => (args.listSupported ? listSupportedHandler(args) : detectHandler(args)),
     )
     .command(
       'info <name>',

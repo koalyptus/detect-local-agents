@@ -136,7 +136,7 @@ import { detectAgents, listSupportedAgents } from 'detect-local-agents';
 
 const supported = await listSupportedAgents();
 console.log(supported.map((s) => s.id));
-// ['claude_code', 'codex_cli', 'open_code', ..., 'acpx', 'rovodev', ...]
+// ['acpx', 'aider', 'amp', 'antigravity', 'augment-cli', ...]  (sorted by id)
 
 // Use a known-valid id with the `only` filter
 const agents = await detectAgents({ only: ['claude_code', 'codex_cli'] });
@@ -249,7 +249,7 @@ Enumerates every agent id this package can detect, **without probing the local m
 
 Covers both config-based detectors and file-based detector modules. It is derived from the same detector-loading path `detectAgents()` uses, so a newly added detector appears here automatically — there is no second registry to keep in sync.
 
-Ids are deduped and order-stable (config-based first, then file-based in directory-read order).
+Results are sorted by `id`. The underlying detector order depends on `fs.readdir`, which POSIX does not guarantee, so sorting keeps the output deterministic across platforms.
 
 > For an agent's **runtime display name** — which can differ from the static id (e.g. `claude_code` reports as `cowork` when `CLAUDE_CODE_IS_COWORK` is set) — call `detectAgents()` and read `.name` on each result. `listSupportedAgents()` deliberately returns only the static id.
 

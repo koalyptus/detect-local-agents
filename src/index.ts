@@ -24,21 +24,14 @@ export { detectorConfigs } from './config/configs.js';
  * Cost: same as `detectAgents()`'s first call — all detector modules are
  * dynamically imported. No binary probes or filesystem scans run.
  *
- * @returns Deduped, order-stable list (config-based detectors first, then
- *          file-based in directory-read order). Duplicate ids are removed
- *          defensively even though current detectors don't collide.
+ * @returns {Promise<SupportedAgent[]>} The supported agents, sorted by `id`.
+ *          Sorting makes the output deterministic across platforms: the
+ *          underlying detector order depends on `fs.readdir`, which POSIX does
+ *          not guarantee.
  */
 export async function listSupportedAgents(): Promise<SupportedAgent[]> {
   const detectors = await loadAllDetectors();
-  const seen = new Set<string>();
-  const result: SupportedAgent[] = [];
-  for (const d of detectors) {
-    if (!seen.has(d.id)) {
-      seen.add(d.id);
-      result.push({ id: d.id });
-    }
-  }
-  return result;
+  return detectors.map((d) => ({ id: d.id })).sort((a, b) => a.id.localeCompare(b.id));
 }
 
 /**

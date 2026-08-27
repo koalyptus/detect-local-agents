@@ -106,7 +106,7 @@
 ### Phase 7f: list-supported API + CLI flag
 
 - [x] `SupportedAgent` interface (`{ id: string }`) and `listSupportedAgents(): Promise<SupportedAgent[]>` exported from `src/index.ts`; backed by `loadAllDetectors()` so new detectors show up automatically (no second registry)
-- [x] Returns static ids only — deduped and order-stable; no probes, no `detect()` calls. Runtime display names stay a `detectAgents()` concern (`nameResolver` is not run here)
+- [x] Returns static ids only — sorted by `id` for deterministic output across platforms; no probes, no `detect()` calls. Runtime display names stay a `detectAgents()` concern (`nameResolver` is not run here)
 - [x] CLI `--list-supported` flag on the default command, honouring `--json`; bypasses detection entirely
 - [x] `detectorConfigs` stays exported and unchanged — the new API is strictly additive
 - [x] 100% coverage on new branches; README + ROADMAP synced
