@@ -127,9 +127,17 @@ export function isInvokedDirectly(argv: string[]): boolean {
 
 export function autoRun(): Promise<void> | void {
   if (isInvokedDirectly(process.argv)) {
-    return runCli(process.argv).then((r) => {
-      process.exit(r.exitCode);
-    });
+    return runCli(process.argv)
+      .then((r) => {
+        process.exit(r.exitCode);
+      })
+      .catch(() => {
+        // runCli rejects on validation failures (e.g. unknown arguments like
+        // --list-supportes) and on genuine errors. Both must exit cleanly —
+        // before this .catch existed, the rejection was unhandled and dumped
+        // a stack trace.
+        process.exit(1);
+      });
   }
 }
 

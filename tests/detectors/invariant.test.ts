@@ -68,3 +68,32 @@ describe('configSource invariant', () => {
     expect(configuredWithoutSource.some((a) => a.name === 'devin')).toBe(true);
   });
 });
+
+describe('detector id invariant', () => {
+  it('every loaded detector has a unique id', async () => {
+    const detectors = await loadAllDetectors();
+    expect(detectors.length).toBeGreaterThan(0);
+
+    const ids = detectors.map((d) => d.id);
+    const duplicates = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
+
+    // A duplicate id is a real bug, not a cosmetic one: detectAgents({ only })
+    // matches on id, so two detectors sharing an id makes one of them
+    // unreachable through the filter. Fail loudly here rather than letting a
+    // caller silently get the wrong detector.
+    expect(
+      duplicates,
+      `duplicate detector ids: ${duplicates.join(', ')} — ids must be unique across config-based entries and *.detector.ts modules`,
+    ).toEqual([]);
+    expect(new Set(ids).size).toBe(detectors.length);
+  });
+
+  it('every loaded detector has a non-empty string id', async () => {
+    const detectors = await loadAllDetectors();
+
+    for (const detector of detectors) {
+      expect(typeof detector.id).toBe('string');
+      expect(detector.id.length).toBeGreaterThan(0);
+    }
+  });
+});

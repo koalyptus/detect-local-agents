@@ -314,4 +314,25 @@ describe('cli - auto-run guard', () => {
 
     expect(exitSpy).not.toHaveBeenCalled();
   });
+
+  it('autoRun exits cleanly when runCli rejects (unknown argument)', async () => {
+    // Regression: a typo like --list-supportes makes yargs throw inside runCli.
+    // Before the fix, autoRun() had no .catch, so this became an unhandled
+    // promise rejection that dumped a stack trace. Now it must exit 1 cleanly.
+    const origArgv = process.argv;
+    process.argv = ['node', '/path/to/cli.js', '--list-supportes'];
+
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+      throw new Error(`exit:${code}`);
+    }) as never);
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+    // runCli rejects via the yargs .fail handler for unknown arguments.
+    await expect(autoRun()).rejects.toThrow('exit:1');
+
+    expect(exitSpy).toHaveBeenCalledWith(1);
+    process.argv = origArgv;
+    exitSpy.mockRestore();
+    stderrSpy.mockRestore();
+  });
 });
