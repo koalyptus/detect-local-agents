@@ -54,9 +54,7 @@ export interface DetectorConfig {
 
 /**
  * A supported agent entry. Currently exposes only the stable id used by
- * `detectAgents({ only: [...] })` and the CLI; the record shape is reserved
- * so future versions can add metadata (e.g. detection-method hints) without
- * a breaking change.
+ * `detectAgents({ only: [...] })` and the CLI.
  */
 export interface SupportedAgent {
   /** Stable Vercel-aligned id (e.g. 'claude_code', 'acpx'). Always present. */

@@ -135,7 +135,9 @@ export function autoRun(): Promise<void> | void {
         // runCli rejects on validation failures (e.g. unknown arguments like
         // --list-supportes) and on genuine errors. Both must exit cleanly —
         // before this .catch existed, the rejection was unhandled and dumped
-        // a stack trace.
+        // a stack trace. Error messages are already surfaced by runCli itself
+        // before it rejects (either by the yargs .fail handler or by runCli's
+        // own catch block), so the only work here is to exit non-zero.
         process.exit(1);
       });
   }

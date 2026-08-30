@@ -247,7 +247,7 @@ async function listSupportedAgents(): Promise<SupportedAgent[]>;
 
 Enumerates every agent id this package can detect, **without probing the local machine** — no binary lookups, no filesystem scans, no subprocesses. Use it to discover valid ids for `detectAgents({ only: [...] })` (or the CLI) rather than hard-coding them or reading the source.
 
-Covers both config-based detectors and file-based detector modules. It is derived from the same detector-loading path `detectAgents()` uses, so a newly added detector appears here automatically — there is no second registry to keep in sync.
+Covers both config-based detectors and file-based detector modules. Adding a new detector automatically appears here.
 
 Results are sorted by `id`. The underlying detector order depends on `fs.readdir`, which POSIX does not guarantee, so sorting keeps the output deterministic across platforms.
 

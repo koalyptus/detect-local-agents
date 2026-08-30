@@ -14,15 +14,11 @@ export { detectorConfigs } from './config/configs.js';
 /**
  * Enumerate all agent ids this package can detect, without probing the local
  * machine. Includes both config-based detectors and file-based detector
- * modules. Backed by `loadAllDetectors()` — adding a new detector
- * automatically appears here, no second registry to keep in sync.
+ * modules. Adding a new detector automatically appears here.
  *
  * For the runtime display name (which can differ from the static id, e.g.
  * `claude_code` ↔ `cowork` via `nameResolver`), call `detectAgents()` and
  * read `.name` on each result.
- *
- * Cost: same as `detectAgents()`'s first call — all detector modules are
- * dynamically imported. No binary probes or filesystem scans run.
  *
  * @returns {Promise<SupportedAgent[]>} The supported agents, sorted by `id`.
  *          Sorting makes the output deterministic across platforms: the
