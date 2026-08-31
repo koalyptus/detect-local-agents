@@ -77,6 +77,7 @@ detectAgents()
 All detectors run in parallel under Promise.all -- per-detector errors are
 swallowed and nulls filtered out -> DetectedAgent[]
 `-- CLI: table with CONFIGURED column, --configured / --json flags
+    (--list-supported bypasses this flow entirely: it lists ids without detecting)
 ```
 
 ## Install
@@ -126,6 +127,21 @@ if (agents.length > 0) {
 const configured = agents.filter((a) => a.isConfigured);
 ```
 
+To find out which agent ids this package supports — without probing the machine — use
+`listSupportedAgents()`. This is the reliable way to discover valid ids for
+`detectAgents({ only: [...] })` instead of hard-coding them:
+
+```typescript
+import { detectAgents, listSupportedAgents } from 'detect-local-agents';
+
+const supported = await listSupportedAgents();
+console.log(supported.map((s) => s.id));
+// ['acpx', 'aider', 'amp', 'antigravity', 'augment-cli', ...]  (sorted by id)
+
+// Use a known-valid id with the `only` filter
+const agents = await detectAgents({ only: ['claude_code', 'codex_cli'] });
+```
+
 ## CLI
 
 After install, the package ships a `detect-local-agents` binary and a `dla` shorthand:
@@ -146,6 +162,12 @@ npx detect-local-agents --json
 
 # Only show configured agents
 npx detect-local-agents --configured
+
+# List the agent ids this package supports (no detection performed)
+npx detect-local-agents --list-supported
+
+# ...as JSON, for piping
+npx detect-local-agents --list-supported --json
 
 # Single-agent details (prints null if not found, exit 0)
 npx detect-local-agents info claude_code
@@ -216,6 +238,32 @@ interface DetectOptions {
   timeout?: number; // per-probe subprocess cap in ms
 }
 ```
+
+### `listSupportedAgents()`
+
+```typescript
+async function listSupportedAgents(): Promise<SupportedAgent[]>;
+```
+
+Enumerates every agent id this package can detect, **without probing the local machine** — no binary lookups, no filesystem scans, no subprocesses. Use it to discover valid ids for `detectAgents({ only: [...] })` (or the CLI) rather than hard-coding them or reading the source.
+
+Covers both config-based detectors and file-based detector modules. Adding a new detector automatically appears here.
+
+Results are sorted by `id`. The underlying detector order depends on `fs.readdir`, which POSIX does not guarantee, so sorting keeps the output deterministic across platforms.
+
+> For an agent's **runtime display name** — which can differ from the static id (e.g. `claude_code` reports as `cowork` when `CLAUDE_CODE_IS_COWORK` is set) — call `detectAgents()` and read `.name` on each result. `listSupportedAgents()` deliberately returns only the static id.
+
+Cost note: the first call dynamically imports all detector modules, the same one-off cost as the first `detectAgents()` call.
+
+### `SupportedAgent`
+
+```typescript
+interface SupportedAgent {
+  id: string; // stable Vercel-aligned id (e.g. 'claude_code', 'acpx')
+}
+```
+
+An entry returned by `listSupportedAgents()`. It intentionally exposes only `id` today; the record shape (rather than a bare `string`) is reserved so future versions can add optional metadata without a breaking change.
 
 ### `AgentDetector`
 

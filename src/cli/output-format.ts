@@ -1,4 +1,4 @@
-import type { DetectedAgent } from '../types.js';
+import type { DetectedAgent, SupportedAgent } from '../types.js';
 
 export type OutputFormat = 'json' | 'table';
 
@@ -43,10 +43,33 @@ function renderTable(agents: DetectedAgent[]): string {
   return lines.join('\n');
 }
 
-function renderJson(agents: DetectedAgent[]): string {
-  return JSON.stringify(agents, null, 2);
+function renderSupportedTable(supported: SupportedAgent[]): string {
+  if (supported.length === 0) {
+    return 'No supported agents.';
+  }
+
+  const headers = ['ID'];
+  const rows = supported.map((s) => [s.id]);
+
+  const widths = headers.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i]!.length)));
+
+  const lines: string[] = [
+    buildRow(headers, widths),
+    buildSeparator(widths),
+    ...rows.map((r) => buildRow(r, widths)),
+  ];
+
+  return lines.join('\n');
+}
+
+function renderJson<T>(items: T[]): string {
+  return JSON.stringify(items, null, 2);
 }
 
 export function formatAgents(agents: DetectedAgent[], format: OutputFormat): string {
   return format === 'json' ? renderJson(agents) : renderTable(agents);
+}
+
+export function formatSupportedAgents(supported: SupportedAgent[], format: OutputFormat): string {
+  return format === 'json' ? renderJson(supported) : renderSupportedTable(supported);
 }

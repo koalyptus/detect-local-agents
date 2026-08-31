@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import yargs from 'yargs';
-import { detectAgents } from '../index.js';
-import { formatAgents, type OutputFormat } from './output-format.js';
+import { detectAgents, listSupportedAgents } from '../index.js';
+import { formatAgents, formatSupportedAgents, type OutputFormat } from './output-format.js';
 import type { DetectedAgent } from '../types.js';
 
 export interface CliResult {
@@ -20,6 +20,21 @@ function filterAgents(agents: DetectedAgent[], opts: { configuredOnly: boolean }
   return opts.configuredOnly ? agents.filter((agent) => agent.isConfigured) : agents;
 }
 
+async function detectHandler(args: { json?: boolean; configured?: boolean }): Promise<void> {
+  const agents = await detectAgents();
+  const filtered = filterAgents(agents, { configuredOnly: Boolean(args.configured) });
+  const format: OutputFormat = args.json ? 'json' : 'table';
+  writeStdout(formatAgents(filtered, format));
+  writeStdout('\n');
+}
+
+async function listSupportedHandler(args: { json?: boolean }): Promise<void> {
+  const supported = await listSupportedAgents();
+  const format: OutputFormat = args.json ? 'json' : 'table';
+  writeStdout(formatSupportedAgents(supported, format));
+  writeStdout('\n');
+}
+
 /**
  * Typed exit sentinel — replaces opaque Error('exit:N') strings so tests
  * can distinguish exit-as-flow-control from genuine errors.
@@ -27,17 +42,6 @@ function filterAgents(agents: DetectedAgent[], opts: { configuredOnly: boolean }
 export const enum CliExitSentinel {
   SUCCESS = 'exit:0',
   ERROR = 'exit:1',
-}
-
-/**
- * Shared handler extracted to eliminate near-duplicate code between $0 and ls.
- */
-async function sharedHandler(args: { json?: boolean; configured?: boolean }): Promise<void> {
-  const agents = await detectAgents();
-  const filtered = filterAgents(agents, { configuredOnly: Boolean(args.configured) });
-  const format: OutputFormat = args.json ? 'json' : 'table';
-  writeStdout(formatAgents(filtered, format));
-  writeStdout('\n');
 }
 
 export async function runCli(argv: string[]): Promise<CliResult> {
@@ -58,8 +62,13 @@ export async function runCli(argv: string[]): Promise<CliResult> {
             type: 'boolean',
             default: false,
             description: 'Only show agents with auth/configured',
+          })
+          .option('list-supported', {
+            type: 'boolean',
+            default: false,
+            description: 'Print supported agent ids and exit (no detection performed)',
           }),
-      (args) => sharedHandler(args),
+      (args) => (args.listSupported ? listSupportedHandler(args) : detectHandler(args)),
     )
     .command(
       'info <name>',
@@ -118,9 +127,19 @@ export function isInvokedDirectly(argv: string[]): boolean {
 
 export function autoRun(): Promise<void> | void {
   if (isInvokedDirectly(process.argv)) {
-    return runCli(process.argv).then((r) => {
-      process.exit(r.exitCode);
-    });
+    return runCli(process.argv)
+      .then((r) => {
+        process.exit(r.exitCode);
+      })
+      .catch(() => {
+        // runCli rejects on validation failures (e.g. unknown arguments like
+        // --list-supportes) and on genuine errors. Both must exit cleanly —
+        // before this .catch existed, the rejection was unhandled and dumped
+        // a stack trace. Error messages are already surfaced by runCli itself
+        // before it rejects (either by the yargs .fail handler or by runCli's
+        // own catch block), so the only work here is to exit non-zero.
+        process.exit(1);
+      });
   }
 }
 

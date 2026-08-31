@@ -1,9 +1,34 @@
-import type { DetectOptions, DetectedAgent } from './types.js';
+import type { DetectOptions, DetectedAgent, SupportedAgent } from './types.js';
 import { loadAllDetectors } from './detectors/index.js';
 
-export type { DetectedAgent, AgentDetector, DetectorConfig, DetectOptions } from './types.js';
+export type {
+  DetectedAgent,
+  AgentDetector,
+  DetectorConfig,
+  DetectOptions,
+  SupportedAgent,
+} from './types.js';
 export { isAgentDetector } from './detectors/index.js';
 export { detectorConfigs } from './config/configs.js';
+
+/**
+ * Enumerate all agent ids this package can detect, without probing the local
+ * machine. Includes both config-based detectors and file-based detector
+ * modules. Adding a new detector automatically appears here.
+ *
+ * For the runtime display name (which can differ from the static id, e.g.
+ * `claude_code` ↔ `cowork` via `nameResolver`), call `detectAgents()` and
+ * read `.name` on each result.
+ *
+ * @returns {Promise<SupportedAgent[]>} The supported agents, sorted by `id`.
+ *          Sorting makes the output deterministic across platforms: the
+ *          underlying detector order depends on `fs.readdir`, which POSIX does
+ *          not guarantee.
+ */
+export async function listSupportedAgents(): Promise<SupportedAgent[]> {
+  const detectors = await loadAllDetectors();
+  return detectors.map((d) => ({ id: d.id })).sort((a, b) => a.id.localeCompare(b.id));
+}
 
 /**
  * Detect all locally installed AI agents.

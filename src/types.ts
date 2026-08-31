@@ -52,6 +52,15 @@ export interface DetectorConfig {
   nameResolver?: (env: Record<string, string | undefined>) => string;
 }
 
+/**
+ * A supported agent entry. Currently exposes only the stable id used by
+ * `detectAgents({ only: [...] })` and the CLI.
+ */
+export interface SupportedAgent {
+  /** Stable Vercel-aligned id (e.g. 'claude_code', 'acpx'). Always present. */
+  id: string;
+}
+
 /** Options for programmatic `detectAgents` calls. */
 export interface DetectOptions {
   /** Only run detectors whose `id` is in this list. Unknown ids are ignored. */
