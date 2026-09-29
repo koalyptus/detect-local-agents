@@ -231,6 +231,15 @@ describe('t3-code detector', () => {
     expect(await t3CodeDetector.detect()).toBeNull();
   });
 
+  it('returns null when LOCALAPPDATA is unset on win32', async () => {
+    mockWhich.mockResolvedValue(null);
+    mockPlatform.mockReturnValue('win32');
+    delete process.env.LOCALAPPDATA;
+    mockFsStat.mockRejectedValue(new Error('not found'));
+
+    expect(await t3CodeDetector.detect()).toBeNull();
+  });
+
   it('returns null when windows common paths all fail', async () => {
     mockWhich.mockResolvedValue(null);
     mockPlatform.mockReturnValue('win32');
