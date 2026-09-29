@@ -153,4 +153,15 @@ describe('windsurf detector', () => {
     const result = await windsurfDetector.detect();
     expect(result).toBeNull();
   });
+
+  it('finds windsurf via ~/Applications fallback on macOS', async () => {
+    mockWhich.mockResolvedValue(null);
+    mockPlatform.mockReturnValue('darwin');
+    // First path (/Applications/...) fails, second (~/Applications/...) succeeds
+    mockFsAccess.mockRejectedValueOnce(new Error('not found')).mockResolvedValueOnce(undefined);
+
+    const result = await windsurfDetector.detect();
+    expect(result?.name).toBe('windsurf');
+    expect(result?.binary).toMatch(/Windsurf/);
+  });
 });
