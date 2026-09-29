@@ -149,6 +149,30 @@ describe('detectors/index', () => {
     }
   });
 
+  it('loadAllDetectors skips detector files without a detect function', async () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const noDetectFile = path.join(
+      path.dirname(fileURLToPath(import.meta.url)),
+      '..',
+      '..',
+      'src',
+      'detectors',
+      'no-detect.detector.ts',
+    );
+    // Valid syntax but no detect function — should be silently skipped
+    await fs.writeFile(noDetectFile, 'export default { id: "no-detect" };\n');
+
+    try {
+      const detectors = await loadAllDetectors();
+      const noDetect = detectors.find((d) => d.id === 'no-detect');
+      expect(noDetect).toBeUndefined();
+    } finally {
+      await fs.rm(noDetectFile, { force: true });
+      spy.mockRestore();
+    }
+  });
+
   it('configToDetector handles configDir with ~ prefix', async () => {
     // Test the ~ branch of configDir handling with a path that won't exist
     const detector = configToDetector({

@@ -373,6 +373,21 @@ describe('which', () => {
       }
     });
 
+    it('win32: skips APPDATA when unset', async () => {
+      mockPlatform.mockReturnValue('win32');
+      // APPDATA, LOCALAPPDATA, USERPROFILE all unset (from beforeEach)
+      mockExecFile.mockImplementation((_cmd, _args, _opts, callback) => {
+        if (typeof callback === 'function') {
+          callback(new Error('not found'), { stdout: '', stderr: '' });
+        }
+        return mockChildProcess;
+      });
+      mockAccess.mockRejectedValue(new Error('ENOENT'));
+
+      const path = await which('my-agent');
+      expect(path).toBeNull();
+    });
+
     it('win32: finds .cmd shim in known dir when bare name missing', async () => {
       mockPlatform.mockReturnValue('win32');
       process.env.APPDATA = 'C:\\Users\\test\\AppData\\Roaming';

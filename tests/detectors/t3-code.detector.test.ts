@@ -206,6 +206,40 @@ describe('t3-code detector', () => {
     expect(result?.binary).toBe(join(installDir, 'T3 Code (Alpha).exe'));
   });
 
+  it('returns null when windows install dir has no non-uninstall .exe', async () => {
+    mockWhich.mockResolvedValue(null);
+    mockPlatform.mockReturnValue('win32');
+    process.env.APPDATA = 'C:\\Users\\test\\AppData\\Roaming';
+    process.env.LOCALAPPDATA = 'C:\\Users\\test\\AppData\\Local';
+    const installDir = 'C:\\Users\\test\\AppData\\Local\\Programs\\t3code';
+    mockFsStat.mockImplementation(async (p: unknown) => {
+      if (String(p) === installDir) {
+        return { isDirectory: () => true } as Awaited<ReturnType<typeof fs.stat>>;
+      }
+      throw new Error('not found');
+    });
+    mockFsReaddir.mockImplementation(async (p: unknown) => {
+      if (String(p) === installDir) {
+        // Only uninstaller and non-exe files — no valid .exe
+        return ['Uninstall T3 Code.exe', 'resources', 'README.md'] as Awaited<
+          ReturnType<typeof fs.readdir>
+        >;
+      }
+      throw new Error('not found');
+    });
+
+    expect(await t3CodeDetector.detect()).toBeNull();
+  });
+
+  it('returns null when LOCALAPPDATA is unset on win32', async () => {
+    mockWhich.mockResolvedValue(null);
+    mockPlatform.mockReturnValue('win32');
+    delete process.env.LOCALAPPDATA;
+    mockFsStat.mockRejectedValue(new Error('not found'));
+
+    expect(await t3CodeDetector.detect()).toBeNull();
+  });
+
   it('returns null when windows common paths all fail', async () => {
     mockWhich.mockResolvedValue(null);
     mockPlatform.mockReturnValue('win32');
