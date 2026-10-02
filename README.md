@@ -82,6 +82,8 @@ swallowed and nulls filtered out -> DetectedAgent[]
 
 ## Install
 
+### From npm (recommended)
+
 ```bash
 npm install detect-local-agents
 ```
@@ -90,16 +92,16 @@ Then use as a library (see below) or via CLI:
 
 ```bash
 npx detect-local-agents
+npx dla            # shorthand
 ```
 
-### Local development
-
-Clone the repo and install:
+### From source
 
 ```bash
-git clone https://github.com/your-org/detect-local-agents.git
+git clone https://github.com/koalyptus/detect-local-agents.git
 cd detect-local-agents
 npm install
+npm run build
 ```
 
 That's it. The CLI works immediately from the project directory:

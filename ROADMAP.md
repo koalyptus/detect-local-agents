@@ -113,6 +113,15 @@
 
 ## Phase 8: Polish & Ship
 
-- [ ] Audit docs, generate API reference
-- [ ] Real-world testing on Windows/macOS/Linux
-- [ ] npm publish
+- [x] Audit docs, generate API reference
+- [x] Real-world testing on Windows/macOS/Linux
+- [x] npm publish
+
+### Phase 8a: Release pipeline
+
+- [x] `.github/workflows/release.yml` — triggered on `v*` tag push, runs full verify gate, publishes to npm with provenance, creates GitHub Release
+- [x] `scripts/pre-publish-check.ts` — packs tarball, installs into throwaway consumer, asserts CLI works end-to-end
+- [x] `package.json` — added `publishConfig`, `prepublishOnly`, `release` scripts
+- [x] `README.md` — added npm install section
+- [x] `tsconfig.json` — no change needed (scripts are run via `npx tsx`, not compiled)
+- [x] `eslint.config.js` — allow `console` in `scripts/**/*.ts`
