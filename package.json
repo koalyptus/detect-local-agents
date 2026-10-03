@@ -19,6 +19,9 @@
     "dist",
     "bin"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
@@ -28,6 +31,8 @@
     "format:check": "prettier --check .",
     "cli": "node dist/cli/cli.js",
     "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
+    "prepublishOnly": "npm run build && npx tsx scripts/pre-publish-check.ts",
+    "release": "npm run verify && npm run build && npm publish --provenance",
     "test": "vitest run --coverage",
     "test:watch": "vitest"
   },
@@ -52,7 +57,7 @@
     "detect-local-agents": "file:",
     "eslint": "^9.15.0",
     "eslint-config-prettier": "^9.1.0",
-    "prettier": "^3.4.1",
+    "prettier": "^3.9.9",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.16.0",
     "vitest": "^4.1.11"

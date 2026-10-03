@@ -24,4 +24,10 @@ export default tseslint.config(
       curly: ['error', 'all'],
     },
   },
+  {
+    files: ['scripts/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
 );
