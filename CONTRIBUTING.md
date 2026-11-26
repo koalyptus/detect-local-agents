@@ -29,7 +29,7 @@ the first failure), so a green local run means CI's sequence will too.
   one does not prove the other, so CI runs both.
 - Autofixers exist if a check fails: `npm run format` (prettier --write) and
   `npm run lint:fix` (eslint --fix).
-- CI runs this sequence on a 3 OS × Node 20/22 matrix — 6 cells in total — so a fully
+- CI runs this sequence on a 2 OS × Node 20/22 matrix — 4 cells in total — so a fully
   green local run saves a full round trip.
 
 ## Test coverage
